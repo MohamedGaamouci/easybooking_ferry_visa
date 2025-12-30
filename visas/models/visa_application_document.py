@@ -25,5 +25,8 @@ class VisaApplicationDocument(models.Model):
         default='pending'
     )
 
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
     class Meta:
         db_table = 'visas_application_document'

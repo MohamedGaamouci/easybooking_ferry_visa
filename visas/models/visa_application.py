@@ -11,13 +11,18 @@ def generate_visa_ref():
 
 
 class VisaApplication(models.Model):
+    # --- Updated Status Workflow ---
     STATUS_CHOICES = (
-        ('new', 'New Application'),
-        ('review', 'Under Review'),
+        ('new', 'New Application'),                 # Step 1: Client submits
+        ('review', 'Under Review'),                 # Step 2: Admin checks docs
+        # Step 3: Date is booked (NEW)
+        ('appointment', 'Appointment Scheduled'),
+        # Step 4: File is at Consulate
         ('embassy', 'Submitted to Embassy'),
-        ('ready', 'Ready for Collection'),
-        ('rejected', 'Rejected'),
+        ('ready', 'Ready for Collection'),          # Step 5: Passport is back
+        # Step 6: Client picked it up
         ('completed', 'Completed'),
+        ('rejected', 'Rejected'),                   # Exception: Refused
     )
 
     reference = models.CharField(
@@ -27,7 +32,7 @@ class VisaApplication(models.Model):
 
     agency = models.ForeignKey(
         'agencies.Agency',
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='visa_applications'
     )
 
