@@ -1,0 +1,290 @@
+{% extends 'client/base_client.html' %}
+
+{% block content %}
+
+<main class="max-w-7xl mx-auto px-6 pt-24 pb-12">
+
+    <div class="flex items-center justify-between mb-8">
+        <h1 class="text-2xl font-bold text-slate-900">My Requests</h1>
+        <a href="{% url 'new_ferry' %}"
+            class="bg-brand-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md hover:bg-brand-700 transition-colors flex items-center gap-2">
+            <i class="ph-bold ph-plus"></i> New Demand
+        </a>
+    </div>
+
+    <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+        <table class="w-full text-left border-collapse">
+            <thead class="bg-slate-50 border-b border-slate-200 text-xs uppercase text-slate-500 font-semibold">
+                <tr>
+                    <th class="px-6 py-4">Status</th>
+                    <th class="px-6 py-4">Provider</th>
+                    <th class="px-6 py-4">Route</th>
+                    <th class="px-6 py-4">Dates</th>
+                    <th class="px-6 py-4 text-right">Price</th>
+                    <th class="px-6 py-4 text-right">Action</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 text-sm">
+
+                <tr class="hover:bg-slate-50 transition-colors group cursor-pointer" onclick="openModal('req-1')">
+                    <td class="px-6 py-4">
+                        <span
+                            class="inline-flex items-center gap-1.5 bg-yellow-100 text-yellow-700 px-2.5 py-1 rounded-full text-xs font-bold shadow-sm border border-yellow-200">
+                            <span class="relative flex h-2 w-2">
+                                <span
+                                    class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-2 w-2 bg-yellow-500"></span>
+                            </span>
+                            Offer Received
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="w-8 h-8 rounded bg-red-50 text-red-600 border border-red-100 flex items-center justify-center">
+                                <i class="ph-fill ph-flag"></i>
+                            </div>
+                            <span class="font-semibold text-slate-900">Corsica Linea</span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 text-slate-600">MRS ↔ ALG</td>
+                    <td class="px-6 py-4 text-slate-600">10 Nov - 20 Nov</td>
+                    <td class="px-6 py-4 text-right font-bold text-slate-900">€580.00</td>
+                    <td class="px-6 py-4 text-right">
+                        <button
+                            class="text-brand-600 font-bold text-xs border border-brand-200 bg-brand-50 px-3 py-1.5 rounded hover:bg-brand-100">Review</button>
+                    </td>
+                </tr>
+
+                <tr class="hover:bg-slate-50 transition-colors cursor-pointer" onclick="openModal('req-2')">
+                    <td class="px-6 py-4">
+                        <span
+                            class="inline-flex items-center gap-1.5 bg-blue-50 text-brand-600 px-2.5 py-1 rounded-full text-xs font-bold border border-blue-100">
+                            <i class="ph-bold ph-spinner animate-spin"></i> Processing
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="w-8 h-8 rounded bg-teal-50 text-teal-600 border border-teal-100 flex items-center justify-center">
+                                <i class="ph-fill ph-sun"></i>
+                            </div>
+                            <span class="font-semibold text-slate-900">Balearia</span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 text-slate-600">VAL ↔ ORN</td>
+                    <td class="px-6 py-4 text-slate-600">15 Nov (One Way)</td>
+                    <td class="px-6 py-4 text-right text-slate-400 font-medium">--</td>
+                    <td class="px-6 py-4 text-right">
+                        <button class="text-slate-400 font-medium text-xs hover:text-slate-600">Details</button>
+                    </td>
+                </tr>
+
+                <tr class="hover:bg-slate-50 transition-colors cursor-pointer" onclick="openModal('req-3')">
+                    <td class="px-6 py-4">
+                        <span
+                            class="inline-flex items-center gap-1.5 bg-green-100 text-green-700 px-2.5 py-1 rounded-full text-xs font-bold border border-green-200">
+                            <i class="ph-bold ph-check"></i> Confirmed
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="w-8 h-8 rounded bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center">
+                                <i class="ph-fill ph-globe"></i>
+                            </div>
+                            <span class="font-semibold text-slate-900">GNV</span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 text-slate-600">GEN ↔ TUN</td>
+                    <td class="px-6 py-4 text-slate-600">01 Dec - 15 Dec</td>
+                    <td class="px-6 py-4 text-right font-bold text-slate-900">€320.00</td>
+                    <td class="px-6 py-4 text-right">
+                        <button
+                            class="text-green-600 font-bold text-xs border border-green-200 bg-green-50 px-3 py-1.5 rounded hover:bg-green-100 flex items-center gap-1 ml-auto">
+                            <i class="ph-bold ph-download-simple"></i> Ticket
+                        </button>
+                    </td>
+                </tr>
+
+            </tbody>
+        </table>
+    </div>
+</main>
+
+<div id="demand-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeModal()"></div>
+
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto modal-enter">
+
+        <div class="sticky top-0 bg-white border-b border-slate-100 p-6 flex items-center justify-between z-10">
+            <div>
+                <div class="flex items-center gap-3 mb-1">
+                    <h2 class="text-xl font-bold text-slate-900">Request #REQ-88291</h2>
+                    <span id="modal-status-badge"
+                        class="bg-yellow-100 text-yellow-700 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase">Offer
+                        Received</span>
+                </div>
+                <p class="text-sm text-slate-500">Submitted on Oct 24, 2025</p>
+            </div>
+            <button onclick="closeModal()"
+                class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors">
+                <i class="ph-bold ph-x"></i>
+            </button>
+        </div>
+
+        <div class="p-6 space-y-6">
+
+            <div id="modal-offer-card"
+                class="bg-gradient-to-br from-brand-50 to-white border border-brand-200 rounded-xl p-6 shadow-sm relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-4 opacity-10"><i
+                        class="ph-fill ph-tag text-6xl text-brand-600"></i></div>
+
+                <h3 class="text-brand-800 font-bold text-lg mb-4">You received an offer!</h3>
+
+                <div class="flex items-end justify-between mb-6">
+                    <div>
+                        <p class="text-xs text-brand-600 font-semibold uppercase mb-1">Total Price</p>
+                        <p class="text-4xl font-bold text-slate-900">€580.00</p>
+                        <p class="text-xs text-slate-500 mt-1">Includes Taxes & Fees</p>
+                    </div>
+                    <div class="text-right text-sm space-y-1">
+                        <p class="text-slate-600"><span class="font-semibold">Provider:</span> Corsica Linea</p>
+                        <p class="text-slate-600"><span class="font-semibold">Departure:</span> 10 Nov 2025</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-3">
+                    <button onclick="acceptOffer()"
+                        class="flex-1 bg-brand-600 text-white py-3 rounded-lg font-bold shadow-md shadow-brand-200 hover:bg-brand-700 transition-all flex items-center justify-center gap-2">
+                        <i class="ph-bold ph-check"></i> Accept & Confirm
+                    </button>
+                    <button
+                        class="px-6 py-3 border border-slate-300 text-slate-700 font-bold rounded-lg hover:bg-white hover:text-red-600 hover:border-red-200 transition-all">
+                        Reject
+                    </button>
+                </div>
+            </div>
+
+            <div>
+                <h4 class="text-xs font-bold text-slate-400 uppercase mb-3 border-b border-slate-100 pb-2">Trip
+                    Details</h4>
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                        <span class="block text-xs text-slate-400 mb-1">Route</span>
+                        <span class="font-semibold text-slate-800">Marseille ↔ Algiers</span>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                        <span class="block text-xs text-slate-400 mb-1">Dates</span>
+                        <span class="font-semibold text-slate-800">10 Nov - 20 Nov</span>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                        <span class="block text-xs text-slate-400 mb-1">Vehicle</span>
+                        <span class="font-semibold text-slate-800">Golf 8 (00-123-16)</span>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                        <span class="block text-xs text-slate-400 mb-1">Preference</span>
+                        <span class="font-semibold text-slate-800">Private Cabin, Meals</span>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h4 class="text-xs font-bold text-slate-400 uppercase mb-3 border-b border-slate-100 pb-2">Passenger
+                    Manifest</h4>
+                <div class="space-y-2">
+                    <div
+                        class="flex items-center justify-between text-sm p-3 bg-white border border-slate-100 rounded-lg">
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
+                                <i class="ph-fill ph-user"></i>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-slate-900">Mohamed Amine</p>
+                                <p class="text-xs text-slate-500">P12345678 • Algerian</p>
+                            </div>
+                        </div>
+                        <span class="text-xs font-bold bg-slate-100 text-slate-600 px-2 py-1 rounded">Adult</span>
+                    </div>
+                    <div
+                        class="flex items-center justify-between text-sm p-3 bg-white border border-slate-100 rounded-lg">
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
+                                <i class="ph-fill ph-user"></i>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-slate-900">Sarah Amine</p>
+                                <p class="text-xs text-slate-500">P87654321 • Algerian</p>
+                            </div>
+                        </div>
+                        <span class="text-xs font-bold bg-slate-100 text-slate-600 px-2 py-1 rounded">Adult</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="modal-docs" class="hidden">
+                <h4 class="text-xs font-bold text-slate-400 uppercase mb-3 border-b border-slate-100 pb-2">Documents
+                </h4>
+                <button
+                    class="w-full border border-dashed border-green-300 bg-green-50 p-4 rounded-lg flex items-center justify-center gap-2 text-green-700 hover:bg-green-100 transition-colors">
+                    <i class="ph-bold ph-file-pdf text-xl"></i>
+                    <span class="font-bold">Download Booking Voucher</span>
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    // Modal Logic
+    const modal = document.getElementById('demand-modal');
+    const offerCard = document.getElementById('modal-offer-card');
+    const docSection = document.getElementById('modal-docs');
+    const badge = document.getElementById('modal-status-badge');
+
+    function openModal(id) {
+        modal.classList.remove('hidden');
+
+        // SIMULATION OF DIFFERENT STATES BASED ON ID
+        if (id === 'req-1') {
+            // Scenario: Offer Received
+            offerCard.classList.remove('hidden');
+            docSection.classList.add('hidden');
+            badge.innerText = "Offer Received";
+            badge.className = "bg-yellow-100 text-yellow-700 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase";
+        }
+        else if (id === 'req-2') {
+            // Scenario: Processing
+            offerCard.classList.add('hidden');
+            docSection.classList.add('hidden');
+            badge.innerText = "Processing";
+            badge.className = "bg-blue-50 text-brand-600 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase border border-blue-100";
+        }
+        else if (id === 'req-3') {
+            // Scenario: Confirmed
+            offerCard.classList.add('hidden');
+            docSection.classList.remove('hidden');
+            badge.innerText = "Confirmed";
+            badge.className = "bg-green-100 text-green-700 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase";
+        }
+    }
+
+    function closeModal() {
+        modal.classList.add('hidden');
+    }
+
+    function acceptOffer() {
+        const btn = document.querySelector('button[onclick="acceptOffer()"]');
+        btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Confirming...';
+        setTimeout(() => {
+            alert("Booking Confirmed! You can now download your ticket.");
+            closeModal();
+            location.reload(); // Reload to show green state
+        }, 1000);
+    }
+</script>
+
+{% endblock %}

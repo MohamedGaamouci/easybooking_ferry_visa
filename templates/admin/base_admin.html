@@ -1,0 +1,181 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EasyBooking Admin</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 50: '#f0f9ff', 100: '#e0f2fe', 600: '#0284c7', 700: '#0369a1', 900: '#0c4a6e' },
+                        slate: { 850: '#1e293b' }
+                    },
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    boxShadow: {
+                        'soft': '0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        .table-row-hover:hover td {
+            background-color: #f8fafc;
+        }
+
+        .status-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: .5;
+            }
+        }
+    </style>
+</head>
+
+<body class="flex h-screen overflow-hidden text-slate-800">
+
+    <aside class="w-64 bg-slate-900 text-white flex flex-col hidden md:flex shrink-0 transition-all duration-300">
+
+        <!-- Logo -->
+        <div class="h-16 flex items-center px-6 border-b border-slate-700 font-bold text-lg tracking-wide">
+            <div class="flex items-center gap-3">
+                <img src="{% static 'img/logo.png' %}"
+                    onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden')"
+                    class="h-10 w-auto object-contain" alt="Easy Booking">
+
+                <div class="hidden flex items-center gap-2">
+                    <i class="ph-fill ph-boat text-brand-500 text-2xl"></i>
+                    <span>Easy Booking ADMIN</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Info -->
+        <div class="p-4 border-b border-slate-800 flex items-center gap-3">
+            <div
+                class="w-10 h-10 rounded-full bg-gradient-to-tr from-brand-500 to-purple-500 flex items-center justify-center font-bold text-sm shadow-lg">
+                KH
+            </div>
+            <div>
+                <div class="text-sm font-semibold">Houssem K.</div>
+                <div class="text-[10px] text-slate-400 uppercase tracking-wider">Super Admin</div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="flex-1 py-6 space-y-1 px-3" id="sidebar-nav">
+
+            <a href="{% url 'admin_dashboard' %}" data-url="admin_dashboard"
+                class="nav-item flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors group">
+                <i class="ph ph-squares-four text-lg"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <a href="{% url 'admin_cms' %}" data-url="admin_cms"
+                class="nav-item flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors group">
+                <i class="ph ph-cube text-lg"></i>
+                <span>CMS</span>
+            </a>
+
+            <a href="{% url 'admin_ferry_requests' %}" data-url="admin_ferry_requests"
+                class="nav-item flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors group">
+                <i class="ph ph-boat text-lg"></i>
+                <span>Ferry Requests</span>
+                <span
+                    class="ml-auto bg-slate-700 text-slate-300 text-[10px] font-bold px-2 py-0.5 rounded-full group-hover:bg-brand-600 group-hover:text-white transition-colors">5</span>
+            </a>
+
+            <a href="{% url 'admin_visa_app' %}" data-url="admin_visa_app"
+                class="nav-item flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors group">
+                <i class="ph ph-passport text-lg"></i>
+                <span>Visa Applications</span>
+                <span
+                    class="ml-auto bg-slate-700 text-slate-300 text-[10px] font-bold px-2 py-0.5 rounded-full group-hover:bg-brand-600 group-hover:text-white transition-colors">3</span>
+            </a>
+
+            <a href="{% url 'admin_accounting' %}" data-url="admin_accounting"
+                class="nav-item flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors group">
+                <i class="ph ph-coins text-lg"></i>
+                <span>Accounting</span>
+                <span class="ml-auto bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">1</span>
+            </a>
+
+            <a href="{% url 'admin_agencies' %}" data-url="admin_agencies"
+                class="nav-item flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors group">
+                <i class="ph ph-users text-lg"></i>
+                <span>Agencies</span>
+            </a>
+
+            <a href="{% url 'admin_setting' %}" data-url="admin_setting"
+                class="nav-item flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors group">
+                <i class="ph ph-gear text-lg"></i>
+                <span>Settings</span>
+            </a>
+
+        </nav>
+
+        <!-- Logout -->
+        <div class="p-4 border-t border-slate-800">
+            <a href="#"
+                class="flex items-center gap-3 px-3 py-2 text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded-lg transition-colors">
+                <i class="ph-bold ph-sign-out text-lg"></i>
+                <span>Logout</span>
+            </a>
+        </div>
+
+        <!-- Active Link JS -->
+        <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                const currentUrlName = "{{ request.resolver_match.url_name }}";
+                const links = document.querySelectorAll('#sidebar-nav a.nav-item');
+
+                links.forEach(link => {
+                    if (link.dataset.url === currentUrlName) {
+                        link.classList.add(
+                            "bg-brand-600",
+                            "text-white",
+                            "shadow-lg",
+                            "shadow-brand-900/20"
+                        );
+
+                        const badge = link.querySelector('span.rounded-full');
+                        if (badge && !badge.classList.contains('bg-red-500')) {
+                            badge.classList.remove('bg-slate-700', 'text-slate-300');
+                            badge.classList.add('bg-white', 'text-brand-700');
+                        }
+                    }
+                });
+            });
+        </script>
+
+    </aside>
+
+    {% block content %}
+    {% endblock %}
+
+</body>
+
+</html>

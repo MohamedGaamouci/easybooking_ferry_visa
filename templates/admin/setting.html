@@ -1,0 +1,161 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block content %}
+
+<main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
+        <h1 class="text-xl font-bold text-slate-900">Platform Settings</h1>
+    </header>
+
+    <div class="flex-1 overflow-y-auto p-8">
+        <div class="max-w-5xl mx-auto">
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+
+                <div class="col-span-1">
+                    <nav class="space-y-1">
+                        <button onclick="showTab('profile')" id="nav-profile"
+                            class="w-full flex items-center gap-3 px-4 py-2.5 bg-white text-brand-600 font-bold text-sm rounded-lg shadow-sm border border-slate-200 transition-all">
+                            <i class="ph-fill ph-user-circle text-lg"></i> Profile & Agency
+                        </button>
+                        <button onclick="showTab('security')" id="nav-security"
+                            class="w-full flex items-center gap-3 px-4 py-2.5 text-slate-500 hover:text-slate-900 hover:bg-white font-medium text-sm rounded-lg transition-all">
+                            <i class="ph-fill ph-lock-key text-lg"></i> Security
+                        </button>
+                        <button onclick="showTab('notify')" id="nav-notify"
+                            class="w-full flex items-center gap-3 px-4 py-2.5 text-slate-500 hover:text-slate-900 hover:bg-white font-medium text-sm rounded-lg transition-all">
+                            <i class="ph-fill ph-bell text-lg"></i> Notifications
+                        </button>
+                    </nav>
+
+                    <div class="mt-8 pt-8 border-t border-slate-200">
+                        <button class="flex items-center gap-2 text-red-600 text-sm font-bold hover:text-red-700 px-4">
+                            <i class="ph-bold ph-sign-out"></i> Log Out
+                        </button>
+                    </div>
+                </div>
+
+                <div class="col-span-1 md:col-span-3">
+
+                    <div id="tab-profile" class="space-y-6 fade-in">
+                        <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+                            <h2 class="text-sm font-bold text-slate-900 uppercase mb-4">Agency Branding</h2>
+                            <div class="flex items-center gap-6">
+                                <div
+                                    class="w-20 h-20 bg-slate-100 rounded-full border border-slate-200 flex items-center justify-center text-slate-400">
+                                    <i class="ph-fill ph-image text-3xl"></i>
+                                </div>
+                                <div>
+                                    <button
+                                        class="bg-white border border-slate-300 text-slate-700 px-4 py-2 rounded-lg text-xs font-bold hover:bg-slate-50 mb-2">Upload
+                                        New Logo</button>
+                                    <p class="text-xs text-slate-400">Recommended size: 400x400px. JPG or PNG.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+                            <h2 class="text-sm font-bold text-slate-900 uppercase mb-4">Admin Details</h2>
+                            <form class="space-y-4">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div><label class="block text-xs font-bold text-slate-500 mb-1">Company
+                                            Name</label><input type="text" value="OceanConnect HQ"
+                                            class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-slate-50"
+                                            readonly></div>
+                                    <div><label class="block text-xs font-bold text-slate-500 mb-1">Super Admin
+                                            Name</label><input type="text" value="Houssem K."
+                                            class="w-full border border-slate-300 rounded-lg p-2.5 text-sm"></div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div><label class="block text-xs font-bold text-slate-500 mb-1">Phone
+                                            Number</label><input type="tel" value="+213 770 00 00 00"
+                                            class="w-full border border-slate-300 rounded-lg p-2.5 text-sm"></div>
+                                    <div><label class="block text-xs font-bold text-slate-500 mb-1">Email
+                                            (Login)</label><input type="email" value="admin@oceanconnect.com"
+                                            class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-slate-50"
+                                            readonly></div>
+                                </div>
+
+                                <div class="pt-2 flex justify-end">
+                                    <button type="button"
+                                        class="bg-brand-600 text-white px-6 py-2 rounded-lg text-sm font-bold shadow hover:bg-brand-700">Save
+                                        Changes</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div id="tab-security" class="hidden space-y-6 fade-in">
+                        <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+                            <h2 class="text-sm font-bold text-slate-900 uppercase mb-4">Change Password</h2>
+                            <form class="space-y-4 max-w-md">
+                                <div><label class="block text-xs font-bold text-slate-500 mb-1">Current
+                                        Password</label><input type="password"
+                                        class="w-full border border-slate-300 rounded-lg p-2.5 text-sm"></div>
+                                <div><label class="block text-xs font-bold text-slate-500 mb-1">New
+                                        Password</label><input type="password"
+                                        class="w-full border border-slate-300 rounded-lg p-2.5 text-sm">
+                                </div>
+                                <div><label class="block text-xs font-bold text-slate-500 mb-1">Confirm New
+                                        Password</label><input type="password"
+                                        class="w-full border border-slate-300 rounded-lg p-2.5 text-sm"></div>
+                                <button type="button"
+                                    class="bg-slate-900 text-white px-6 py-2 rounded-lg text-sm font-bold hover:bg-slate-800">Update
+                                    Password</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div id="tab-notify" class="hidden space-y-6 fade-in">
+                        <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+                            <h2 class="text-sm font-bold text-slate-900 uppercase mb-4">Email Preferences</h2>
+                            <div class="space-y-4">
+                                <label class="flex items-center justify-between cursor-pointer">
+                                    <span class="text-sm font-medium text-slate-700">New Agency Applications</span>
+                                    <input type="checkbox" checked class="accent-brand-600 w-5 h-5">
+                                </label>
+                                <hr class="border-slate-100">
+                                <label class="flex items-center justify-between cursor-pointer">
+                                    <span class="text-sm font-medium text-slate-700">Ferry Request Alerts</span>
+                                    <input type="checkbox" checked class="accent-brand-600 w-5 h-5">
+                                </label>
+                                <hr class="border-slate-100">
+                                <label class="flex items-center justify-between cursor-pointer">
+                                    <span class="text-sm font-medium text-slate-700">Financial Reports</span>
+                                    <input type="checkbox" checked class="accent-brand-600 w-5 h-5">
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    function showTab(id) {
+        // Hide all
+        document.getElementById('tab-profile').classList.add('hidden');
+        document.getElementById('tab-security').classList.add('hidden');
+        document.getElementById('tab-notify').classList.add('hidden');
+
+        // Reset Buttons
+        const navs = ['profile', 'security', 'notify'];
+        navs.forEach(nav => {
+            const btn = document.getElementById('nav-' + nav);
+            btn.className = "w-full flex items-center gap-3 px-4 py-2.5 text-slate-500 hover:text-slate-900 hover:bg-white font-medium text-sm rounded-lg transition-all";
+        });
+
+        // Show Active
+        document.getElementById('tab-' + id).classList.remove('hidden');
+
+        // Style Active Button
+        const activeBtn = document.getElementById('nav-' + id);
+        activeBtn.className = "w-full flex items-center gap-3 px-4 py-2.5 bg-white text-brand-600 font-bold text-sm rounded-lg shadow-sm border border-slate-200 transition-all";
+    }
+</script>
+
+{% endblock %}

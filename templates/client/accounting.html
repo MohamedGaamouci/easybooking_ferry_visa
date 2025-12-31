@@ -1,0 +1,235 @@
+{% extends 'client/base_client.html' %}
+
+{% block content %}
+
+<main class="max-w-7xl mx-auto px-6 pt-24 pb-12 fade-in">
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+
+        <div
+            class="md:col-span-1 bg-gradient-to-br from-brand-900 to-slate-900 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
+            <div class="absolute top-0 right-0 p-6 opacity-10"><i class="ph-fill ph-wallet text-8xl"></i></div>
+            <div class="relative z-10">
+                <p class="text-slate-300 text-sm font-medium mb-1">Available Balance</p>
+                <h2 class="text-4xl font-bold mb-6">€ 2,450.00</h2>
+
+                <div class="flex items-center gap-4 text-xs text-slate-300 border-t border-white/10 pt-4">
+                    <div>
+                        <span class="block text-slate-400">Credit Limit</span>
+                        <span class="font-bold text-white">€ 5,000.00</span>
+                    </div>
+                    <div class="h-8 w-px bg-white/10"></div>
+                    <div>
+                        <span class="block text-slate-400">Blocked</span>
+                        <span class="font-bold text-white">€ 0.00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="md:col-span-2 grid grid-cols-2 gap-6">
+            <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
+                <div>
+                    <div
+                        class="w-10 h-10 bg-red-50 text-red-600 rounded-full flex items-center justify-center mb-3 text-xl">
+                        <i class="ph-bold ph-trend-down"></i>
+                    </div>
+                    <p class="text-slate-500 text-sm">Spent this Month</p>
+                    <h3 class="text-2xl font-bold text-slate-900">€ 8,240.00</h3>
+                </div>
+                <div class="mt-4">
+                    <span class="text-xs text-green-600 font-medium bg-green-50 px-2 py-1 rounded">+12% vs last
+                        month</span>
+                </div>
+            </div>
+
+            <div
+                class="bg-brand-50 border border-brand-100 rounded-2xl p-6 flex flex-col justify-center items-center text-center">
+                <div
+                    class="w-12 h-12 bg-white text-brand-600 rounded-full flex items-center justify-center mb-3 text-2xl shadow-sm">
+                    <i class="ph-fill ph-bank"></i>
+                </div>
+                <h3 class="font-bold text-brand-900 mb-1">Need more credit?</h3>
+                <p class="text-xs text-brand-700 mb-4 px-4">Upload your bank transfer receipt to top up your wallet
+                    instantly.</p>
+                <button onclick="openTopUpModal()"
+                    class="bg-brand-600 text-white px-6 py-2.5 rounded-lg text-sm font-bold shadow-md hover:bg-brand-700 transition-colors w-full max-w-[200px]">
+                    Request Top-Up
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+
+        <div class="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
+            <h3 class="font-bold text-slate-800">Transaction History</h3>
+            <div class="flex gap-2">
+                <button
+                    class="px-3 py-1.5 text-xs font-medium bg-white border border-slate-200 rounded-lg shadow-sm text-slate-700 hover:bg-slate-50">This
+                    Month</button>
+                <button
+                    class="px-3 py-1.5 text-xs font-medium bg-white border border-slate-200 rounded-lg shadow-sm text-slate-700 hover:bg-slate-50"><i
+                        class="ph-bold ph-download-simple"></i> Statement</button>
+            </div>
+        </div>
+
+        <table class="w-full text-left border-collapse">
+            <thead class="bg-slate-50 text-xs uppercase text-slate-500 font-semibold border-b border-slate-200">
+                <tr>
+                    <th class="px-6 py-4">Date</th>
+                    <th class="px-6 py-4">Description / Reference</th>
+                    <th class="px-6 py-4">Type</th>
+                    <th class="px-6 py-4 text-right">Amount</th>
+                    <th class="px-6 py-4 text-center">Status</th>
+                    <th class="px-6 py-4 text-right">Invoice</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 text-sm">
+
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="px-6 py-4 text-slate-500">Oct 24, 2025</td>
+                    <td class="px-6 py-4">
+                        <div class="font-medium text-slate-900">Ferry Booking - Corsica Linea</div>
+                        <div class="text-xs text-slate-500 font-mono">Ref: #REQ-88290</div>
+                    </td>
+                    <td class="px-6 py-4"><span
+                            class="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded">Purchase</span>
+                    </td>
+                    <td class="px-6 py-4 text-right font-bold text-red-600">- € 320.00</td>
+                    <td class="px-6 py-4 text-center"><i class="ph-fill ph-check-circle text-green-500 text-lg"></i>
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <button class="text-slate-400 hover:text-brand-600"><i
+                                class="ph-bold ph-file-pdf text-lg"></i></button>
+                    </td>
+                </tr>
+
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="px-6 py-4 text-slate-500">Oct 20, 2025</td>
+                    <td class="px-6 py-4">
+                        <div class="font-medium text-slate-900">Bank Transfer Deposit</div>
+                        <div class="text-xs text-slate-500 font-mono">ID: #DEP-9921</div>
+                    </td>
+                    <td class="px-6 py-4"><span
+                            class="text-xs font-bold text-green-700 bg-green-100 px-2 py-1 rounded">Top Up</span>
+                    </td>
+                    <td class="px-6 py-4 text-right font-bold text-green-600">+ € 1,000.00</td>
+                    <td class="px-6 py-4 text-center"><i class="ph-fill ph-check-circle text-green-500 text-lg"></i>
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <button class="text-slate-400 hover:text-brand-600"><i
+                                class="ph-bold ph-file-pdf text-lg"></i></button>
+                    </td>
+                </tr>
+
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="px-6 py-4 text-slate-500">Oct 18, 2025</td>
+                    <td class="px-6 py-4">
+                        <div class="font-medium text-slate-900">Ferry Booking - GNV</div>
+                        <div class="text-xs text-slate-500 font-mono">Ref: #REQ-88100</div>
+                    </td>
+                    <td class="px-6 py-4"><span
+                            class="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded">Purchase</span>
+                    </td>
+                    <td class="px-6 py-4 text-right font-bold text-red-600">- € 450.00</td>
+                    <td class="px-6 py-4 text-center"><i class="ph-fill ph-check-circle text-green-500 text-lg"></i>
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <button class="text-slate-400 hover:text-brand-600"><i
+                                class="ph-bold ph-file-pdf text-lg"></i></button>
+                    </td>
+                </tr>
+
+                <tr class="hover:bg-slate-50 transition-colors bg-yellow-50/30">
+                    <td class="px-6 py-4 text-slate-500">Oct 15, 2025</td>
+                    <td class="px-6 py-4">
+                        <div class="font-medium text-slate-900">Cash Deposit (Agency)</div>
+                        <div class="text-xs text-slate-500 font-mono">ID: #DEP-9900</div>
+                    </td>
+                    <td class="px-6 py-4"><span
+                            class="text-xs font-bold text-green-700 bg-green-100 px-2 py-1 rounded">Top Up</span>
+                    </td>
+                    <td class="px-6 py-4 text-right font-bold text-slate-400">+ € 500.00</td>
+                    <td class="px-6 py-4 text-center">
+                        <span
+                            class="bg-yellow-100 text-yellow-700 text-[10px] px-2 py-0.5 rounded font-bold uppercase">Pending</span>
+                    </td>
+                    <td class="px-6 py-4 text-right">--</td>
+                </tr>
+
+            </tbody>
+        </table>
+    </div>
+
+</main>
+
+<div id="topup-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeTopUpModal()">
+    </div>
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 fade-in">
+
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-lg font-bold text-slate-900">Request Top-Up</h3>
+            <button onclick="closeTopUpModal()" class="text-slate-400 hover:text-slate-600"><i
+                    class="ph-bold ph-x text-lg"></i></button>
+        </div>
+
+        <form onsubmit="event.preventDefault(); submitTopUp();" class="space-y-4">
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Amount to Add</label>
+                <div class="relative">
+                    <span class="absolute left-3 top-2.5 text-slate-400 font-bold">€</span>
+                    <input type="number"
+                        class="w-full border border-slate-300 rounded-lg py-2 pl-8 pr-4 focus:ring-2 focus:ring-brand-500 outline-none font-bold text-slate-900"
+                        placeholder="0.00">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Payment Method</label>
+                <select class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white">
+                    <option>Bank Transfer (CCP/BNA/AGB)</option>
+                    <option>Cash Deposit at Office</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Upload Receipt</label>
+                <div
+                    class="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:bg-slate-50 transition-colors cursor-pointer">
+                    <i class="ph-duotone ph-upload-simple text-3xl text-slate-400 mb-2"></i>
+                    <p class="text-xs text-slate-500">Click to upload photo or PDF</p>
+                </div>
+            </div>
+
+            <div class="pt-2">
+                <button type="submit"
+                    class="w-full bg-brand-600 text-white font-bold py-3 rounded-lg shadow-md hover:bg-brand-700 transition-colors">
+                    Submit Request
+                </button>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+<script>
+    function openTopUpModal() {
+        document.getElementById('topup-modal').classList.remove('hidden');
+    }
+    function closeTopUpModal() {
+        document.getElementById('topup-modal').classList.add('hidden');
+    }
+    function submitTopUp() {
+        const btn = document.querySelector('#topup-modal button[type="submit"]');
+        btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Submitting...';
+        setTimeout(() => {
+            alert("Top-up request sent! Admin will validate shortly.");
+            closeTopUpModal();
+            btn.innerHTML = 'Submit Request'; // Reset
+        }, 1000);
+    }
+</script>
+
+{% endblock %}

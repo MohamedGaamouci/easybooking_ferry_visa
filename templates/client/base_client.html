@@ -1,0 +1,306 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Easy Booking</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 50: '#f0f9ff', 100: '#e0f2fe', 600: '#0284c7', 700: '#0369a1', 900: '#0c4a6e' },
+                        slate: { 850: '#1e293b' }
+                    },
+                    fontFamily: { sans: ['Inter', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Chart Animations */
+        .bar {
+            transition: height 1s ease-out;
+            height: 0;
+        }
+
+        /* Donut Chart */
+        .donut {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: conic-gradient(#0284c7 0% 65%, #a855f7 65% 100%);
+            position: relative;
+        }
+
+        .donut::after {
+            content: "";
+            position: absolute;
+            inset: 15px;
+            background: white;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+
+<body class="text-slate-800 pt-20" onload="animateCharts()">
+
+    <header class="bg-white border-b border-slate-200 fixed w-full top-0 z-50 h-16 transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
+            <div class="flex items-center gap-8">
+                <a href="{% url 'dashboard' %}"
+                    class="flex items-center gap-2 font-bold text-xl text-brand-900 tracking-tight group">
+                    <img src="{% static 'img/logo.png' %}"
+                        onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden')"
+                        class="h-8 w-auto object-contain" alt="Easy booking">
+                    <div class="hidden flex items-center gap-2">
+                        <i class="ph-fill ph-boat text-brand-600 text-2xl group-hover:text-brand-700"></i>
+                    </div>
+                </a>
+                <nav class="hidden md:flex space-x-1" id="client-nav">
+
+                    <a href="{% url 'dashboard' %}" class="px-3 py-2 text-sm rounded-md transition-colors
+       {% if request.resolver_match.url_name == 'dashboard' %}
+           font-bold text-brand-700 bg-brand-50 ring-1 ring-brand-100
+       {% else %}
+           font-medium text-slate-500 hover:text-brand-600 hover:bg-slate-50
+       {% endif %}">
+                        Dashboard
+                    </a>
+
+                    <span class="border-r border-slate-200 h-6 my-auto mx-2"></span>
+
+                    <a href="{% url 'ferries' %}" class="px-3 py-2 text-sm rounded-md transition-colors
+       {% if request.resolver_match.url_name == 'ferries' %}
+           font-bold text-brand-700 bg-brand-50 ring-1 ring-brand-100
+       {% else %}
+           font-medium text-slate-500 hover:text-brand-600 hover:bg-slate-50
+       {% endif %}">
+                        Ferry Requests
+                    </a>
+
+                    <span class="border-r border-slate-200 h-6 my-auto mx-2"></span>
+
+                    <a href="{% url 'visa' %}" class="px-3 py-2 text-sm rounded-md transition-colors
+       {% if request.resolver_match.url_name == 'visa' %}
+           font-bold text-brand-700 bg-brand-50 ring-1 ring-brand-100
+       {% else %}
+           font-medium text-slate-500 hover:text-brand-600 hover:bg-slate-50
+       {% endif %}">
+                        Visa Apps
+                    </a>
+
+                    <span class="border-r border-slate-200 h-6 my-auto mx-2"></span>
+
+                    <a href="{% url 'accounting' %}" class="px-3 py-2 text-sm rounded-md transition-colors
+       {% if request.resolver_match.url_name == 'accounting' %}
+           font-bold text-brand-700 bg-brand-50 ring-1 ring-brand-100
+       {% else %}
+           font-medium text-slate-500 hover:text-brand-600 hover:bg-slate-50
+       {% endif %}">
+                        Accounting
+                    </a>
+
+                </nav>
+
+            </div>
+
+            <div class="flex items-center gap-5">
+
+                <button onclick="toggleContactModal(true)"
+                    class="hidden lg:flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-brand-600 hover:bg-slate-50 border border-slate-200 rounded-lg transition-all active:scale-95">
+                    <i class="ph-bold ph-headset"></i>
+                    <span>Help center</span>
+                </button>
+
+                <div class="hidden lg:block text-right leading-tight">
+                    <div class="text-[10px] uppercase font-bold text-slate-400">Wallet Balance</div>
+                    <div class="text-sm font-bold text-green-600 font-mono">€ 2,450.00</div>
+                </div>
+
+                <div class="h-8 w-px bg-slate-200 hidden lg:block"></div>
+
+                <div class="flex items-center gap-3">
+                    <a href="{% url 'setting' %}" class="group flex items-center gap-2">
+                        <div
+                            class="w-9 h-9 bg-brand-50 text-brand-700 rounded-full flex items-center justify-center font-bold text-xs border border-brand-200 group-hover:bg-brand-600 group-hover:text-white transition-all shadow-sm">
+                            GT</div>
+                    </a>
+                    <a href="/login.html" class="text-slate-400 hover:text-red-500 transition-colors" title="Logout"><i
+                            class="ph-bold ph-sign-out text-xl"></i></a>
+                </div>
+            </div>
+        </div>
+
+        <!-- contact Modal -->
+        <div id="contact-modal" class="hidden fixed inset-0 z-[100]" aria-labelledby="modal-title" role="dialog"
+            aria-modal="true">
+            <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity"
+                onclick="toggleContactModal(false)"></div>
+
+            <div class="fixed inset-0 z-10 overflow-y-auto">
+                <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+                    <div
+                        class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-2xl border border-slate-100">
+
+                        <div
+                            class="bg-slate-50 px-4 py-4 sm:px-6 flex justify-between items-center border-b border-slate-100">
+                            <div>
+                                <h3 class="text-lg font-bold leading-6 text-brand-900" id="modal-title">Contact Support
+                                </h3>
+                                <p class="mt-1 text-sm text-slate-500">Our team is available Mon-Fri, 9am - 6pm.</p>
+                            </div>
+                            <button type="button" onclick="toggleContactModal(false)"
+                                class="rounded-md bg-white text-slate-400 hover:text-slate-500 focus:outline-none">
+                                <i class="ph-bold ph-x text-xl"></i>
+                            </button>
+                        </div>
+
+                        <div class="px-4 py-5 sm:p-6">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                                <div
+                                    class="p-4 rounded-lg border border-slate-100 hover:border-brand-200 hover:bg-brand-50/50 transition-colors group">
+                                    <div class="flex items-center gap-2 mb-3">
+                                        <div
+                                            class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
+                                            <i class="ph-bold ph-boat"></i>
+                                        </div>
+                                        <h4 class="font-bold text-slate-800">Ferry Bookings</h4>
+                                    </div>
+                                    <div class="space-y-2 text-sm">
+                                        <a href="mailto:ferry@easybooking.pro"
+                                            class="flex items-center gap-2 text-slate-600 hover:text-brand-600">
+                                            <i class="ph-bold ph-envelope-simple"></i> ferry@easybooking.pro
+                                        </a>
+                                        <a href="tel:+123456789"
+                                            class="flex items-center gap-2 text-slate-600 hover:text-brand-600">
+                                            <i class="ph-bold ph-phone"></i> +212 600 000 000
+                                        </a>
+                                        <a href="#"
+                                            class="flex items-center gap-2 text-green-600 hover:text-green-700 font-medium">
+                                            <i class="ph-bold ph-whatsapp-logo"></i> WhatsApp Support
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <div
+                                    class="p-4 rounded-lg border border-slate-100 hover:border-brand-200 hover:bg-brand-50/50 transition-colors group">
+                                    <div class="flex items-center gap-2 mb-3">
+                                        <div
+                                            class="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center">
+                                            <i class="ph-bold ph-passport"></i>
+                                        </div>
+                                        <h4 class="font-bold text-slate-800">Visa Department</h4>
+                                    </div>
+                                    <div class="space-y-2 text-sm">
+                                        <a href="mailto:visa@easybooking.pro"
+                                            class="flex items-center gap-2 text-slate-600 hover:text-brand-600">
+                                            <i class="ph-bold ph-envelope-simple"></i> visa@easybooking.pro
+                                        </a>
+                                        <a href="tel:+123456789"
+                                            class="flex items-center gap-2 text-slate-600 hover:text-brand-600">
+                                            <i class="ph-bold ph-phone"></i> +212 600 000 001
+                                        </a>
+                                        <a href="#"
+                                            class="flex items-center gap-2 text-green-600 hover:text-green-700 font-medium">
+                                            <i class="ph-bold ph-whatsapp-logo"></i> WhatsApp Support
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <div
+                                    class="p-4 rounded-lg border border-slate-100 hover:border-brand-200 hover:bg-brand-50/50 transition-colors group">
+                                    <div class="flex items-center gap-2 mb-3">
+                                        <div
+                                            class="w-8 h-8 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center">
+                                            <i class="ph-bold ph-receipt"></i>
+                                        </div>
+                                        <h4 class="font-bold text-slate-800">Accounting</h4>
+                                    </div>
+                                    <div class="space-y-2 text-sm">
+                                        <a href="mailto:billing@easybooking.pro"
+                                            class="flex items-center gap-2 text-slate-600 hover:text-brand-600">
+                                            <i class="ph-bold ph-envelope-simple"></i> billing@easybooking.pro
+                                        </a>
+                                        <a href="tel:+123456789"
+                                            class="flex items-center gap-2 text-slate-600 hover:text-brand-600">
+                                            <i class="ph-bold ph-phone"></i> +212 600 000 002
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <div
+                                    class="p-4 rounded-lg border border-slate-100 hover:border-brand-200 hover:bg-brand-50/50 transition-colors group">
+                                    <div class="flex items-center gap-2 mb-3">
+                                        <div
+                                            class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center">
+                                            <i class="ph-bold ph-code"></i>
+                                        </div>
+                                        <h4 class="font-bold text-slate-800">Tech Support</h4>
+                                    </div>
+                                    <div class="space-y-2 text-sm">
+                                        <a href="mailto:support@easybooking.pro"
+                                            class="flex items-center gap-2 text-slate-600 hover:text-brand-600">
+                                            <i class="ph-bold ph-envelope-simple"></i> support@easybooking.pro
+                                        </a>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            // Modal Toggle Function
+            function toggleContactModal(show) {
+                const modal = document.getElementById('contact-modal');
+                if (show) {
+                    modal.classList.remove('hidden');
+                    // Prevent background scrolling
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    modal.classList.add('hidden');
+                    // Restore background scrolling
+                    document.body.style.overflow = 'auto';
+                }
+            }
+        </script>
+    </header>
+
+    {% block content %}
+    {% endblock %}
+</body>
+
+</html>

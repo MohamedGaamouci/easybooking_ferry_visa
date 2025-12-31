@@ -1,0 +1,435 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block content %}
+
+<main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
+        <h1 class="text-xl font-bold text-slate-900">Agency Management</h1>
+        <div class="flex items-center gap-4">
+            <button onclick="openEditModal('new')"
+                class="bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md hover:bg-slate-800 transition-colors flex items-center gap-2">
+                <i class="ph-bold ph-plus"></i> Add New Agency
+            </button>
+        </div>
+    </header>
+
+    <div class="px-8 pt-6 pb-2 bg-white border-b border-slate-200 flex flex-wrap gap-4 items-center justify-between">
+
+        <div class="flex items-center gap-3 flex-1">
+            <div class="relative w-64">
+                <i class="ph ph-magnifying-glass absolute left-3 top-2.5 text-slate-400"></i>
+                <input type="text" placeholder="Search by name, RC, phone..."
+                    class="pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:border-brand-500 w-full shadow-sm">
+            </div>
+
+            <select
+                class="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white text-slate-600 shadow-sm cursor-pointer hover:border-slate-300">
+                <option value="">All Statuses</option>
+                <option value="active">Active</option>
+                <option value="suspended">Suspended</option>
+                <option value="pending">Pending Review</option>
+            </select>
+
+            <select
+                class="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white text-slate-600 shadow-sm cursor-pointer hover:border-slate-300">
+                <option value="">All Cities</option>
+                <option value="algiers">Algiers</option>
+                <option value="oran">Oran</option>
+                <option value="setif">Setif</option>
+            </select>
+
+            <select
+                class="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white text-slate-600 shadow-sm cursor-pointer hover:border-slate-300">
+                <option value="">Filter by Tag</option>
+                <option value="vip">VIP</option>
+                <option value="risk">High Risk</option>
+                <option value="wholesaler">Wholesaler</option>
+            </select>
+        </div>
+
+        <button
+            class="text-slate-500 hover:text-brand-600 font-bold text-xs flex items-center gap-2 border border-slate-200 px-3 py-2 rounded-lg bg-slate-50 hover:bg-white transition-colors">
+            <i class="ph-bold ph-download-simple"></i> Export CSV
+        </button>
+    </div>
+
+    <div class="flex-1 overflow-y-auto p-8 bg-slate-50/50">
+        <div class="max-w-full space-y-8">
+
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-sm font-bold text-slate-900 uppercase flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-yellow-500 animate-pulse"></span> Pending
+                        Applications
+                    </h2>
+                    <span class="text-xs font-bold text-slate-400">2 Requests</span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+
+                    <div
+                        class="bg-white p-5 rounded-xl border border-yellow-200 shadow-sm hover:shadow-md transition-all relative overflow-hidden group">
+                        <div class="absolute top-0 left-0 w-1.5 h-full bg-yellow-400"></div>
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <h3 class="font-bold text-lg text-slate-900 leading-tight">Oran Travel Services</h3>
+                                <p class="text-xs text-slate-500 mt-1">Submitted: 2 hours ago</p>
+                            </div>
+                            <div
+                                class="w-8 h-8 rounded-full bg-yellow-50 text-yellow-600 flex items-center justify-center border border-yellow-100">
+                                <i class="ph-fill ph-clock"></i>
+                            </div>
+                        </div>
+                        <div class="space-y-2 mb-4">
+                            <p class="text-sm text-slate-600 flex items-center gap-2"><i
+                                    class="ph-fill ph-user text-slate-400"></i> Ahmed Benali</p>
+                            <p class="text-sm text-slate-600 flex items-center gap-2"><i
+                                    class="ph-fill ph-map-pin text-slate-400"></i> Oran, 31000</p>
+                        </div>
+                        <div class="flex gap-2 border-t border-slate-100 pt-3">
+                            <button onclick="openReviewModal('Oran Travel Services')"
+                                class="flex-1 bg-slate-900 text-white py-2 rounded-lg text-xs font-bold hover:bg-slate-800 transition-colors shadow-sm">Review
+                                Docs</button>
+                        </div>
+                    </div>
+
+                    <div
+                        class="bg-white p-5 rounded-xl border border-yellow-200 shadow-sm hover:shadow-md transition-all relative overflow-hidden group">
+                        <div class="absolute top-0 left-0 w-1.5 h-full bg-yellow-400"></div>
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <h3 class="font-bold text-lg text-slate-900 leading-tight">Sahara Tours</h3>
+                                <p class="text-xs text-slate-500 mt-1">Submitted: Yesterday</p>
+                            </div>
+                            <div
+                                class="w-8 h-8 rounded-full bg-yellow-50 text-yellow-600 flex items-center justify-center border border-yellow-100">
+                                <i class="ph-fill ph-clock"></i>
+                            </div>
+                        </div>
+                        <div class="space-y-2 mb-4">
+                            <p class="text-sm text-slate-600 flex items-center gap-2"><i
+                                    class="ph-fill ph-user text-slate-400"></i> Yacine M.</p>
+                            <p class="text-sm text-slate-600 flex items-center gap-2"><i
+                                    class="ph-fill ph-map-pin text-slate-400"></i> Ghardaia, 47000</p>
+                        </div>
+                        <div class="flex gap-2 border-t border-slate-100 pt-3">
+                            <button onclick="openReviewModal('Sahara Tours')"
+                                class="flex-1 bg-slate-900 text-white py-2 rounded-lg text-xs font-bold hover:bg-slate-800 transition-colors shadow-sm">Review
+                                Docs</button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div>
+                <h2 class="text-sm font-bold text-slate-900 uppercase mb-4">Active Agency Directory</h2>
+                <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+                    <table class="w-full text-left border-collapse">
+                        <thead
+                            class="bg-slate-50 text-xs uppercase text-slate-500 font-semibold border-b border-slate-200">
+                            <tr>
+                                <th class="px-6 py-4">Agency Name & Manager</th>
+                                <th class="px-6 py-4">Contact Info</th>
+                                <th class="px-6 py-4">Finance (Balance/Limit)</th>
+                                <th class="px-6 py-4">Tags</th>
+                                <th class="px-6 py-4">Status</th>
+                                <th class="px-6 py-4 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 text-sm">
+
+                            <tr class="hover:bg-slate-50 transition-colors group">
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-3">
+                                        <div
+                                            class="w-10 h-10 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center font-bold text-xs">
+                                            GT</div>
+                                        <div>
+                                            <div class="font-bold text-slate-900">Global Travel</div>
+                                            <div class="text-xs text-slate-500">Amine Khelil</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 text-slate-600">
+                                    <div class="flex items-center gap-1.5"><i
+                                            class="ph-bold ph-phone text-slate-400"></i> 0550 12 34 56</div>
+                                    <div class="flex items-center gap-1.5 mt-1 text-xs"><i
+                                            class="ph-bold ph-map-pin text-slate-400"></i> Algiers</div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="text-green-600 font-bold">€ 2,450.00</div>
+                                    <div class="text-xs text-slate-400">Limit: -€2,000</div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex gap-1 flex-wrap">
+                                        <span
+                                            class="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-[10px] font-bold uppercase border border-purple-200">VIP</span>
+                                        <span
+                                            class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-[10px] font-bold uppercase border border-blue-200">Wholesaler</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4"><span
+                                        class="bg-green-100 text-green-700 px-2.5 py-1 rounded-full text-xs font-bold border border-green-200">Active</span>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <div class="flex justify-end gap-2 opacity-100 transition-opacity">
+                                        <button onclick="openEditModal('edit', 'Global Travel')"
+                                            class="p-1.5 text-slate-500 hover:text-brand-600 hover:bg-brand-50 rounded border border-transparent hover:border-brand-200 transition-all"
+                                            title="Edit"><i class="ph-bold ph-pencil-simple"></i></button>
+                                        <button onclick="confirmSuspend('Global Travel')"
+                                            class="p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded border border-transparent hover:border-red-200 transition-all"
+                                            title="Suspend"><i class="ph-bold ph-lock-key"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <tr class="hover:bg-slate-50 transition-colors bg-red-50/20 group">
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-3">
+                                        <div
+                                            class="w-10 h-10 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-xs">
+                                            ET</div>
+                                        <div>
+                                            <div class="font-bold text-slate-900">Elite Tours</div>
+                                            <div class="text-xs text-slate-500">John Doe</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 text-slate-600">
+                                    <div class="flex items-center gap-1.5"><i
+                                            class="ph-bold ph-phone text-slate-400"></i> 0661 22 33 44</div>
+                                    <div class="flex items-center gap-1.5 mt-1 text-xs"><i
+                                            class="ph-bold ph-map-pin text-slate-400"></i> Oran</div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="text-red-600 font-bold">- € 1,200.00</div>
+                                    <div class="text-xs text-slate-400">Limit: -€1,500</div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex gap-1 flex-wrap">
+                                        <span
+                                            class="bg-red-100 text-red-700 px-2 py-0.5 rounded text-[10px] font-bold uppercase border border-red-200">Slow
+                                            Payer</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4"><span
+                                        class="bg-yellow-100 text-yellow-700 px-2.5 py-1 rounded-full text-xs font-bold border border-yellow-200">Overdraft</span>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <div class="flex justify-end gap-2 opacity-100 transition-opacity">
+                                        <button onclick="openEditModal('edit', 'Elite Tours')"
+                                            class="p-1.5 text-slate-500 hover:text-brand-600 hover:bg-brand-50 rounded border border-transparent hover:border-brand-200 transition-all"><i
+                                                class="ph-bold ph-pencil-simple"></i></button>
+                                        <button onclick="confirmSuspend('Elite Tours')"
+                                            class="p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded border border-transparent hover:border-red-200 transition-all"><i
+                                                class="ph-bold ph-lock-key"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</main>
+
+<div id="review-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeReviewModal()">
+    </div>
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-[80vh] flex overflow-hidden modal-enter">
+
+        <div class="w-1/2 bg-slate-100 border-r border-slate-200 flex flex-col p-6 items-center justify-center">
+            <div
+                class="bg-white p-2 shadow-sm rounded-lg mb-4 w-64 rotate-1 hover:rotate-0 transition-transform duration-300 cursor-zoom-in">
+                <img src="https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?q=80&w=400"
+                    class="w-full h-auto rounded border border-slate-200 opacity-90">
+            </div>
+            <p class="text-sm font-bold text-slate-700">Trade_Registry.jpg</p>
+            <div class="flex gap-2 mt-4">
+                <button
+                    class="bg-white border border-slate-300 text-slate-700 px-3 py-1.5 rounded text-xs font-medium hover:bg-slate-50"><i
+                        class="ph-bold ph-eye"></i> View NIF</button>
+                <button
+                    class="bg-white border border-slate-300 text-slate-700 px-3 py-1.5 rounded text-xs font-medium hover:bg-slate-50"><i
+                        class="ph-bold ph-download-simple"></i> Download All</button>
+            </div>
+        </div>
+
+        <div class="w-1/2 flex flex-col bg-white">
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900" id="review-title">Agency Name</h2>
+                    <p class="text-xs text-slate-500">Applied on Oct 24, 2025</p>
+                </div>
+                <button onclick="closeReviewModal()" class="text-slate-400 hover:text-slate-600"><i
+                        class="ph-bold ph-x text-lg"></i></button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-6 space-y-6">
+                <div class="space-y-4 text-sm">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="block text-[10px] font-bold text-slate-400 uppercase">Manager</label>
+                            <p class="font-bold text-slate-800">Ahmed Benali</p>
+                        </div>
+                        <div><label class="block text-[10px] font-bold text-slate-400 uppercase">Phone</label>
+                            <p class="font-bold text-slate-800">0550 99 88 77</p>
+                        </div>
+                    </div>
+                    <div><label class="block text-[10px] font-bold text-slate-400 uppercase">Address</label>
+                        <p class="font-bold text-slate-800">12 Rue de la Révolution, Oran</p>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 font-mono text-xs">
+                        <div class="flex justify-between mb-1"><span>RC:</span> <span class="font-bold">1992-B-12</span>
+                        </div>
+                        <div class="flex justify-between"><span>NIF:</span> <span class="font-bold">099821102933</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-slate-100">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Initial Settings</label>
+                    <div class="grid grid-cols-2 gap-4 mb-3">
+                        <div><label class="block text-[10px] text-slate-400">Credit Limit (€)</label><input
+                                type="number" value="500"
+                                class="w-full border border-slate-300 rounded p-2 text-sm font-bold"></div>
+                        <div><label class="block text-[10px] text-slate-400">Initial Tags</label><select
+                                class="w-full border border-slate-300 rounded p-2 text-sm">
+                                <option>Standard</option>
+                                <option>VIP</option>
+                            </select></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-6 border-t border-slate-100 bg-slate-50 flex gap-3">
+                <button onclick="closeReviewModal()"
+                    class="flex-1 py-3 border border-red-200 text-red-600 rounded-lg text-sm font-bold hover:bg-red-50">Reject</button>
+                <button onclick="approveAgency()"
+                    class="flex-1 py-3 bg-green-600 text-white rounded-lg text-sm font-bold shadow hover:bg-green-700">Approve
+                    & Activate</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="edit-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeEditModal()">
+    </div>
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden modal-enter">
+        <div class="bg-slate-900 p-4 flex justify-between items-center text-white">
+            <h3 class="font-bold flex items-center gap-2"><i class="ph-bold ph-pencil"></i> <span
+                    id="edit-modal-title">Manage Agency</span></h3>
+            <button onclick="closeEditModal()"><i class="ph-bold ph-x"></i></button>
+        </div>
+        <div class="p-6 overflow-y-auto max-h-[80vh]">
+            <form onsubmit="event.preventDefault(); saveAgency();" class="space-y-4">
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Agency Name</label>
+                    <input type="text" id="input-name"
+                        class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Manager</label><input
+                            type="text" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm"></div>
+                    <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Phone</label><input
+                            type="text" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm"></div>
+                </div>
+
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <h4 class="text-xs font-bold text-slate-900 mb-3 uppercase">Financial Settings</h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[10px] text-slate-500 mb-1">Credit Limit (Overdraft)</label>
+                            <div class="relative"><span
+                                    class="absolute left-2 top-2 text-slate-400 font-bold text-xs">-€</span><input
+                                    type="number"
+                                    class="w-full border border-slate-300 rounded pl-7 p-2 text-sm font-bold text-red-600">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-slate-500 mb-1">Discount Level</label>
+                            <select class="w-full border border-slate-300 rounded p-2 text-sm bg-white">
+                                <option>Standard (0%)</option>
+                                <option>Silver (2%)</option>
+                                <option>Gold (5%)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Tags</label>
+                    <div class="flex flex-wrap gap-2 mb-2">
+                        <label class="cursor-pointer"><input type="checkbox" class="peer hidden" checked><span
+                                class="px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-bold border border-slate-200 peer-checked:bg-purple-100 peer-checked:text-purple-700 peer-checked:border-purple-200 transition-colors">VIP</span></label>
+                        <label class="cursor-pointer"><input type="checkbox" class="peer hidden"><span
+                                class="px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-bold border border-slate-200 peer-checked:bg-blue-100 peer-checked:text-blue-700 peer-checked:border-blue-200 transition-colors">Wholesaler</span></label>
+                        <label class="cursor-pointer"><input type="checkbox" class="peer hidden"><span
+                                class="px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-bold border border-slate-200 peer-checked:bg-red-100 peer-checked:text-red-700 peer-checked:border-red-200 transition-colors">Bad
+                                Payer</span></label>
+                    </div>
+                </div>
+
+                <div class="pt-2 border-t border-slate-100">
+                    <button type="button"
+                        class="text-brand-600 text-xs font-bold hover:underline flex items-center gap-1"><i
+                            class="ph-bold ph-key"></i> Send Password Reset Email</button>
+                </div>
+
+                <div class="pt-4 flex gap-3">
+                    <button type="button" onclick="closeEditModal()"
+                        class="flex-1 py-2.5 border border-slate-300 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50">Cancel</button>
+                    <button type="submit"
+                        class="flex-1 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold shadow hover:bg-slate-800">Save
+                        Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- REVIEW MODAL ---
+    const reviewModal = document.getElementById('review-modal');
+    function openReviewModal(name) {
+        document.getElementById('review-title').innerText = name;
+        reviewModal.classList.remove('hidden');
+    }
+    function closeReviewModal() { reviewModal.classList.add('hidden'); }
+    function approveAgency() {
+        const btn = document.querySelector('#review-modal button:last-child');
+        btn.innerHTML = 'Activating...';
+        setTimeout(() => { alert("Agency Approved & Activated!"); closeReviewModal(); btn.innerHTML = 'Approve & Activate'; }, 1000);
+    }
+
+    // --- EDIT/ADD MODAL ---
+    const editModal = document.getElementById('edit-modal');
+    function openEditModal(mode, name = "") {
+        document.getElementById('edit-modal-title').innerText = mode === 'new' ? 'Add New Agency' : 'Edit Agency';
+        if (name) document.getElementById('input-name').value = name;
+        else document.getElementById('input-name').value = "";
+        editModal.classList.remove('hidden');
+    }
+    function closeEditModal() { editModal.classList.add('hidden'); }
+    function saveAgency() {
+        const btn = document.querySelector('#edit-modal button[type="submit"]');
+        btn.innerHTML = 'Saving...';
+        setTimeout(() => { alert("Agency Details Saved!"); closeEditModal(); btn.innerHTML = 'Save Changes'; }, 800);
+    }
+
+    // --- SUSPEND ---
+    function confirmSuspend(name) {
+        if (confirm(`Are you sure you want to SUSPEND access for ${name}? They will not be able to log in.`)) {
+            alert(`${name} has been suspended.`);
+        }
+    }
+</script>
+
+{% endblock %}

@@ -1,0 +1,270 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block content %}
+
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+
+        <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0 z-10">
+            <h1 class="text-xl font-bold text-slate-900">Overview</h1>
+            <div class="flex items-center gap-4">
+                <div class="relative">
+                    <i class="ph ph-magnifying-glass absolute left-3 top-2.5 text-slate-400"></i>
+                    <input type="text" placeholder="Global Search (Ref, Client...)"
+                        class="pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-brand-500 w-64 transition-all focus:w-80">
+                </div>
+                <button class="relative p-2 text-slate-400 hover:text-brand-600 transition-colors">
+                    <i class="ph ph-bell text-xl"></i>
+                    <span
+                        class="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+                </button>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-8 bg-slate-50/50">
+            <div class="max-w-7xl mx-auto space-y-8 fade-in">
+
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Revenue (Oct)</p>
+                                <h3 class="text-2xl font-bold text-slate-900 mt-1">€ 12,450</h3>
+                                <p class="text-xs text-green-600 font-medium mt-1 flex items-center"><i
+                                        class="ph-bold ph-trend-up mr-1"></i> +12% vs Sep</p>
+                            </div>
+                            <div
+                                class="w-10 h-10 bg-green-50 text-green-600 rounded-lg flex items-center justify-center text-xl">
+                                <i class="ph-fill ph-currency-eur"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Sales</p>
+                                <h3 class="text-2xl font-bold text-slate-900 mt-1">142</h3>
+                                <p class="text-xs text-slate-500 mt-1">Ferry: 88 | Visa: 54</p>
+                            </div>
+                            <div
+                                class="w-10 h-10 bg-brand-50 text-brand-600 rounded-lg flex items-center justify-center text-xl">
+                                <i class="ph-fill ph-chart-bar"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm ring-2 ring-red-50">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Action Required</p>
+                                <h3 class="text-2xl font-bold text-red-600 mt-1">9 Items</h3>
+                                <p class="text-xs text-red-500 mt-1 font-medium">New Requests Waiting</p>
+                            </div>
+                            <div
+                                class="w-10 h-10 bg-red-50 text-red-600 rounded-lg flex items-center justify-center text-xl">
+                                <i class="ph-fill ph-warning"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Active Agencies</p>
+                                <h3 class="text-2xl font-bold text-slate-900 mt-1">24</h3>
+                                <p class="text-xs text-slate-500 mt-1">2 New this week</p>
+                            </div>
+                            <div
+                                class="w-10 h-10 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center text-xl">
+                                <i class="ph-fill ph-briefcase"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+                    <div class="lg:col-span-2 bg-white border border-slate-200 rounded-xl shadow-sm p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="font-bold text-slate-800">Sales Performance (Last 7 Days)</h3>
+                            <select
+                                class="text-xs border border-slate-200 rounded-lg p-1 text-slate-500 bg-transparent">
+                                <option>Ferry & Visa</option>
+                                <option>Ferry Only</option>
+                                <option>Visa Only</option>
+                            </select>
+                        </div>
+
+                        <div class="h-64 flex items-end justify-between gap-2 px-4 pb-2 border-b border-slate-100">
+                            <div class="w-full flex flex-col items-center gap-2 group">
+                                <div class="w-full bg-brand-100 rounded-t-sm relative group-hover:bg-brand-200 transition-colors h-0 bar"
+                                    style="--h: 40%">
+                                    <div
+                                        class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                                        €400</div>
+                                </div>
+                                <span class="text-xs text-slate-400 font-medium">Mon</span>
+                            </div>
+                            <div class="w-full flex flex-col items-center gap-2 group">
+                                <div class="w-full bg-brand-100 rounded-t-sm relative group-hover:bg-brand-200 transition-colors h-0 bar"
+                                    style="--h: 65%">
+                                    <div
+                                        class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                                        €650</div>
+                                </div>
+                                <span class="text-xs text-slate-400 font-medium">Tue</span>
+                            </div>
+                            <div class="w-full flex flex-col items-center gap-2 group">
+                                <div class="w-full bg-brand-100 rounded-t-sm relative group-hover:bg-brand-200 transition-colors h-0 bar"
+                                    style="--h: 30%">
+                                    <div
+                                        class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                                        €300</div>
+                                </div>
+                                <span class="text-xs text-slate-400 font-medium">Wed</span>
+                            </div>
+                            <div class="w-full flex flex-col items-center gap-2 group">
+                                <div class="w-full bg-brand-500 rounded-t-sm relative group-hover:bg-brand-600 transition-colors h-0 bar shadow-lg shadow-brand-200"
+                                    style="--h: 85%">
+                                    <div
+                                        class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                                        €850</div>
+                                </div>
+                                <span class="text-xs text-slate-900 font-bold">Thu</span>
+                            </div>
+                            <div class="w-full flex flex-col items-center gap-2 group">
+                                <div class="w-full bg-brand-100 rounded-t-sm relative group-hover:bg-brand-200 transition-colors h-0 bar"
+                                    style="--h: 55%"></div>
+                                <span class="text-xs text-slate-400 font-medium">Fri</span>
+                            </div>
+                            <div class="w-full flex flex-col items-center gap-2 group">
+                                <div class="w-full bg-brand-100 rounded-t-sm relative group-hover:bg-brand-200 transition-colors h-0 bar"
+                                    style="--h: 45%"></div>
+                                <span class="text-xs text-slate-400 font-medium">Sat</span>
+                            </div>
+                            <div class="w-full flex flex-col items-center gap-2 group">
+                                <div class="w-full bg-brand-100 rounded-t-sm relative group-hover:bg-brand-200 transition-colors h-0 bar"
+                                    style="--h: 20%"></div>
+                                <span class="text-xs text-slate-400 font-medium">Sun</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
+                        <div class="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                            <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span> Urgent Tasks
+                            </h3>
+                            <span class="text-xs font-bold text-slate-400">4 Pending</span>
+                        </div>
+                        <div class="flex-1 overflow-y-auto">
+                            <div
+                                class="p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors flex items-center justify-between group">
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="w-8 h-8 rounded bg-yellow-50 text-yellow-600 flex items-center justify-center">
+                                        <i class="ph-fill ph-wallet"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-bold text-slate-900">Approve Deposit</p>
+                                        <p class="text-xs text-slate-500">Global Travel • €1,000</p>
+                                    </div>
+                                </div>
+                                <a href="admin_finance.html"
+                                    class="text-brand-600 text-xs font-bold border border-brand-200 px-2 py-1 rounded bg-white hover:bg-brand-50">Review</a>
+                            </div>
+                            <div
+                                class="p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors flex items-center justify-between group">
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="w-8 h-8 rounded bg-blue-50 text-brand-600 flex items-center justify-center">
+                                        <i class="ph-fill ph-boat"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-bold text-slate-900">New Ferry Request</p>
+                                        <p class="text-xs text-slate-500">Sunshine Voyages • MRS-ALG</p>
+                                    </div>
+                                </div>
+                                <a href="admin_dashboard.html"
+                                    class="text-brand-600 text-xs font-bold border border-brand-200 px-2 py-1 rounded bg-white hover:bg-brand-50">Process</a>
+                            </div>
+                            <div
+                                class="p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors flex items-center justify-between group">
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="w-8 h-8 rounded bg-purple-50 text-purple-600 flex items-center justify-center">
+                                        <i class="ph-fill ph-passport"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-bold text-slate-900">Visa App Received</p>
+                                        <p class="text-xs text-slate-500">Karim B. • France</p>
+                                    </div>
+                                </div>
+                                <a href="admin_visa_dashboard.html"
+                                    class="text-brand-600 text-xs font-bold border border-brand-200 px-2 py-1 rounded bg-white hover:bg-brand-50">Process</a>
+                            </div>
+                        </div>
+                        <div class="p-3 bg-slate-50 text-center border-t border-slate-100">
+                            <button class="text-xs font-bold text-slate-500 hover:text-slate-700">View All
+                                Tasks</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white border border-slate-200 rounded-xl shadow-sm p-6">
+                    <h3 class="font-bold text-slate-800 mb-4">Live Activity Stream</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-start gap-3">
+                            <div class="flex flex-col items-center gap-1">
+                                <div class="w-2 h-2 rounded-full bg-slate-300 mt-2"></div>
+                                <div class="w-0.5 h-full bg-slate-100"></div>
+                            </div>
+                            <div class="pb-4">
+                                <p class="text-sm text-slate-800"><span class="font-bold">Elite Tours</span> logged in.
+                                </p>
+                                <p class="text-xs text-slate-400">2 minutes ago</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <div class="flex flex-col items-center gap-1">
+                                <div class="w-2 h-2 rounded-full bg-brand-500 mt-2"></div>
+                                <div class="w-0.5 h-full bg-slate-100"></div>
+                            </div>
+                            <div class="pb-4">
+                                <p class="text-sm text-slate-800"><span class="font-bold">Global Travel</span> created a
+                                    new <span class="text-brand-600 font-medium">Ferry Request (#REQ-992)</span>.</p>
+                                <p class="text-xs text-slate-400">15 minutes ago</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <div class="flex flex-col items-center gap-1">
+                                <div class="w-2 h-2 rounded-full bg-green-500 mt-2"></div>
+                            </div>
+                            <div>
+                                <p class="text-sm text-slate-800">System generated invoice <span
+                                        class="font-mono text-slate-500">#INV-2025-001</span>.</p>
+                                <p class="text-xs text-slate-400">1 hour ago</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // Simple Chart Animation on Load
+        function animateChart() {
+            setTimeout(() => {
+                const bars = document.querySelectorAll('.bar');
+                bars.forEach(bar => {
+                    const h = bar.getAttribute('style').split(':')[1];
+                    bar.style.height = h;
+                });
+            }, 300);
+        }
+    </script>
+
+{% endblock %}

@@ -1,0 +1,328 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block content %}
+
+<main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
+        <h1 class="text-xl font-bold text-slate-900">Financial Control Center</h1>
+        <div class="flex items-center gap-4">
+            <button onclick="openManualTransactionModal()"
+                class="bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md hover:bg-slate-800 transition-colors flex items-center gap-2">
+                <i class="ph-bold ph-plus-minus"></i> Manual Transaction
+            </button>
+        </div>
+    </header>
+
+    <div class="px-8 pt-6 pb-0 bg-white border-b border-slate-200">
+        <div class="flex gap-6">
+            <button onclick="switchTab('overview')" id="tab-overview"
+                class="pb-3 border-b-2 border-brand-600 text-brand-600 font-bold text-sm">Overview &
+                Approvals</button>
+            <button onclick="switchTab('ledger')" id="tab-ledger"
+                class="pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-medium text-sm">Global
+                Ledger (History)</button>
+        </div>
+    </div>
+
+    <div class="flex-1 overflow-y-auto p-8">
+        <div class="max-w-7xl mx-auto">
+
+            <div id="view-overview" class="space-y-8 animate-fade-in">
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <p class="text-xs font-bold text-slate-400 uppercase">Total Agency Balances</p>
+                                <h3 class="text-2xl font-bold text-slate-900">€ 42,500.00</h3>
+                            </div>
+                            <div
+                                class="w-10 h-10 bg-brand-50 text-brand-600 rounded-full flex items-center justify-center text-xl">
+                                <i class="ph-fill ph-wallet"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <p class="text-xs font-bold text-slate-400 uppercase">Agency Debt</p>
+                                <h3 class="text-2xl font-bold text-red-600">€ 3,250.00</h3>
+                            </div>
+                            <div
+                                class="w-10 h-10 bg-red-50 text-red-600 rounded-full flex items-center justify-center text-xl">
+                                <i class="ph-fill ph-trend-down"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <p class="text-xs font-bold text-slate-400 uppercase">Pending Deposits</p>
+                                <h3 class="text-2xl font-bold text-yellow-600">€ 1,500.00</h3>
+                            </div>
+                            <div
+                                class="w-10 h-10 bg-yellow-50 text-yellow-600 rounded-full flex items-center justify-center text-xl">
+                                <i class="ph-fill ph-hourglass"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900 uppercase mb-4 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></span> Pending Top-Ups
+                    </h3>
+                    <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+                        <table class="w-full text-left border-collapse">
+                            <thead
+                                class="bg-slate-50 text-xs uppercase text-slate-500 font-semibold border-b border-slate-200">
+                                <tr>
+                                    <th class="px-6 py-4">Date</th>
+                                    <th class="px-6 py-4">Agency</th>
+                                    <th class="px-6 py-4">Method</th>
+                                    <th class="px-6 py-4 text-right">Amount</th>
+                                    <th class="px-6 py-4 text-right">Receipt</th>
+                                    <th class="px-6 py-4 text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 text-sm">
+                                <tr class="hover:bg-slate-50 transition-colors">
+                                    <td class="px-6 py-4 text-slate-500">Oct 24, 10:30</td>
+                                    <td class="px-6 py-4 font-bold text-slate-900">Global Travel</td>
+                                    <td class="px-6 py-4">Bank Transfer (BNA)</td>
+                                    <td class="px-6 py-4 text-right font-bold text-green-600">+ € 1,000.00</td>
+                                    <td class="px-6 py-4 text-right"><button onclick="openReceiptModal()"
+                                            class="text-brand-600 hover:underline font-bold text-xs">View
+                                            Image</button></td>
+                                    <td class="px-6 py-4 text-right flex justify-end gap-2">
+                                        <button
+                                            class="text-red-500 hover:bg-red-50 px-3 py-1.5 rounded text-xs font-bold">Reject</button>
+                                        <button
+                                            class="bg-green-600 text-white px-3 py-1.5 rounded text-xs font-bold shadow hover:bg-green-700">Approve</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900 uppercase mb-4">Partner Agencies</h3>
+                    <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+                        <table class="w-full text-left border-collapse">
+                            <thead
+                                class="bg-slate-50 text-xs uppercase text-slate-500 font-semibold border-b border-slate-200">
+                                <tr>
+                                    <th class="px-6 py-4">Agency Name</th>
+                                    <th class="px-6 py-4">Current Balance</th>
+                                    <th class="px-6 py-4">Credit Limit</th>
+                                    <th class="px-6 py-4">Status</th>
+                                    <th class="px-6 py-4 text-right">Manage</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 text-sm">
+                                <tr class="hover:bg-slate-50 transition-colors">
+                                    <td class="px-6 py-4 font-bold text-slate-900">Global Travel</td>
+                                    <td class="px-6 py-4 font-bold text-slate-900">€ 2,450.00</td>
+                                    <td class="px-6 py-4 text-slate-500">Max -€2,000</td>
+                                    <td class="px-6 py-4"><span
+                                            class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-bold">Active</span>
+                                    </td>
+                                    <td class="px-6 py-4 text-right">
+                                        <button onclick="openEditAgency('Global Travel', 2450)"
+                                            class="text-brand-600 border border-brand-200 px-3 py-1.5 rounded text-xs font-bold hover:bg-brand-50">Settings</button>
+                                        <button
+                                            class="text-slate-500 px-3 py-1.5 rounded text-xs font-bold hover:text-slate-700"><i
+                                                class="ph-bold ph-file-pdf"></i> Statement</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-ledger" class="hidden space-y-6">
+
+                <div class="flex items-center justify-between">
+                    <div class="flex gap-4">
+                        <input type="date" class="border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white">
+                        <select class="border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white">
+                            <option>All Transaction Types</option>
+                            <option>Deposit (Credit)</option>
+                            <option>Purchase (Debit)</option>
+                            <option>Refund</option>
+                        </select>
+                    </div>
+                    <button class="text-brand-600 font-bold text-sm flex items-center gap-2"><i
+                            class="ph-bold ph-download-simple"></i> Export CSV</button>
+                </div>
+
+                <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+                    <table class="w-full text-left border-collapse">
+                        <thead
+                            class="bg-slate-50 text-xs uppercase text-slate-500 font-semibold border-b border-slate-200">
+                            <tr>
+                                <th class="px-6 py-4">ID</th>
+                                <th class="px-6 py-4">Date/Time</th>
+                                <th class="px-6 py-4">Agency</th>
+                                <th class="px-6 py-4">Description</th>
+                                <th class="px-6 py-4 text-right">Amount</th>
+                                <th class="px-6 py-4 text-right">Balance After</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 text-sm">
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="px-6 py-4 font-mono text-xs text-slate-500">#TRX-9901</td>
+                                <td class="px-6 py-4 text-slate-600">Oct 24, 14:20</td>
+                                <td class="px-6 py-4 font-bold">Global Travel</td>
+                                <td class="px-6 py-4">Ferry Booking #REQ-88290</td>
+                                <td class="px-6 py-4 text-right font-bold text-red-600">- € 320.00</td>
+                                <td class="px-6 py-4 text-right font-mono text-slate-500">2,450.00</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="px-6 py-4 font-mono text-xs text-slate-500">#TRX-9900</td>
+                                <td class="px-6 py-4 text-slate-600">Oct 24, 10:00</td>
+                                <td class="px-6 py-4 font-bold">Sunshine Voyages</td>
+                                <td class="px-6 py-4">Deposit Approved (Bank Transfer)</td>
+                                <td class="px-6 py-4 text-right font-bold text-green-600">+ € 1,000.00</td>
+                                <td class="px-6 py-4 text-right font-mono text-slate-500">1,500.00</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50 transition-colors bg-yellow-50/20">
+                                <td class="px-6 py-4 font-mono text-xs text-slate-500">#TRX-9899</td>
+                                <td class="px-6 py-4 text-slate-600">Oct 23, 18:00</td>
+                                <td class="px-6 py-4 font-bold">Elite Tours</td>
+                                <td class="px-6 py-4">Manual Adjustment (Cash in Office)</td>
+                                <td class="px-6 py-4 text-right font-bold text-green-600">+ € 500.00</td>
+                                <td class="px-6 py-4 text-right font-mono text-slate-500">-1,200.00</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</main>
+
+<div id="receipt-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm transition-opacity" onclick="closeReceiptModal()">
+    </div>
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden modal-enter">
+        <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+            <h3 class="font-bold text-slate-900">Proof of Payment</h3>
+            <button onclick="closeReceiptModal()"><i class="ph-bold ph-x text-slate-500"></i></button>
+        </div>
+        <div class="p-6 flex flex-col items-center">
+            <div
+                class="w-full h-64 bg-slate-100 border border-slate-200 rounded-lg flex items-center justify-center mb-4 overflow-hidden">
+                <img src="https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?q=80&w=600"
+                    class="object-cover w-full h-full opacity-80" alt="Receipt">
+            </div>
+            <div class="text-center">
+                <p class="text-sm font-bold text-slate-900">Amount: € 1,000.00</p>
+                <p class="text-xs text-slate-500">Ref: BNA-99821102</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="manual-trx-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"
+        onclick="closeManualTransactionModal()"></div>
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden modal-enter">
+        <div class="bg-slate-900 p-4 flex justify-between items-center text-white">
+            <h3 class="font-bold flex items-center gap-2"><i class="ph-bold ph-arrows-left-right"></i> Manual
+                Transaction</h3>
+            <button onclick="closeManualTransactionModal()"><i class="ph-bold ph-x"></i></button>
+        </div>
+        <div class="p-6 space-y-4">
+
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Select Agency</label>
+                <select class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white">
+                    <option>Global Travel</option>
+                    <option>Sunshine Voyages</option>
+                    <option>Elite Tours</option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <label
+                    class="border border-slate-200 rounded-lg p-3 cursor-pointer hover:bg-green-50 hover:border-green-300 flex flex-col items-center gap-1 transition-colors">
+                    <input type="radio" name="trx_type" class="accent-green-600" checked>
+                    <span class="text-sm font-bold text-green-700">Credit (+)</span>
+                    <span class="text-[10px] text-slate-400">Add Money</span>
+                </label>
+                <label
+                    class="border border-slate-200 rounded-lg p-3 cursor-pointer hover:bg-red-50 hover:border-red-300 flex flex-col items-center gap-1 transition-colors">
+                    <input type="radio" name="trx_type" class="accent-red-600">
+                    <span class="text-sm font-bold text-red-700">Debit (-)</span>
+                    <span class="text-[10px] text-slate-400">Remove Money</span>
+                </label>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Amount</label>
+                <div class="relative">
+                    <span class="absolute left-3 top-2.5 text-slate-400 font-bold">€</span>
+                    <input type="number"
+                        class="w-full border border-slate-300 rounded-lg py-2 pl-8 pr-4 text-slate-900 font-bold focus:ring-2 focus:ring-slate-500 outline-none">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Description / Reason</label>
+                <input type="text" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm"
+                    placeholder="e.g. Cash payment in office">
+            </div>
+
+            <button onclick="submitManualTrx()"
+                class="w-full bg-slate-900 text-white font-bold py-3 rounded-lg shadow hover:bg-slate-800 transition-all">Process
+                Transaction</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- TABS ---
+    function switchTab(tabId) {
+        document.getElementById('view-overview').classList.add('hidden');
+        document.getElementById('view-ledger').classList.add('hidden');
+        document.getElementById('tab-overview').classList.remove('border-brand-600', 'text-brand-600');
+        document.getElementById('tab-ledger').classList.remove('border-brand-600', 'text-brand-600');
+
+        document.getElementById('view-' + tabId).classList.remove('hidden');
+        document.getElementById('tab-' + tabId).classList.add('border-brand-600', 'text-brand-600');
+    }
+
+    // --- RECEIPT ---
+    const receiptModal = document.getElementById('receipt-modal');
+    function openReceiptModal() { receiptModal.classList.remove('hidden'); }
+    function closeReceiptModal() { receiptModal.classList.add('hidden'); }
+
+    // --- MANUAL TRX ---
+    const trxModal = document.getElementById('manual-trx-modal');
+    function openManualTransactionModal() { trxModal.classList.remove('hidden'); }
+    function closeManualTransactionModal() { trxModal.classList.add('hidden'); }
+
+    function submitManualTrx() {
+        const btn = document.querySelector('#manual-trx-modal button');
+        btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Processing...';
+        setTimeout(() => {
+            alert("Transaction Processed Successfully.");
+            closeManualTransactionModal();
+            btn.innerHTML = 'Process Transaction';
+        }, 1000);
+    }
+
+    // --- EDIT AGENCY (Placeholder for the button in table) ---
+    function openEditAgency(name, balance) {
+        alert(`Edit settings for ${name} (Balance: €${balance})`);
+        // You can reuse the manual modal or create a specific one for limits
+    }
+</script>
+
+{% endblock %}

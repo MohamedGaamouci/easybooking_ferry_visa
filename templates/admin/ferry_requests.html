@@ -1,0 +1,304 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block content %}
+
+<main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0 z-10">
+        <h1 class="text-xl font-bold text-slate-900">Incoming Requests</h1>
+        <div class="flex items-center gap-4">
+            <div class="relative">
+                <i class="ph ph-magnifying-glass absolute left-3 top-2.5 text-slate-400"></i>
+                <input type="text" placeholder="Search ref, agency..."
+                    class="pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-brand-500 w-64">
+            </div>
+            <button class="relative p-2 text-slate-400 hover:text-brand-600 transition-colors">
+                <i class="ph ph-bell text-xl"></i>
+                <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+            </button>
+        </div>
+    </header>
+
+    <div class="flex-1 overflow-y-auto p-8">
+        <div class="max-w-7xl mx-auto space-y-8">
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div
+                    class="bg-white p-5 rounded-xl border border-slate-200 shadow-soft flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">New Requests</p>
+                        <p class="text-2xl font-bold text-slate-900 mt-1">12</p>
+                    </div>
+                    <div
+                        class="w-10 h-10 rounded-full bg-blue-50 text-brand-600 flex items-center justify-center text-xl">
+                        <i class="ph-fill ph-tray"></i>
+                    </div>
+                </div>
+                <div
+                    class="bg-white p-5 rounded-xl border border-slate-200 shadow-soft flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Pending Offer</p>
+                        <p class="text-2xl font-bold text-slate-900 mt-1">8</p>
+                    </div>
+                    <div
+                        class="w-10 h-10 rounded-full bg-yellow-50 text-yellow-600 flex items-center justify-center text-xl">
+                        <i class="ph-fill ph-hourglass"></i>
+                    </div>
+                </div>
+                <div
+                    class="bg-white p-5 rounded-xl border border-slate-200 shadow-soft flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Confirmed Today</p>
+                        <p class="text-2xl font-bold text-slate-900 mt-1">5</p>
+                    </div>
+                    <div
+                        class="w-10 h-10 rounded-full bg-green-50 text-green-600 flex items-center justify-center text-xl">
+                        <i class="ph-fill ph-check-circle"></i>
+                    </div>
+                </div>
+                <div
+                    class="bg-white p-5 rounded-xl border border-slate-200 shadow-soft flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Revenue Today</p>
+                        <p class="text-2xl font-bold text-slate-900 mt-1">€2,850</p>
+                    </div>
+                    <div
+                        class="w-10 h-10 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center text-xl">
+                        <i class="ph-fill ph-currency-eur"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-xl shadow-soft overflow-hidden">
+
+                <div class="p-4 border-b border-slate-200 flex items-center gap-4 bg-slate-50/50">
+                    <div class="flex bg-slate-200/50 p-1 rounded-lg">
+                        <button
+                            class="px-4 py-1.5 text-sm font-semibold rounded-md bg-white text-slate-900 shadow-sm transition-all">All
+                            Requests</button>
+                        <button
+                            class="px-4 py-1.5 text-sm font-medium rounded-md text-slate-500 hover:text-slate-700 transition-all flex items-center gap-2">
+                            New <span
+                                class="bg-brand-100 text-brand-700 text-[10px] px-1.5 rounded-full font-bold">12</span>
+                        </button>
+                        <button
+                            class="px-4 py-1.5 text-sm font-medium rounded-md text-slate-500 hover:text-slate-700 transition-all">Pending</button>
+                        <button
+                            class="px-4 py-1.5 text-sm font-medium rounded-md text-slate-500 hover:text-slate-700 transition-all">Confirmed</button>
+                    </div>
+                    <div class="ml-auto flex items-center gap-2">
+                        <button
+                            class="flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50">
+                            <i class="ph ph-funnel"></i> Filter
+                        </button>
+                        <button
+                            class="flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50">
+                            <i class="ph ph-export"></i> Export
+                        </button>
+                    </div>
+                </div>
+
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr
+                            class="text-xs font-semibold text-slate-400 uppercase border-b border-slate-200 bg-slate-50/30">
+                            <th class="px-6 py-4">Status</th>
+                            <th class="px-6 py-4">Reference</th>
+                            <th class="px-6 py-4">Agency / Agent</th>
+                            <th class="px-6 py-4">Trip Details</th>
+                            <th class="px-6 py-4">Dates</th>
+                            <th class="px-6 py-4 text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 text-sm">
+
+                        <tr class="table-row-hover group transition-colors bg-blue-50/30">
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2 h-2 rounded-full bg-brand-500 status-pulse"></span>
+                                    <span
+                                        class="font-bold text-brand-700 text-xs uppercase bg-brand-100 px-2 py-0.5 rounded">New</span>
+                                </div>
+                                <div class="text-[10px] text-slate-400 mt-1 pl-4">2 mins ago</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="font-mono font-bold text-slate-900">#REQ-88295</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-500">
+                                        AK</div>
+                                    <div>
+                                        <div class="font-semibold text-slate-900">Global Travel</div>
+                                        <div class="text-xs text-slate-500">Amine K.</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <div
+                                        class="w-5 h-5 rounded bg-red-50 flex items-center justify-center text-red-600 border border-red-100">
+                                        <i class="ph-fill ph-flag"></i>
+                                    </div>
+                                    <span class="font-medium text-slate-700">Corsica Linea</span>
+                                </div>
+                                <div class="text-xs text-slate-500">MRS ↔ ALG • 2 Pax • Vehicle</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="font-medium text-slate-700">10 Nov 2025</div>
+                                <div class="text-xs text-slate-400">Round Trip</div>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <button onclick="window.location.href='admin_process_demand.html'"
+                                    class="bg-brand-600 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-md shadow-brand-200 hover:bg-brand-700 hover:scale-105 transition-all">
+                                    Process Request
+                                </button>
+                            </td>
+                        </tr>
+
+                        <tr class="table-row-hover group transition-colors">
+                            <td class="px-6 py-4">
+                                <span
+                                    class="font-bold text-yellow-700 text-xs uppercase bg-yellow-100 px-2 py-0.5 rounded">Waiting
+                                    Client</span>
+                                <div class="text-[10px] text-slate-400 mt-1">Offer Sent 2h ago</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="font-mono font-medium text-slate-600">#REQ-88294</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-xs font-bold">
+                                        SM</div>
+                                    <div>
+                                        <div class="font-semibold text-slate-900">Sunshine Voyage</div>
+                                        <div class="text-xs text-slate-500">Sarah M.</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <div
+                                        class="w-5 h-5 rounded bg-teal-50 flex items-center justify-center text-teal-600 border border-teal-100">
+                                        <i class="ph-fill ph-sun"></i>
+                                    </div>
+                                    <span class="font-medium text-slate-700">Balearia</span>
+                                </div>
+                                <div class="text-xs text-slate-500">VAL ↔ ORN • 4 Pax</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="font-medium text-slate-700">15 Nov 2025</div>
+                                <div class="text-xs text-slate-400">One Way</div>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <button
+                                    class="text-slate-400 hover:text-brand-600 font-medium text-xs px-3 py-1 border border-slate-200 rounded hover:bg-slate-50 transition-colors">
+                                    View Details
+                                </button>
+                            </td>
+                        </tr>
+
+                        <tr class="table-row-hover group transition-colors">
+                            <td class="px-6 py-4">
+                                <span
+                                    class="font-bold text-green-700 text-xs uppercase bg-green-100 px-2 py-0.5 rounded">Confirmed</span>
+                                <div class="text-[10px] text-slate-400 mt-1">Sold today</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="font-mono font-medium text-slate-600">#REQ-88290</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-500">
+                                        JD</div>
+                                    <div>
+                                        <div class="font-semibold text-slate-900">Elite Tours</div>
+                                        <div class="text-xs text-slate-500">John D.</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <div
+                                        class="w-5 h-5 rounded bg-blue-50 flex items-center justify-center text-blue-600 border border-blue-100">
+                                        <i class="ph-fill ph-globe"></i>
+                                    </div>
+                                    <span class="font-medium text-slate-700">GNV</span>
+                                </div>
+                                <div class="text-xs text-slate-500">GEN ↔ TUN • 1 Pax</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="font-medium text-slate-700">01 Dec 2025</div>
+                                <div class="text-xs text-slate-400">Round Trip</div>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <button
+                                    class="text-slate-400 hover:text-green-600 font-medium text-xs px-3 py-1 flex items-center gap-1 ml-auto">
+                                    <i class="ph-bold ph-download-simple"></i> Ticket
+                                </button>
+                            </td>
+                        </tr>
+
+                        <tr class="table-row-hover group transition-colors opacity-60 hover:opacity-100">
+                            <td class="px-6 py-4">
+                                <span
+                                    class="font-bold text-slate-500 text-xs uppercase bg-slate-100 px-2 py-0.5 rounded">Cancelled</span>
+                                <div class="text-[10px] text-slate-400 mt-1">Client rejected</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="font-mono font-medium text-slate-600 line-through">#REQ-88211</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-500">
+                                        AK</div>
+                                    <div>
+                                        <div class="font-semibold text-slate-900">Global Travel</div>
+                                        <div class="text-xs text-slate-500">Amine K.</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <div
+                                        class="w-5 h-5 rounded bg-red-50 flex items-center justify-center text-red-600 border border-red-100">
+                                        <i class="ph-fill ph-flag"></i>
+                                    </div>
+                                    <span class="font-medium text-slate-700">Corsica Linea</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="font-medium text-slate-700">05 Nov 2025</div>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <button class="text-slate-400 hover:text-slate-600">
+                                    <i class="ph-bold ph-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+
+                    </tbody>
+                </table>
+
+                <div class="p-4 border-t border-slate-200 flex items-center justify-between bg-slate-50/50">
+                    <span class="text-xs text-slate-500">Showing <span class="font-bold">1-4</span> of <span
+                            class="font-bold">12</span> requests</span>
+                    <div class="flex gap-2">
+                        <button
+                            class="px-3 py-1 border border-slate-200 rounded bg-white text-slate-400 text-xs cursor-not-allowed">Previous</button>
+                        <button
+                            class="px-3 py-1 border border-slate-200 rounded bg-white text-slate-600 hover:bg-slate-50 text-xs">Next</button>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</main>
+
+{% endblock %}
