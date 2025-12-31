@@ -19,8 +19,8 @@ class VisaFormField(models.Model):
 
     label = models.CharField(
         max_length=255, help_text="Question text e.g. 'Mother's Name'")
-    field_key = models.CharField(
-        max_length=50, help_text="Unique key for code e.g. 'mother_name'")
+    # field_key = models.CharField(
+    #     max_length=50, help_text="Unique key for code e.g. 'mother_name'")
     field_type = models.CharField(
         max_length=20, choices=FIELD_TYPES, default='text')
 
