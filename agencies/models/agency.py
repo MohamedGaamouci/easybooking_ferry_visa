@@ -52,3 +52,7 @@ class Agency(models.Model):
 
     def __str__(self):
         return self.company_name
+
+    @property
+    def tags_list(self):
+        return self.tags.all()

@@ -1,4 +1,5 @@
 {% extends 'admin/base_admin.html' %}
+{% load static %}
 
 {% block content %}
 
@@ -7,7 +8,7 @@
     <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
         <h1 class="text-xl font-bold text-slate-900">Agency Management</h1>
         <div class="flex items-center gap-4">
-            <button onclick="openEditModal('new')"
+            <button onclick="openNewAgencyModal()"
                 class="bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md hover:bg-slate-800 transition-colors flex items-center gap-2">
                 <i class="ph-bold ph-plus"></i> Add New Agency
             </button>
@@ -15,39 +16,19 @@
     </header>
 
     <div class="px-8 pt-6 pb-2 bg-white border-b border-slate-200 flex flex-wrap gap-4 items-center justify-between">
-
         <div class="flex items-center gap-3 flex-1">
             <div class="relative w-64">
                 <i class="ph ph-magnifying-glass absolute left-3 top-2.5 text-slate-400"></i>
                 <input type="text" placeholder="Search by name, RC, phone..."
                     class="pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:border-brand-500 w-full shadow-sm">
             </div>
-
             <select
                 class="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white text-slate-600 shadow-sm cursor-pointer hover:border-slate-300">
                 <option value="">All Statuses</option>
                 <option value="active">Active</option>
                 <option value="suspended">Suspended</option>
-                <option value="pending">Pending Review</option>
-            </select>
-
-            <select
-                class="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white text-slate-600 shadow-sm cursor-pointer hover:border-slate-300">
-                <option value="">All Cities</option>
-                <option value="algiers">Algiers</option>
-                <option value="oran">Oran</option>
-                <option value="setif">Setif</option>
-            </select>
-
-            <select
-                class="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white text-slate-600 shadow-sm cursor-pointer hover:border-slate-300">
-                <option value="">Filter by Tag</option>
-                <option value="vip">VIP</option>
-                <option value="risk">High Risk</option>
-                <option value="wholesaler">Wholesaler</option>
             </select>
         </div>
-
         <button
             class="text-slate-500 hover:text-brand-600 font-bold text-xs flex items-center gap-2 border border-slate-200 px-3 py-2 rounded-lg bg-slate-50 hover:bg-white transition-colors">
             <i class="ph-bold ph-download-simple"></i> Export CSV
@@ -57,24 +38,26 @@
     <div class="flex-1 overflow-y-auto p-8 bg-slate-50/50">
         <div class="max-w-full space-y-8">
 
+            {% if pending_count > 0 %}
             <div class="space-y-4">
                 <div class="flex items-center justify-between">
                     <h2 class="text-sm font-bold text-slate-900 uppercase flex items-center gap-2">
-                        <span class="w-2.5 h-2.5 rounded-full bg-yellow-500 animate-pulse"></span> Pending
-                        Applications
+                        <span class="w-2.5 h-2.5 rounded-full bg-yellow-500 animate-pulse"></span> Pending Applications
                     </h2>
-                    <span class="text-xs font-bold text-slate-400">2 Requests</span>
+                    <span class="text-xs font-bold text-slate-400">{{ pending_count }} Requests</span>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-
+                    {% for agency in pending_agencies %}
                     <div
                         class="bg-white p-5 rounded-xl border border-yellow-200 shadow-sm hover:shadow-md transition-all relative overflow-hidden group">
                         <div class="absolute top-0 left-0 w-1.5 h-full bg-yellow-400"></div>
                         <div class="flex justify-between items-start mb-3">
                             <div>
-                                <h3 class="font-bold text-lg text-slate-900 leading-tight">Oran Travel Services</h3>
-                                <p class="text-xs text-slate-500 mt-1">Submitted: 2 hours ago</p>
+                                <h3 class="font-bold text-lg text-slate-900 leading-tight">{{ agency.company_name }}
+                                </h3>
+                                <p class="text-xs text-slate-500 mt-1">Submitted: {{ agency.created_at|timesince }} ago
+                                </p>
                             </div>
                             <div
                                 class="w-8 h-8 rounded-full bg-yellow-50 text-yellow-600 flex items-center justify-center border border-yellow-100">
@@ -82,49 +65,47 @@
                             </div>
                         </div>
                         <div class="space-y-2 mb-4">
-                            <p class="text-sm text-slate-600 flex items-center gap-2"><i
-                                    class="ph-fill ph-user text-slate-400"></i> Ahmed Benali</p>
-                            <p class="text-sm text-slate-600 flex items-center gap-2"><i
-                                    class="ph-fill ph-map-pin text-slate-400"></i> Oran, 31000</p>
+                            <p class="text-sm text-slate-600 flex items-center gap-2">
+                                <i class="ph-fill ph-user text-slate-400">
+
+                                </i> {% if agency.manager.first_name or agency.manager.last_name %}
+                                {{ agency.manager.first_name }} {{ agency.manager.last_name }}
+                                {% else %}
+                                Unknown Manager
+                                {% endif %}
+
+                            </p>
+                            <p class="text-sm text-slate-600 flex items-center gap-2">
+                                <i class="ph-fill ph-map-pin text-slate-400"></i> {{ agency.city|default:"-" }}
+                            </p>
                         </div>
                         <div class="flex gap-2 border-t border-slate-100 pt-3">
-                            <button onclick="openReviewModal('Oran Travel Services')"
-                                class="flex-1 bg-slate-900 text-white py-2 rounded-lg text-xs font-bold hover:bg-slate-800 transition-colors shadow-sm">Review
-                                Docs</button>
+                            <button /* Agency Data */ data-name="{{ agency.company_name }}"
+                                data-rc="{{ agency.rc_number }}" data-phone="{{ agency.phone }}"
+                                data-address="{{ agency.address }}" data-city="{{ agency.city }}"
+                                data-date="{{ agency.created_at|date:'M d, Y' }}"
+                                data-logo="{% if agency.logo %}{{ agency.logo.url }}{% endif %}"
+                                data-doc="{% if agency.rc_document %}{{ agency.rc_document.url }}{% endif %}" /* Manager
+                                Data (CustomUser Fields) */ data-manager-first="{{ agency.manager.first_name }}"
+                                data-manager-last="{{ agency.manager.last_name }}"
+                                data-manager-email="{{ agency.manager.email }}"
+                                data-manager-phone="{{ agency.manager.phone }}"
+                                data-manager-state="{{ agency.manager.state }}"
+                                data-manager-role="{{ agency.manager.role.name|default:'Agency Admin' }}"
+                                onclick="openReviewModal(this)"
+                                class="flex-1 bg-slate-900 text-white py-2 rounded-lg text-xs font-bold hover:bg-slate-800 transition-colors shadow-sm">
+                                Review Docs
+                            </button>
                         </div>
                     </div>
-
-                    <div
-                        class="bg-white p-5 rounded-xl border border-yellow-200 shadow-sm hover:shadow-md transition-all relative overflow-hidden group">
-                        <div class="absolute top-0 left-0 w-1.5 h-full bg-yellow-400"></div>
-                        <div class="flex justify-between items-start mb-3">
-                            <div>
-                                <h3 class="font-bold text-lg text-slate-900 leading-tight">Sahara Tours</h3>
-                                <p class="text-xs text-slate-500 mt-1">Submitted: Yesterday</p>
-                            </div>
-                            <div
-                                class="w-8 h-8 rounded-full bg-yellow-50 text-yellow-600 flex items-center justify-center border border-yellow-100">
-                                <i class="ph-fill ph-clock"></i>
-                            </div>
-                        </div>
-                        <div class="space-y-2 mb-4">
-                            <p class="text-sm text-slate-600 flex items-center gap-2"><i
-                                    class="ph-fill ph-user text-slate-400"></i> Yacine M.</p>
-                            <p class="text-sm text-slate-600 flex items-center gap-2"><i
-                                    class="ph-fill ph-map-pin text-slate-400"></i> Ghardaia, 47000</p>
-                        </div>
-                        <div class="flex gap-2 border-t border-slate-100 pt-3">
-                            <button onclick="openReviewModal('Sahara Tours')"
-                                class="flex-1 bg-slate-900 text-white py-2 rounded-lg text-xs font-bold hover:bg-slate-800 transition-colors shadow-sm">Review
-                                Docs</button>
-                        </div>
-                    </div>
-
+                    {% endfor %}
                 </div>
             </div>
+            {% endif %}
 
             <div>
-                <h2 class="text-sm font-bold text-slate-900 uppercase mb-4">Active Agency Directory</h2>
+                <h2 class="text-sm font-bold text-slate-900 uppercase mb-4">Active Agency Directory ({{ total_active }})
+                </h2>
                 <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
                     <table class="w-full text-left border-collapse">
                         <thead
@@ -139,295 +120,977 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 text-sm">
-
-                            <tr class="hover:bg-slate-50 transition-colors group">
+                            {% for agency in active_agencies %}
+                            <tr
+                                class="hover:bg-slate-50 transition-colors group {% if agency.status == 'suspended' %}bg-red-50/30{% endif %}">
                                 <td class="px-6 py-4">
                                     <div class="flex items-center gap-3">
                                         <div
                                             class="w-10 h-10 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center font-bold text-xs">
-                                            GT</div>
+                                            {{ agency.company_name|slice:":2"|upper }}
+                                        </div>
                                         <div>
-                                            <div class="font-bold text-slate-900">Global Travel</div>
-                                            <div class="text-xs text-slate-500">Amine Khelil</div>
+                                            <div class="font-bold text-slate-900">{{ agency.company_name }}</div>
+                                            <div class="text-xs text-slate-500">{{ agency.contact_name }}</div>
                                         </div>
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 text-slate-600">
                                     <div class="flex items-center gap-1.5"><i
-                                            class="ph-bold ph-phone text-slate-400"></i> 0550 12 34 56</div>
+                                            class="ph-bold ph-phone text-slate-400"></i> {{ agency.phone }}</div>
                                     <div class="flex items-center gap-1.5 mt-1 text-xs"><i
-                                            class="ph-bold ph-map-pin text-slate-400"></i> Algiers</div>
+                                            class="ph-bold ph-map-pin text-slate-400"></i> {{ agency.city }}</div>
                                 </td>
                                 <td class="px-6 py-4">
-                                    <div class="text-green-600 font-bold">€ 2,450.00</div>
-                                    <div class="text-xs text-slate-400">Limit: -€2,000</div>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <div class="flex gap-1 flex-wrap">
-                                        <span
-                                            class="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-[10px] font-bold uppercase border border-purple-200">VIP</span>
-                                        <span
-                                            class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-[10px] font-bold uppercase border border-blue-200">Wholesaler</span>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4"><span
-                                        class="bg-green-100 text-green-700 px-2.5 py-1 rounded-full text-xs font-bold border border-green-200">Active</span>
-                                </td>
-                                <td class="px-6 py-4 text-right">
-                                    <div class="flex justify-end gap-2 opacity-100 transition-opacity">
-                                        <button onclick="openEditModal('edit', 'Global Travel')"
-                                            class="p-1.5 text-slate-500 hover:text-brand-600 hover:bg-brand-50 rounded border border-transparent hover:border-brand-200 transition-all"
-                                            title="Edit"><i class="ph-bold ph-pencil-simple"></i></button>
-                                        <button onclick="confirmSuspend('Global Travel')"
-                                            class="p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded border border-transparent hover:border-red-200 transition-all"
-                                            title="Suspend"><i class="ph-bold ph-lock-key"></i></button>
-                                    </div>
-                                </td>
-                            </tr>
-
-                            <tr class="hover:bg-slate-50 transition-colors bg-red-50/20 group">
-                                <td class="px-6 py-4">
-                                    <div class="flex items-center gap-3">
-                                        <div
-                                            class="w-10 h-10 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-xs">
-                                            ET</div>
-                                        <div>
-                                            <div class="font-bold text-slate-900">Elite Tours</div>
-                                            <div class="text-xs text-slate-500">John Doe</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 text-slate-600">
-                                    <div class="flex items-center gap-1.5"><i
-                                            class="ph-bold ph-phone text-slate-400"></i> 0661 22 33 44</div>
-                                    <div class="flex items-center gap-1.5 mt-1 text-xs"><i
-                                            class="ph-bold ph-map-pin text-slate-400"></i> Oran</div>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <div class="text-red-600 font-bold">- € 1,200.00</div>
-                                    <div class="text-xs text-slate-400">Limit: -€1,500</div>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <div class="flex gap-1 flex-wrap">
-                                        <span
-                                            class="bg-red-100 text-red-700 px-2 py-0.5 rounded text-[10px] font-bold uppercase border border-red-200">Slow
-                                            Payer</span>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4"><span
-                                        class="bg-yellow-100 text-yellow-700 px-2.5 py-1 rounded-full text-xs font-bold border border-yellow-200">Overdraft</span>
-                                </td>
-                                <td class="px-6 py-4 text-right">
-                                    <div class="flex justify-end gap-2 opacity-100 transition-opacity">
-                                        <button onclick="openEditModal('edit', 'Elite Tours')"
-                                            class="p-1.5 text-slate-500 hover:text-brand-600 hover:bg-brand-50 rounded border border-transparent hover:border-brand-200 transition-all"><i
-                                                class="ph-bold ph-pencil-simple"></i></button>
-                                        <button onclick="confirmSuspend('Elite Tours')"
-                                            class="p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded border border-transparent hover:border-red-200 transition-all"><i
-                                                class="ph-bold ph-lock-key"></i></button>
-                                    </div>
-                                </td>
-                            </tr>
-
-                        </tbody>
-                    </table>
+                                    {% if agency.account.balance < 0 %} <div class="text-red-600 font-bold">DZD {{
+                                        agency.account.balance }}
                 </div>
+                <div class="text-xs text-slate-400">Overdraft</div>
+                {% else %}
+                <div class="text-green-600 font-bold">DZD {{ agency.account.balance }}</div>
+                <div class="text-xs text-slate-400">Limit: -DZD {{ agency.account.overdraft_limit|default:"0" }}</div>
+                {% endif %}
+                </td>
+                <td class="px-6 py-4">
+                    <div class="flex gap-1 flex-wrap">
+                        <span
+                            class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase border border-slate-200">
+                            {% for tag in agency.tags_list %}
+                            <span class="
+            px-2 py-0.5 text-xs font-semibold rounded-full
+            bg-{{ tag.color }}-100
+            text-{{ tag.color }}-700
+        ">
+                                {{ tag.name }}
+                            </span>
+                            {% empty %}
+                            <span class="text-xs text-slate-400">No tags</span>
+                            {% endfor %}
+                        </span>
+                    </div>
+                </td>
+                <td class="px-6 py-4">
+                    {% if agency.status == 'active' %}
+                    <span
+                        class="bg-green-100 text-green-700 px-2.5 py-1 rounded-full text-xs font-bold border border-green-200">Active</span>
+                    {% elif agency.status == 'suspended' %}
+                    <span
+                        class="bg-red-100 text-red-700 px-2.5 py-1 rounded-full text-xs font-bold border border-red-200">Suspended</span>
+                    {% else %}
+                    <span
+                        class="bg-slate-100 text-slate-700 px-2.5 py-1 rounded-full text-xs font-bold border border-slate-200">{{
+                        agency.status }}</span>
+                    {% endif %}
+                </td>
+                <td class="px-6 py-4 text-right">
+                    <div class="flex justify-end gap-2 opacity-100 transition-opacity">
+                        <button data-id="{{ agency.id }}" data-company-name="{{ agency.company_name }}"
+                            data-phone="{{ agency.phone }}" data-address="{{ agency.address }}"
+                            data-city="{{ agency.city }}" data-rc="{{ agency.rc_number }}"
+                            data-balance="{{ agency.balance }}" data-limit="{{ agency.credit_limit }}"
+                            data-status="{{ agency.status }}" /* THE KEY FIX: Name|Color format */
+                            data-tags="{% for tag in agency.tags.all %}{{ tag.name }}|{{ tag.color|default:'slate' }},{% endfor %}"
+                            onclick="openEditAgencyModal(this)"
+                            class="p-1.5 text-slate-500 hover:text-brand-600 hover:bg-brand-50 rounded border border-transparent hover:border-brand-200 transition-all"
+                            title="Edit Agency Details">
+                            <i class="ph-bold ph-pencil-simple"></i>
+                        </button>
+                        <button onclick="confirmSuspend('{{ agency.company_name|escapejs }}')"
+                            class="p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded border border-transparent hover:border-red-200 transition-all">
+                            <i class="ph-bold ph-lock-key"></i>
+                        </button>
+                    </div>
+                </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="px-6 py-12 text-center text-slate-400">
+                        <i class="ph ph-users text-4xl mb-2"></i>
+                        <p>No active agencies found.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+                </table>
             </div>
-
         </div>
-    </div>
 
+    </div>
+    </div>
 </main>
-
-<div id="review-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
-    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeReviewModal()">
+<div id="new_agency_modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeNewAgencyModal()">
     </div>
-    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-[80vh] flex overflow-hidden modal-enter">
 
-        <div class="w-1/2 bg-slate-100 border-r border-slate-200 flex flex-col p-6 items-center justify-center">
-            <div
-                class="bg-white p-2 shadow-sm rounded-lg mb-4 w-64 rotate-1 hover:rotate-0 transition-transform duration-300 cursor-zoom-in">
-                <img src="https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?q=80&w=400"
-                    class="w-full h-auto rounded border border-slate-200 opacity-90">
+    <div
+        class="relative bg-white rounded-2xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden modal-enter">
+
+        <div class="bg-slate-900 p-4 flex justify-between items-center text-white shrink-0">
+            <div>
+                <h3 class="font-bold text-lg flex items-center gap-2">
+                    <i class="ph-bold ph-buildings"></i> Register New Agency
+                </h3>
+                <p class="text-xs text-slate-400 mt-0.5">Fill in agency details and create the manager account.</p>
             </div>
-            <p class="text-sm font-bold text-slate-700">Trade_Registry.jpg</p>
-            <div class="flex gap-2 mt-4">
-                <button
-                    class="bg-white border border-slate-300 text-slate-700 px-3 py-1.5 rounded text-xs font-medium hover:bg-slate-50"><i
-                        class="ph-bold ph-eye"></i> View NIF</button>
-                <button
-                    class="bg-white border border-slate-300 text-slate-700 px-3 py-1.5 rounded text-xs font-medium hover:bg-slate-50"><i
-                        class="ph-bold ph-download-simple"></i> Download All</button>
-            </div>
+            <button onclick="closeNewAgencyModal()" class="hover:bg-slate-700 p-1 rounded transition-colors"><i
+                    class="ph-bold ph-x text-lg"></i></button>
         </div>
 
-        <div class="w-1/2 flex flex-col bg-white">
-            <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                <div>
-                    <h2 class="text-lg font-bold text-slate-900" id="review-title">Agency Name</h2>
-                    <p class="text-xs text-slate-500">Applied on Oct 24, 2025</p>
-                </div>
-                <button onclick="closeReviewModal()" class="text-slate-400 hover:text-slate-600"><i
-                        class="ph-bold ph-x text-lg"></i></button>
-            </div>
+        <div class="flex-1 overflow-y-auto bg-slate-50">
+            <form id="new_agency_form" onsubmit="event.preventDefault(); submitNewAgency();" class="p-6"
+                enctype="multipart/form-data">
+                {% csrf_token %}
 
-            <div class="flex-1 overflow-y-auto p-6 space-y-6">
-                <div class="space-y-4 text-sm">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div><label class="block text-[10px] font-bold text-slate-400 uppercase">Manager</label>
-                            <p class="font-bold text-slate-800">Ahmed Benali</p>
+                <div class="flex flex-col lg:flex-row gap-8">
+
+                    <div class="flex-1 space-y-6">
+                        <div class="flex items-center gap-2 text-brand-700 font-bold border-b border-brand-200 pb-2">
+                            <i class="ph-fill ph-briefcase"></i> Agency Information
                         </div>
-                        <div><label class="block text-[10px] font-bold text-slate-400 uppercase">Phone</label>
-                            <p class="font-bold text-slate-800">0550 99 88 77</p>
+
+                        <div class="grid grid-cols-12 gap-4">
+                            <div class="col-span-8">
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Company Name <span
+                                        class="text-red-500">*</span></label>
+                                <input type="text" name="company_name" required
+                                    placeholder="e.g. Global Travel Services"
+                                    class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                            </div>
+                            <div class="col-span-4">
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Logo</label>
+                                <input type="file" name="logo" accept="image/*"
+                                    class="w-full text-[10px] text-slate-500 file:mr-2 file:py-2 file:px-2 file:rounded-lg file:border-0 file:text-[10px] file:font-semibold file:bg-slate-200 file:text-slate-700 hover:file:bg-slate-300">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Phone Number <span
+                                        class="text-red-500">*</span></label>
+                                <input type="text" name="phone" required placeholder="021 00 00 00"
+                                    class="w-full border border-slate-300 rounded-lg p-2.5 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">City <span
+                                        class="text-red-500">*</span></label>
+                                <select name="city" required
+                                    class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white">
+                                    <option value="">Select City...</option>
+                                    <option value="Algiers">Algiers</option>
+                                    <option value="Oran">Oran</option>
+                                    <option value="Setif">Setif</option>
+                                    <option value="Constantine">Constantine</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Full Address <span
+                                    class="text-red-500">*</span></label>
+                            <textarea name="address" rows="2" required
+                                class="w-full border border-slate-300 rounded-lg p-2.5 text-sm resize-none"></textarea>
+                        </div>
+
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                            <h4 class="text-xs font-bold text-slate-900 mb-3 uppercase flex items-center gap-2"><i
+                                    class="ph-fill ph-file-text text-slate-400"></i> Legal Documents</h4>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">RC Number <span
+                                            class="text-red-500">*</span></label>
+                                    <input type="text" name="rc_number" required placeholder="16/00-123456B19"
+                                        class="w-full border border-slate-300 rounded-lg p-2.5 text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">RC
+                                        Document</label>
+                                    <input type="file" name="rc_document" accept=".pdf,.jpg,.png"
+                                        class="w-full text-[10px] text-slate-500 file:mr-2 file:py-2 file:px-2 file:rounded-lg file:border-0 file:text-[10px] file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Initial
+                                    Status</label>
+                                <select name="status"
+                                    class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white">
+                                    <option value="pending" selected>Pending Review</option>
+                                    <option value="active">Active</option>
+                                    <option value="suspended">Suspended</option>
+                                </select>
+                            </div>
+                            <div>
+                                <div class="flex justify-between items-center mb-1">
+                                    <label class="block text-xs font-bold text-slate-500 uppercase">Tags</label>
+                                    <button type="button" onclick="openTagModal()"
+                                        class="text-[10px] text-brand-600 font-bold hover:underline flex items-center gap-1">
+                                        <i class="ph-bold ph-plus"></i> New Tag
+                                    </button>
+                                </div>
+                                <div id="tags-container"
+                                    class="flex flex-wrap gap-2 p-2 border border-slate-300 rounded-lg bg-white min-h-[42px]">
+                                    <label class="cursor-pointer select-none">
+                                        <input type="checkbox" name="tags" value="vip" class="peer hidden">
+                                        <span
+                                            class="px-2 py-1 rounded text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200 peer-checked:bg-purple-100 peer-checked:text-purple-700 peer-checked:border-purple-300 transition-all">VIP</span>
+                                    </label>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div><label class="block text-[10px] font-bold text-slate-400 uppercase">Address</label>
-                        <p class="font-bold text-slate-800">12 Rue de la Révolution, Oran</p>
-                    </div>
-                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 font-mono text-xs">
-                        <div class="flex justify-between mb-1"><span>RC:</span> <span class="font-bold">1992-B-12</span>
+
+                    <div class="hidden lg:block w-px bg-slate-200"></div>
+
+                    <div class="flex-1 space-y-6">
+                        <div class="flex items-center gap-2 text-brand-700 font-bold border-b border-brand-200 pb-2">
+                            <i class="ph-fill ph-user-gear"></i> Manager Information
                         </div>
-                        <div class="flex justify-between"><span>NIF:</span> <span class="font-bold">099821102933</span>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">First Name <span
+                                        class="text-red-500">*</span></label>
+                                <input type="text" name="first_name" required
+                                    class="w-full border border-slate-300 rounded-lg p-2.5 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Last Name <span
+                                        class="text-red-500">*</span></label>
+                                <input type="text" name="last_name" required
+                                    class="w-full border border-slate-300 rounded-lg p-2.5 text-sm">
+                            </div>
                         </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Username <span
+                                    class="text-red-500">*</span></label>
+                            <input type="text" name="username" required placeholder="user.name"
+                                class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-slate-50">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Email Address <span
+                                    class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <i class="ph-bold ph-envelope absolute left-3 top-3 text-slate-400"></i>
+                                <input type="email" name="email" required placeholder="manager@company.com"
+                                    class="w-full border border-slate-300 rounded-lg pl-10 p-2.5 text-sm">
+                            </div>
+                        </div>
+
+                        <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 space-y-3">
+                            <div class="flex justify-between items-center">
+                                <h4 class="text-xs font-bold text-blue-800 uppercase">Security</h4>
+                                <button type="button" onclick="generateAndFillPassword()"
+                                    class="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 font-bold shadow-sm">
+                                    <i class="ph-bold ph-magic-wand"></i> Generate
+                                </button>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Password
+                                        <span class="text-red-500">*</span></label>
+                                    <input type="text" id="new_pass_1" name="password" required
+                                        class="w-full border border-slate-300 rounded-lg p-2 text-sm font-mono text-slate-700">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Confirm
+                                        Password <span class="text-red-500">*</span></label>
+                                    <input type="text" id="new_pass_2" name="confirm_password" required
+                                        class="w-full border border-slate-300 rounded-lg p-2 text-sm font-mono text-slate-700">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Mobile Phone <span
+                                        class="text-red-500">*</span></label>
+                                <input type="tel" name="manager_phone" required
+                                    class="w-full border border-slate-300 rounded-lg p-2.5 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">State <span
+                                        class="text-red-500">*</span></label>
+                                <input type="text" name="state" required
+                                    class="w-full border border-slate-300 rounded-lg p-2.5 text-sm">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Role <span
+                                    class="text-red-500">*</span></label>
+                            <select name="role" required
+                                class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white">
+                                <option value="">Select Role...</option>
+                                <option value="admin">Agency Admin</option>
+                                <option value="manager">Manager</option>
+                                <option value="agent">Agent</option>
+                            </select>
+                        </div>
+
                     </div>
                 </div>
 
-                <div class="pt-4 border-t border-slate-100">
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Initial Settings</label>
-                    <div class="grid grid-cols-2 gap-4 mb-3">
-                        <div><label class="block text-[10px] text-slate-400">Credit Limit (€)</label><input
-                                type="number" value="500"
-                                class="w-full border border-slate-300 rounded p-2 text-sm font-bold"></div>
-                        <div><label class="block text-[10px] text-slate-400">Initial Tags</label><select
-                                class="w-full border border-slate-300 rounded p-2 text-sm">
-                                <option>Standard</option>
-                                <option>VIP</option>
-                            </select></div>
-                    </div>
-                </div>
-            </div>
+                <button type="submit" class="hidden" id="btn-submit-new-agency"></button>
+            </form>
+        </div>
 
-            <div class="p-6 border-t border-slate-100 bg-slate-50 flex gap-3">
-                <button onclick="closeReviewModal()"
-                    class="flex-1 py-3 border border-red-200 text-red-600 rounded-lg text-sm font-bold hover:bg-red-50">Reject</button>
-                <button onclick="approveAgency()"
-                    class="flex-1 py-3 bg-green-600 text-white rounded-lg text-sm font-bold shadow hover:bg-green-700">Approve
-                    & Activate</button>
-            </div>
+        <div class="p-4 border-t border-slate-200 bg-white flex justify-end gap-3 shrink-0">
+            <button onclick="closeNewAgencyModal()"
+                class="px-6 py-2.5 border border-slate-300 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
+            <button onclick="document.getElementById('btn-submit-new-agency').click()"
+                class="px-6 py-2.5 bg-brand-600 text-white rounded-lg text-sm font-bold shadow-md hover:bg-brand-700 transition-transform active:scale-95 flex items-center gap-2">
+                <i class="ph-bold ph-check"></i> Create Agency & Manager
+            </button>
         </div>
     </div>
 </div>
 
-<div id="edit-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
-    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeEditModal()">
+<div id="review-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeReviewModal()">
     </div>
-    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden modal-enter">
-        <div class="bg-slate-900 p-4 flex justify-between items-center text-white">
-            <h3 class="font-bold flex items-center gap-2"><i class="ph-bold ph-pencil"></i> <span
-                    id="edit-modal-title">Manage Agency</span></h3>
-            <button onclick="closeEditModal()"><i class="ph-bold ph-x"></i></button>
+
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-5xl h-[85vh] flex overflow-hidden modal-enter">
+
+        <div class="w-1/3 bg-slate-100 border-r border-slate-200 flex flex-col p-6 items-center overflow-y-auto">
+
+            <div class="mb-6 text-center">
+                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Agency Logo</label>
+                <div
+                    class="w-32 h-32 bg-white rounded-full border-4 border-white shadow-sm flex items-center justify-center overflow-hidden mx-auto">
+                    <img id="review-logo-img" src="" alt="Logo" class="w-full h-full object-cover">
+                    <i id="review-logo-icon" class="ph-fill ph-buildings text-4xl text-slate-300 hidden"></i>
+                </div>
+            </div>
+
+            <div class="w-full">
+                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 text-center">Trade Registry
+                    (RC)</label>
+                <div
+                    class="bg-white p-2 shadow-sm rounded-lg mb-3 w-full aspect-[3/4] flex items-center justify-center border border-slate-200 relative group cursor-pointer">
+                    <div class="text-center">
+                        <i class="ph-fill ph-file-pdf text-4xl text-red-500 mb-2"></i>
+                        <p class="text-xs text-slate-500 font-medium">RC_Document.pdf</p>
+                    </div>
+                    <div
+                        class="absolute inset-0 bg-slate-900/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-md">
+                        <a id="review-doc-link" href="#" target="_blank"
+                            class="bg-white text-slate-900 px-3 py-1.5 rounded-lg text-xs font-bold hover:scale-105 transition-transform">
+                            View File
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="p-6 overflow-y-auto max-h-[80vh]">
-            <form onsubmit="event.preventDefault(); saveAgency();" class="space-y-4">
+
+        <div class="w-2/3 flex flex-col bg-white">
+
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50 shrink-0">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h2 class="text-xl font-bold text-slate-900" id="review-title">Agency Name</h2>
+                        <span
+                            class="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded text-[10px] font-bold uppercase border border-yellow-200">Pending</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-1">Applied on: <span id="review-date">-</span></p>
+                </div>
+                <button onclick="closeReviewModal()"
+                    class="text-slate-400 hover:text-slate-600 p-1 rounded-md hover:bg-slate-100 transition-colors">
+                    <i class="ph-bold ph-x text-lg"></i>
+                </button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-8 space-y-8">
+
+                <div class="bg-blue-50/60 p-5 rounded-xl border border-blue-100">
+                    <h3 class="text-xs font-bold text-blue-800 uppercase mb-4 flex items-center gap-2">
+                        <i class="ph-fill ph-user-gear"></i> Manager Information
+                    </h3>
+                    <div class="grid grid-cols-2 gap-y-4 gap-x-8 text-sm">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase">First Name</label>
+                            <p class="font-bold text-slate-900" id="review-manager-first">-</p>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase">Last Name</label>
+                            <p class="font-bold text-slate-900" id="review-manager-last">-</p>
+                        </div>
+
+                        <div class="col-span-2">
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase">Email (Username)</label>
+                            <p class="font-medium text-slate-900 flex items-center gap-2">
+                                <span id="review-manager-email">-</span>
+                                <i class="ph-bold ph-check-circle text-green-500 text-sm" title="Verified"></i>
+                            </p>
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase">Personal Phone</label>
+                            <p class="font-medium text-slate-900" id="review-manager-phone">-</p>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase">Residence State</label>
+                            <p class="font-medium text-slate-900" id="review-manager-state">-</p>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase">Assigned Role</label>
+                            <span
+                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200"
+                                id="review-manager-role">
+                                -
+                            </span>
+                        </div>
+                    </div>
+                </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Agency Name</label>
-                    <input type="text" id="input-name"
-                        class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-brand-500 outline-none">
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Manager</label><input
-                            type="text" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm"></div>
-                    <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Phone</label><input
-                            type="text" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm"></div>
+                    <h3 class="text-xs font-bold text-slate-900 uppercase mb-4 flex items-center gap-2">
+                        <i class="ph-fill ph-briefcase"></i> Company Information
+                    </h3>
+                    <div class="grid grid-cols-2 gap-y-4 gap-x-8 text-sm">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase">RC Number</label>
+                            <p class="font-mono font-bold text-slate-900 bg-slate-50 px-2 py-1 rounded border border-slate-200 w-fit"
+                                id="review-rc">-</p>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase">Agency Phone</label>
+                            <p class="font-medium text-slate-900" id="review-agency-phone">-</p>
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase">Full Address</label>
+                            <p class="font-medium text-slate-900" id="review-address">-</p>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase">City</label>
+                            <p class="font-medium text-slate-900" id="review-city">-</p>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                    <h4 class="text-xs font-bold text-slate-900 mb-3 uppercase">Financial Settings</h4>
+                <div class="pt-6 border-t border-slate-100">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-3">Approval Settings</label>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-[10px] text-slate-500 mb-1">Credit Limit (Overdraft)</label>
-                            <div class="relative"><span
-                                    class="absolute left-2 top-2 text-slate-400 font-bold text-xs">-€</span><input
-                                    type="number"
-                                    class="w-full border border-slate-300 rounded pl-7 p-2 text-sm font-bold text-red-600">
+                            <label class="block text-[10px] text-slate-400 mb-1">Set Credit Limit</label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-2.5 text-slate-400 font-bold text-xs">DZD</span>
+                                <input type="number" value="0.00"
+                                    class="w-full border border-slate-300 rounded-lg pl-10 p-2 text-sm font-bold text-slate-700">
                             </div>
                         </div>
                         <div>
-                            <label class="block text-[10px] text-slate-500 mb-1">Discount Level</label>
-                            <select class="w-full border border-slate-300 rounded p-2 text-sm bg-white">
-                                <option>Standard (0%)</option>
-                                <option>Silver (2%)</option>
-                                <option>Gold (5%)</option>
+                            <label class="block text-[10px] text-slate-400 mb-1">Assign Tag</label>
+                            <select class="w-full border border-slate-300 rounded-lg p-2 text-sm bg-white">
+                                <option>Standard</option>
+                                <option>VIP</option>
+                                <option>Probation</option>
                             </select>
                         </div>
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Tags</label>
-                    <div class="flex flex-wrap gap-2 mb-2">
-                        <label class="cursor-pointer"><input type="checkbox" class="peer hidden" checked><span
-                                class="px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-bold border border-slate-200 peer-checked:bg-purple-100 peer-checked:text-purple-700 peer-checked:border-purple-200 transition-colors">VIP</span></label>
-                        <label class="cursor-pointer"><input type="checkbox" class="peer hidden"><span
-                                class="px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-bold border border-slate-200 peer-checked:bg-blue-100 peer-checked:text-blue-700 peer-checked:border-blue-200 transition-colors">Wholesaler</span></label>
-                        <label class="cursor-pointer"><input type="checkbox" class="peer hidden"><span
-                                class="px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-bold border border-slate-200 peer-checked:bg-red-100 peer-checked:text-red-700 peer-checked:border-red-200 transition-colors">Bad
-                                Payer</span></label>
+            </div>
+
+            <div class="p-6 border-t border-slate-200 bg-slate-50 flex gap-3 shrink-0">
+                <button onclick="closeReviewModal()"
+                    class="px-4 py-3 border border-red-200 text-red-600 rounded-lg text-sm font-bold hover:bg-red-50 flex-1">
+                    Reject Application
+                </button>
+                <button onclick="approveAgency()"
+                    class="px-4 py-3 bg-green-600 text-white rounded-lg text-sm font-bold shadow hover:bg-green-700 flex-[2] flex items-center justify-center gap-2">
+                    <i class="ph-bold ph-check"></i> Approve & Activate
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="edit_agency_modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeEditAgencyModal()">
+    </div>
+
+    <div
+        class="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl h-[85vh] flex flex-col overflow-hidden modal-enter">
+
+        <div class="bg-slate-900 p-4 flex justify-between items-center text-white shrink-0">
+            <div>
+                <h3 class="font-bold text-lg flex items-center gap-2">
+                    <i class="ph-bold ph-pencil-simple"></i> <span id="edit-modal-title">Edit Agency Details</span>
+                </h3>
+                <p class="text-xs text-slate-400 mt-0.5">Update general information and status.</p>
+            </div>
+            <button onclick="closeEditAgencyModal()" class="hover:bg-slate-700 p-1 rounded transition-colors">
+                <i class="ph-bold ph-x text-lg"></i>
+            </button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto bg-slate-50">
+            <form id="edit_agency_form" onsubmit="event.preventDefault(); updateAgency();" class="p-6 space-y-5"
+                enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" id="edit-agency-id" name="agency_id">
+
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <h4 class="text-xs font-bold text-slate-900 mb-3 uppercase flex items-center gap-2">
+                        <i class="ph-fill ph-identification-card text-brand-500"></i> Identity
+                    </h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="col-span-2">
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Company Name</label>
+                            <input type="text" id="edit-name" name="company_name" required
+                                class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">RC Number</label>
+                            <input type="text" id="edit-rc" name="rc_number" required
+                                class="w-full border border-slate-300 rounded-lg p-2.5 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Update Logo</label>
+                            <input type="file" name="logo" accept="image/*"
+                                class="w-full text-[10px] text-slate-500 file:mr-2 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-bold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200">
+                        </div>
                     </div>
                 </div>
 
-                <div class="pt-2 border-t border-slate-100">
-                    <button type="button"
-                        class="text-brand-600 text-xs font-bold hover:underline flex items-center gap-1"><i
-                            class="ph-bold ph-key"></i> Send Password Reset Email</button>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Phone</label>
+                        <input type="text" id="edit-phone" name="phone" required
+                            class="w-full border border-slate-300 rounded-lg p-2.5 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">City</label>
+                        <select id="edit-city" name="city" required
+                            class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white">
+                            <option value="Algiers">Algiers</option>
+                            <option value="Oran">Oran</option>
+                            <option value="Setif">Setif</option>
+                            <option value="Constantine">Constantine</option>
+                        </select>
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Full Address</label>
+                        <textarea id="edit-address" name="address" rows="2"
+                            class="w-full border border-slate-300 rounded-lg p-2.5 text-sm resize-none"></textarea>
+                    </div>
                 </div>
 
-                <div class="pt-4 flex gap-3">
-                    <button type="button" onclick="closeEditModal()"
-                        class="flex-1 py-2.5 border border-slate-300 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50">Cancel</button>
-                    <button type="submit"
-                        class="flex-1 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold shadow hover:bg-slate-800">Save
-                        Changes</button>
+                <div class="bg-slate-100 p-4 rounded-xl border border-slate-200">
+                    <div class="flex justify-between items-center mb-3">
+                        <h4 class="text-xs font-bold text-slate-700 uppercase flex items-center gap-2">
+                            <i class="ph-fill ph-lock-key text-slate-400"></i> Financials (Locked)
+                        </h4>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[10px] text-slate-500 mb-1">Current Balance</label>
+                            <input type="text" id="edit-balance" disabled
+                                class="w-full border border-slate-200 rounded-lg p-2.5 text-sm bg-slate-200 text-slate-500 font-mono cursor-not-allowed">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-slate-500 mb-1">Credit Limit</label>
+                            <input type="text" id="edit-limit" disabled
+                                class="w-full border border-slate-200 rounded-lg p-2.5 text-sm bg-slate-200 text-slate-500 font-mono cursor-not-allowed">
+                        </div>
+                    </div>
                 </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Account Status</label>
+                        <select id="edit-status" name="status"
+                            class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white">
+                            <option value="active">Active</option>
+                            <option value="suspended">Suspended</option>
+                            <option value="pending">Pending Review</option>
+                        </select>
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="block text-xs font-bold text-slate-500 uppercase">Tags</label>
+                            <button type="button" onclick="openTagModal()"
+                                class="text-[10px] text-brand-600 font-bold hover:underline">
+                                + New Tag
+                            </button>
+                        </div>
+                        <div id="edit-tags-container"
+                            class="bg-white border border-slate-300 rounded-lg p-2 min-h-[42px] flex flex-wrap gap-2">
+                            <span class="text-xs text-slate-400 italic" id="no-tags-msg">No tags assigned.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Update RC Document</label>
+                    <input type="file" name="rc_document" accept=".pdf,.jpg,.png"
+                        class="w-full text-xs text-slate-500 file:mr-2 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200">
+                </div>
+
             </form>
+        </div>
+
+        <div class="p-4 border-t border-slate-200 bg-white flex justify-end gap-3 shrink-0">
+            <button onclick="closeEditAgencyModal()"
+                class="px-6 py-2.5 border border-slate-300 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
+            <button onclick="document.getElementById('edit_agency_form').dispatchEvent(new Event('submit'))"
+                id="update-btn-text"
+                class="px-6 py-2.5 bg-brand-600 text-white rounded-lg text-sm font-bold shadow-md hover:bg-brand-700 transition-transform active:scale-95 flex items-center gap-2">
+                <i class="ph-bold ph-floppy-disk"></i> Save Changes
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="new_tag_modal" class="hidden fixed inset-0 z-[110] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]" onclick="closeTagModal()"></div>
+
+    <div class="relative bg-white rounded-xl shadow-xl w-full max-w-2xl overflow-hidden modal-enter">
+
+        <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+            <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                <i class="ph-bold ph-tag"></i> Manage Tags
+            </h3>
+            <button onclick="closeTagModal()" class="text-slate-400 hover:text-slate-600"><i
+                    class="ph-bold ph-x text-lg"></i></button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2">
+
+            <div class="p-5 border-r border-slate-100 bg-slate-50/50">
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-3">Available Tags</label>
+
+                <div class="space-y-2 max-h-[250px] overflow-y-auto pr-2" id="available-tags-list">
+                    <button onclick="selectExistingTag('VIP', 'purple')"
+                        class="w-full flex items-center justify-between p-2 bg-white border border-slate-200 rounded-lg hover:border-brand-300 hover:shadow-sm transition-all group">
+                        <span
+                            class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-700 border border-purple-200">VIP</span>
+                        <i class="ph-bold ph-plus text-slate-300 group-hover:text-brand-600"></i>
+                    </button>
+                    <button onclick="selectExistingTag('Wholesaler', 'blue')"
+                        class="w-full flex items-center justify-between p-2 bg-white border border-slate-200 rounded-lg hover:border-brand-300 hover:shadow-sm transition-all group">
+                        <span
+                            class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700 border border-blue-200">Wholesaler</span>
+                        <i class="ph-bold ph-plus text-slate-300 group-hover:text-brand-600"></i>
+                    </button>
+                    <button onclick="selectExistingTag('Bad Payer', 'red')"
+                        class="w-full flex items-center justify-between p-2 bg-white border border-slate-200 rounded-lg hover:border-brand-300 hover:shadow-sm transition-all group">
+                        <span
+                            class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700 border border-red-200">Bad
+                            Payer</span>
+                        <i class="ph-bold ph-plus text-slate-300 group-hover:text-brand-600"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="p-5 bg-white">
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-3">Create New Tag</label>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 mb-1">Name</label>
+                        <input type="text" id="new-tag-name" placeholder="e.g. Reliable"
+                            class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 mb-1">Theme Color</label>
+                        <div class="flex items-center gap-3">
+                            <input type="color" id="new-tag-color" value="#3B82F6"
+                                class="w-12 h-10 p-0.5 border border-slate-300 rounded cursor-pointer"
+                                onchange="updateColorPreview(this.value)">
+
+                            <div class="text-xs text-slate-500 flex-1">
+                                Pick a color for the badge background/border.
+                            </div>
+
+                            <span id="tag-preview-badge"
+                                class="px-3 py-1 rounded-full text-xs font-bold border transition-colors"
+                                style="background-color: #eff6ff; color: #1d4ed8; border-color: #dbeafe;">
+                                Preview
+                            </span>
+                        </div>
+                    </div>
+
+                    <button onclick="saveNewTag()"
+                        class="w-full py-2 bg-slate-900 text-white rounded-lg text-sm font-bold shadow hover:bg-slate-800 flex items-center justify-center gap-2">
+                        <i class="ph-bold ph-plus-circle"></i> Create & Add
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-    // --- REVIEW MODAL ---
+    /* =========================================
+       1. NEW AGENCY MODAL LOGIC
+       ========================================= */
+    const newAgencyModal = document.getElementById('new_agency_modal');
+    const newAgencyForm = document.getElementById('new_agency_form');
+
+    function openNewAgencyModal() {
+        newAgencyForm.reset();
+        document.getElementById('tags-container').innerHTML = '<span class="text-xs text-slate-400 italic" id="new-no-tags-msg">No tags assigned.</span>';
+
+        // Generate password for new manager
+        generateAndFillPassword();
+
+        newAgencyModal.classList.remove('hidden');
+    }
+
+    function closeNewAgencyModal() {
+        newAgencyModal.classList.add('hidden');
+    }
+
+    function submitNewAgency() {
+        const pass1 = document.getElementById('new_pass_1').value;
+        const pass2 = document.getElementById('new_pass_2').value;
+
+        if (pass1 !== pass2) {
+            alert("Passwords do not match!");
+            return;
+        }
+
+        const btn = document.querySelector('#new_agency_modal button:last-child');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Creating...';
+
+        setTimeout(() => {
+            alert("New Agency and Manager Account Created!");
+            closeNewAgencyModal();
+            btn.innerHTML = originalText;
+            window.location.reload();
+        }, 1000);
+    }
+
+    function generateAndFillPassword() {
+        const pass = generatePassword();
+        document.getElementById('new_pass_1').value = pass;
+        document.getElementById('new_pass_2').value = pass;
+    }
+
+
+    /* =========================================
+       2. REVIEW MODAL LOGIC (Pending Apps)
+       ========================================= */
     const reviewModal = document.getElementById('review-modal');
-    function openReviewModal(name) {
-        document.getElementById('review-title').innerText = name;
+
+    function openReviewModal(button) {
+        // Populate Data
+        document.getElementById('review-title').innerText = button.dataset.name;
+        document.getElementById('review-date').innerText = button.dataset.date;
+        document.getElementById('review-rc').innerText = button.dataset.rc;
+        document.getElementById('review-agency-phone').innerText = button.dataset.phone;
+        document.getElementById('review-address').innerText = button.dataset.address;
+        document.getElementById('review-city').innerText = button.dataset.city;
+
+        document.getElementById('review-manager-first').innerText = button.dataset.managerFirst;
+        document.getElementById('review-manager-last').innerText = button.dataset.managerLast;
+        document.getElementById('review-manager-email').innerText = button.dataset.managerEmail;
+        document.getElementById('review-manager-phone').innerText = button.dataset.managerPhone;
+        document.getElementById('review-manager-state').innerText = button.dataset.managerState;
+        document.getElementById('review-manager-role').innerText = button.dataset.managerRole;
+
+        // Logo
+        const logoImg = document.getElementById('review-logo-img');
+        const logoIcon = document.getElementById('review-logo-icon');
+        if (button.dataset.logo && button.dataset.logo !== 'undefined') {
+            logoImg.src = button.dataset.logo;
+            logoImg.classList.remove('hidden');
+            logoIcon.classList.add('hidden');
+        } else {
+            logoImg.classList.add('hidden');
+            logoIcon.classList.remove('hidden');
+        }
+
+        // Docs
+        const docLink = document.getElementById('review-doc-link');
+        if (button.dataset.doc && button.dataset.doc !== 'undefined') {
+            docLink.href = button.dataset.doc;
+            docLink.classList.remove('pointer-events-none', 'opacity-50');
+        } else {
+            docLink.href = '#';
+            docLink.classList.add('pointer-events-none', 'opacity-50');
+        }
+
         reviewModal.classList.remove('hidden');
     }
-    function closeReviewModal() { reviewModal.classList.add('hidden'); }
+
+    function closeReviewModal() {
+        reviewModal.classList.add('hidden');
+    }
+
     function approveAgency() {
-        const btn = document.querySelector('#review-modal button:last-child');
-        btn.innerHTML = 'Activating...';
-        setTimeout(() => { alert("Agency Approved & Activated!"); closeReviewModal(); btn.innerHTML = 'Approve & Activate'; }, 1000);
+        alert("Agency Approved!");
+        closeReviewModal();
     }
 
-    // --- EDIT/ADD MODAL ---
-    const editModal = document.getElementById('edit-modal');
-    function openEditModal(mode, name = "") {
-        document.getElementById('edit-modal-title').innerText = mode === 'new' ? 'Add New Agency' : 'Edit Agency';
-        if (name) document.getElementById('input-name').value = name;
-        else document.getElementById('input-name').value = "";
-        editModal.classList.remove('hidden');
-    }
-    function closeEditModal() { editModal.classList.add('hidden'); }
-    function saveAgency() {
-        const btn = document.querySelector('#edit-modal button[type="submit"]');
-        btn.innerHTML = 'Saving...';
-        setTimeout(() => { alert("Agency Details Saved!"); closeEditModal(); btn.innerHTML = 'Save Changes'; }, 800);
+
+    /* =========================================
+       3. EDIT AGENCY MODAL LOGIC
+       ========================================= */
+    const editAgencyModal = document.getElementById('edit_agency_modal');
+
+    function openEditAgencyModal(button) {
+        // Populate Fields
+        document.getElementById('edit-agency-id').value = button.dataset.id;
+        document.getElementById('edit-name').value = button.dataset.companyName;
+        document.getElementById('edit-rc').value = button.dataset.rc;
+        document.getElementById('edit-phone').value = button.dataset.phone;
+        document.getElementById('edit-city').value = button.dataset.city;
+        document.getElementById('edit-address').value = button.dataset.address;
+        document.getElementById('edit-status').value = button.dataset.status;
+        document.getElementById('edit-balance').value = 'DZD ' + button.dataset.balance;
+        document.getElementById('edit-limit').value = 'DZD ' + button.dataset.limit;
+
+        // Handle Tags
+        const container = document.getElementById('edit-tags-container');
+        container.innerHTML = '';
+
+        const rawTags = button.dataset.tags;
+        let hasTags = false;
+
+        if (rawTags && rawTags.trim() !== '') {
+            const tags = rawTags.split(',');
+            tags.forEach(tagString => {
+                if (tagString.trim() !== '' && tagString.includes('|')) {
+                    hasTags = true;
+                    const [name, color] = tagString.split('|');
+                    createRemovableTag(container, name, color || 'slate');
+                }
+            });
+        }
+
+        if (!hasTags) {
+            container.innerHTML = '<span class="text-xs text-slate-400 italic" id="edit-no-tags-msg">No tags assigned.</span>';
+        }
+
+        editAgencyModal.classList.remove('hidden');
     }
 
-    // --- SUSPEND ---
+    function closeEditAgencyModal() {
+        editAgencyModal.classList.add('hidden');
+    }
+
+    function updateAgency() {
+        alert("Agency Updated!");
+        closeEditAgencyModal();
+        window.location.reload();
+    }
+
+
+    /* =========================================
+       4. TAG MANAGER LOGIC (UNIFIED)
+       ========================================= */
+    const tagModal = document.getElementById('new_tag_modal');
+
+    function openTagModal() {
+        document.getElementById('new-tag-name').value = '';
+        tagModal.classList.remove('hidden');
+    }
+
+    function closeTagModal() {
+        tagModal.classList.add('hidden');
+    }
+
+    // Called when clicking an Existing Tag (Left Side)
+    function selectExistingTag(name, color) {
+        addTagToActiveForm(name, color, true); // true = tailwind class
+    }
+
+    // Called when creating a New Tag (Right Side)
+    function saveNewTag() {
+        const name = document.getElementById('new-tag-name').value;
+        const color = document.getElementById('new-tag-color').value; // Hex value
+
+        if (!name) return alert("Please enter a tag name");
+        addTagToActiveForm(name, color, false); // false = hex code
+    }
+
+    // Determines where to put the tag (New Modal or Edit Modal)
+    function addTagToActiveForm(name, color, isTailwindClass) {
+        let container;
+        let noTagsId;
+
+        // Check if Edit Modal is open (it has higher priority if both somehow open)
+        if (!editAgencyModal.classList.contains('hidden')) {
+            container = document.getElementById('edit-tags-container');
+            noTagsId = 'edit-no-tags-msg';
+        } else {
+            // Otherwise assume New Agency Modal
+            container = document.getElementById('tags-container');
+            noTagsId = 'new-no-tags-msg';
+        }
+
+        // Remove placeholder text if it exists
+        const msg = document.getElementById(noTagsId);
+        if (msg) msg.remove();
+
+        // Create the chip
+        createRemovableTag(container, name, color, isTailwindClass);
+        closeTagModal();
+    }
+
+    // Helper: Creates the Tag Chip with X button
+    function createRemovableTag(container, name, color, isTailwindClass = true) {
+        // If color starts with #, force isTailwindClass to false
+        if (color.startsWith('#')) isTailwindClass = false;
+
+        const chip = document.createElement('div');
+        let classes = `inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border transition-all select-none`;
+        let styles = "";
+
+        if (isTailwindClass) {
+            // Tailwind preset (purple, blue, etc.)
+            classes += ` bg-${color}-100 text-${color}-700 border-${color}-200`;
+        } else {
+            // Custom Hex
+            styles = `background-color: ${color}20; color: ${color}; border-color: ${color}40;`;
+        }
+
+        chip.className = classes;
+        if (styles) chip.style.cssText = styles;
+
+        chip.innerHTML = `
+            <span>${name}</span>
+            <input type="hidden" name="tags" value="${name}">
+            <button type="button" onclick="this.parentElement.remove()" class="hover:opacity-60 transition-opacity rounded-full p-0.5 flex items-center justify-center cursor-pointer">
+                <i class="ph-bold ph-x text-[10px]"></i>
+            </button>
+        `;
+
+        container.appendChild(chip);
+    }
+
+    function updateColorPreview(hexColor) {
+        const preview = document.getElementById('tag-preview-badge');
+        if (preview) {
+            preview.style.backgroundColor = hexColor + '20';
+            preview.style.borderColor = hexColor + '40';
+            preview.style.color = hexColor;
+        }
+    }
+
+
+    /* =========================================
+       5. UTILITIES
+       ========================================= */
+    function generatePassword() {
+        const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$";
+        let pass = "";
+        for (let i = 0; i < 12; i++) pass += chars.charAt(Math.floor(Math.random() * chars.length));
+        return pass;
+    }
+
     function confirmSuspend(name) {
-        if (confirm(`Are you sure you want to SUSPEND access for ${name}? They will not be able to log in.`)) {
-            alert(`${name} has been suspended.`);
+        if (confirm(`Suspend access for ${name}?`)) {
+            alert(`${name} suspended.`);
+            window.location.reload();
         }
     }
 </script>

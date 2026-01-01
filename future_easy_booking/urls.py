@@ -7,6 +7,7 @@ from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
 from django.shortcuts import render
+from agencies.views import admin_agencies_view
 
 
 # ======================
@@ -25,8 +26,12 @@ def admin_accounting_view(request):
     return render(request, 'admin/accounting.html')
 
 
-def admin_agencies_view(request):
-    return render(request, 'admin/agencies.html')
+# def admin_agencies_view(request):
+#     return render(request, 'admin/agencies.html')
+
+
+def admin_users_view(request):
+    return render(request, 'admin/users.html')
 
 
 def admin_cms_view(request):
@@ -88,6 +93,7 @@ admin_urls = [
     path("admin_panel/settings/", admin_setting_view, name="admin_setting"),
     path("admin_panel/accounting/", admin_accounting_view, name="admin_accounting"),
     path("admin_panel/agencies/", admin_agencies_view, name="admin_agencies"),
+    path("admin_panel/users/", admin_users_view, name="admin_users"),
     path("admin_panel/cms/", admin_cms_view, name="admin_cms"),
     path("admin_panel/ferries/", admin_ferry_requests_view,
          name="admin_ferry_requests"),
