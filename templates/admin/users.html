@@ -3,6 +3,339 @@
 
 {% block content %}
 
+<main class="flex-1 flex flex-col h-screen overflow-hidden relative">
 
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
+        <h1 class="text-xl font-bold text-slate-900">User Management</h1>
+        <button onclick="openUserModal('new')"
+            class="bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md hover:bg-slate-800 transition-colors flex items-center gap-2">
+            <i class="ph-bold ph-user-plus"></i> Add New User
+        </button>
+    </header>
+
+    <div class="px-8 pt-6 pb-2 bg-white border-b border-slate-200 flex flex-wrap gap-4 items-center justify-between">
+        <div class="relative flex-1 max-w-md">
+            <i class="ph ph-magnifying-glass absolute left-3 top-2.5 text-slate-400"></i>
+            <input type="text" placeholder="Search Name, Email, or Agency..."
+                class="pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:border-brand-500 w-full shadow-sm">
+        </div>
+
+        <div class="flex gap-3">
+            <select
+                class="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white text-slate-600 shadow-sm cursor-pointer hover:border-slate-300">
+                <option value="">All Roles</option>
+                <option value="admin">Platform Admin</option>
+                <option value="manager">Agency Manager</option>
+                <option value="agent">Agent</option>
+            </select>
+
+            <select
+                class="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white text-slate-600 shadow-sm cursor-pointer hover:border-slate-300">
+                <option value="">All Agencies</option>
+                <option value="none">Platform Staff (No Agency)</option>
+                {% for agency in agencies %}
+                <option value="{{ agency.id }}">{{ agency.company_name }}</option>
+                {% endfor %}
+            </select>
+
+            <select
+                class="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white text-slate-600 shadow-sm cursor-pointer hover:border-slate-300">
+                <option value="">Status</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="flex-1 overflow-y-auto p-8 bg-slate-50/50">
+        <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+            <table class="w-full text-left border-collapse">
+                <thead class="bg-slate-50 text-xs uppercase text-slate-500 font-semibold border-b border-slate-200">
+                    <tr>
+                        <th class="px-6 py-4">User Identity</th>
+                        <th class="px-6 py-4">Role & Access</th>
+                        <th class="px-6 py-4">Agency Affiliation</th>
+                        <th class="px-6 py-4">Contact</th>
+                        <th class="px-6 py-4">Status</th>
+                        <th class="px-6 py-4 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-sm">
+                    {% for user in users %}
+                    <tr class="hover:bg-slate-50 transition-colors group">
+
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="w-9 h-9 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-xs uppercase">
+                                    {{ user.first_name|slice:":1" }}{{ user.last_name|slice:":1" }}
+                                </div>
+                                <div>
+                                    <div class="font-bold text-slate-900">{{ user.first_name }} {{ user.last_name }}
+                                    </div>
+                                    <div class="text-xs text-slate-500">{{ user.email }}</div>
+                                </div>
+                            </div>
+                        </td>
+
+                        <td class="px-6 py-4">
+                            {% if user.is_superuser %}
+                            <span
+                                class="bg-purple-100 text-purple-700 px-2 py-1 rounded text-[10px] font-bold uppercase border border-purple-200">Super
+                                Admin</span>
+                            {% elif user.role %}
+                            <span
+                                class="bg-blue-50 text-blue-700 px-2 py-1 rounded text-[10px] font-bold uppercase border border-blue-100">{{
+                                user.role.name }}</span>
+                            {% else %}
+                            <span
+                                class="bg-slate-100 text-slate-500 px-2 py-1 rounded text-[10px] font-bold uppercase border border-slate-200">No
+                                Role</span>
+                            {% endif %}
+                        </td>
+
+                        <td class="px-6 py-4">
+                            {% if user.agency %}
+                            <div class="flex items-center gap-2">
+                                <i class="ph-fill ph-buildings text-slate-400"></i>
+                                <span class="font-medium text-slate-700">{{ user.agency.company_name }}</span>
+                            </div>
+                            {% else %}
+                            <div class="flex items-center gap-2">
+                                <i class="ph-fill ph-globe text-slate-400"></i>
+                                <span class="text-xs text-slate-400 italic">Platform Staff</span>
+                            </div>
+                            {% endif %}
+                        </td>
+
+                        <td class="px-6 py-4 text-slate-600">
+                            <div class="flex items-center gap-1.5"><i class="ph-bold ph-phone text-slate-400"></i>
+                                {{user.phone }}</div>
+                            <div class="flex items-center gap-1.5 mt-1 text-xs"><i
+                                    class="ph-bold ph-map-pin text-slate-400"></i> {{ user.state }}</div>
+                        </td>
+
+                        <td class="px-6 py-4">
+                            {% if user.is_active %}
+                            <span
+                                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-green-50 text-green-700 border border-green-100">
+                                <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Active
+                            </span>
+                            {% else %}
+                            <span
+                                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-100">
+                                <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Inactive
+                            </span>
+                            {% endif %}
+                        </td>
+
+                        <td class="px-6 py-4 text-right">
+                            <button onclick="openUserModal('edit', this)" data-id="{{ user.id }}"
+                                data-first="{{ user.first_name }}" data-last="{{ user.last_name }}"
+                                data-email="{{ user.email }}" data-phone="{{ user.phone }}"
+                                data-state="{{ user.state }}" data-role="{{ user.role.id|default:'' }}"
+                                data-agency="{{ user.agency.id|default:'' }}"
+                                data-active="{{ user.is_active|yesno:'true,false' }}"
+                                class="p-1.5 text-slate-500 hover:text-brand-600 hover:bg-brand-50 rounded border border-transparent hover:border-brand-200 transition-all">
+                                <i class="ph-bold ph-pencil-simple"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center text-slate-400">
+                            <i class="ph ph-users text-4xl mb-2"></i>
+                            <p>No users found matching your search.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<div id="user_modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeUserModal()"></div>
+
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden modal-enter">
+
+        <div class="bg-slate-900 p-4 flex justify-between items-center text-white">
+            <h3 class="font-bold text-lg flex items-center gap-2">
+                <i class="ph-bold ph-user"></i> <span id="modal-title">Add New User</span>
+            </h3>
+            <button onclick="closeUserModal()" class="hover:bg-slate-700 p-1 rounded"><i
+                    class="ph-bold ph-x text-lg"></i></button>
+        </div>
+
+        <div class="p-6 overflow-y-auto max-h-[80vh]">
+            <form id="user_form" onsubmit="event.preventDefault(); saveUser();" class="space-y-5">
+                {% csrf_token %}
+                <input type="hidden" id="user-id" name="user_id">
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">First Name *</label>
+                        <input type="text" id="input-first" name="first_name" required
+                            class="w-full border border-slate-300 rounded-lg p-2.5 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Last Name *</label>
+                        <input type="text" id="input-last" name="last_name" required
+                            class="w-full border border-slate-300 rounded-lg p-2.5 text-sm">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Phone *</label>
+                        <input type="tel" id="input-phone" name="phone" required
+                            class="w-full border border-slate-300 rounded-lg p-2.5 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">State *</label>
+                        <select id="input-state" name="state" required
+                            class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white">
+                            <option value="">Select State...</option>
+                            <option value="Algiers">Algiers</option>
+                            <option value="Oran">Oran</option>
+                            <option value="Setif">Setif</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <h4 class="text-xs font-bold text-slate-900 mb-3 uppercase flex items-center gap-2">
+                        <i class="ph-fill ph-lock-key-open text-brand-500"></i> Access & Permissions
+                    </h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[10px] text-slate-500 mb-1">Role</label>
+                            <select id="input-role" name="role"
+                                class="w-full border border-slate-300 rounded-lg p-2 text-sm bg-white">
+                                <option value="">Select Role...</option>
+                                {% for role in roles %}
+                                <option value="{{ role.id }}">{{ role.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-slate-500 mb-1">Agency (Optional)</label>
+                            <select id="input-agency" name="agency"
+                                class="w-full border border-slate-300 rounded-lg p-2 text-sm bg-white">
+                                <option value="">None (Platform Staff)</option>
+                                {% for agency in agencies %}
+                                <option value="{{ agency.id }}">{{ agency.company_name }}</option>
+                                {% endfor %}
+                            </select>
+                            <p class="text-[10px] text-slate-400 mt-1">Leave empty if user belongs to the platform.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Email (Username) *</label>
+                        <input type="email" id="input-email" name="email" required
+                            class="w-full border border-slate-300 rounded-lg p-2.5 text-sm">
+                    </div>
+
+                    <div id="password-section">
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Password</label>
+                        <div class="relative">
+                            <input type="text" id="input-password" name="password"
+                                class="w-full border border-slate-300 rounded-lg p-2.5 text-sm font-mono text-slate-700 bg-white">
+                            <button type="button" onclick="generateUserPassword()"
+                                class="absolute right-2 top-2 text-xs bg-slate-200 px-2 py-1 rounded hover:bg-slate-300 font-bold text-slate-600">Generate</button>
+                        </div>
+                    </div>
+
+                    <div id="status-section" class="hidden pt-2">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="input-active"
+                                class="w-4 h-4 text-brand-600 rounded border-gray-300 focus:ring-brand-500">
+                            <span class="text-sm text-slate-700 font-medium">User Account Active</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="pt-4 flex gap-3 border-t border-slate-100">
+                    <button type="button" onclick="closeUserModal()"
+                        class="flex-1 py-2.5 border border-slate-300 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50">Cancel</button>
+                    <button type="submit" id="save-btn"
+                        class="flex-1 py-2.5 bg-brand-600 text-white rounded-lg text-sm font-bold shadow hover:bg-brand-700">Save
+                        User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    const userModal = document.getElementById('user_modal');
+    const userForm = document.getElementById('user_form');
+
+    function openUserModal(mode, button = null) {
+        userForm.reset();
+
+        if (mode === 'new') {
+            // NEW USER
+            document.getElementById('modal-title').innerText = 'Add New User';
+            document.getElementById('user-id').value = '';
+            document.getElementById('password-section').classList.remove('hidden');
+            document.getElementById('status-section').classList.add('hidden');
+            document.getElementById('input-password').required = true;
+            generateUserPassword(); // Auto generate for new
+
+        } else {
+            // EDIT USER
+            document.getElementById('modal-title').innerText = 'Edit User Details';
+            document.getElementById('user-id').value = button.dataset.id;
+
+            // Populate
+            document.getElementById('input-first').value = button.dataset.first;
+            document.getElementById('input-last').value = button.dataset.last;
+            document.getElementById('input-email').value = button.dataset.email;
+            document.getElementById('input-phone').value = button.dataset.phone;
+            document.getElementById('input-state').value = button.dataset.state;
+            document.getElementById('input-role').value = button.dataset.role;
+            document.getElementById('input-agency').value = button.dataset.agency;
+
+            // Handle Checkbox
+            document.getElementById('input-active').checked = (button.dataset.active === 'true');
+
+            // Handle UI Changes
+            document.getElementById('password-section').classList.add('hidden'); // Hide pass on edit
+            document.getElementById('input-password').required = false;
+            document.getElementById('status-section').classList.remove('hidden'); // Show status toggle
+        }
+
+        userModal.classList.remove('hidden');
+    }
+
+    function closeUserModal() {
+        userModal.classList.add('hidden');
+    }
+
+    function saveUser() {
+        const btn = document.getElementById('save-btn');
+        const originalText = btn.innerText;
+        btn.innerText = 'Saving...';
+
+        setTimeout(() => {
+            alert('User Saved Successfully!');
+            closeUserModal();
+            btn.innerText = originalText;
+            window.location.reload();
+        }, 800);
+    }
+
+    function generateUserPassword() {
+        const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$";
+        let pass = "";
+        for (let i = 0; i < 12; i++) pass += chars.charAt(Math.floor(Math.random() * chars.length));
+        document.getElementById('input-password').value = pass;
+    }
+</script>
 
 {% endblock %}

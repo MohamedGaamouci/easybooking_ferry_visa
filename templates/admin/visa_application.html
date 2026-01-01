@@ -1,4 +1,5 @@
 {% extends 'admin/base_admin.html' %}
+{% load static %}
 
 {% block content %}
 
@@ -22,7 +23,7 @@
                     class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
                     <div>
                         <p class="text-xs font-bold text-slate-400 uppercase">New</p>
-                        <p class="text-2xl font-bold text-slate-900">4</p>
+                        <p class="text-2xl font-bold text-slate-900">{{ count_new }}</p>
                     </div>
                     <div
                         class="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-xl">
@@ -33,7 +34,7 @@
                     class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
                     <div>
                         <p class="text-xs font-bold text-slate-400 uppercase">Appointment Set</p>
-                        <p class="text-2xl font-bold text-slate-900">3</p>
+                        <p class="text-2xl font-bold text-slate-900">{{ count_appt }}</p>
                     </div>
                     <div
                         class="w-10 h-10 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center text-xl">
@@ -44,7 +45,7 @@
                     class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
                     <div>
                         <p class="text-xs font-bold text-slate-400 uppercase">Embassy</p>
-                        <p class="text-2xl font-bold text-slate-900">8</p>
+                        <p class="text-2xl font-bold text-slate-900">{{ count_embassy }}</p>
                     </div>
                     <div
                         class="w-10 h-10 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center text-xl">
@@ -55,7 +56,7 @@
                     class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
                     <div>
                         <p class="text-xs font-bold text-slate-400 uppercase">Completed</p>
-                        <p class="text-2xl font-bold text-slate-900">12</p>
+                        <p class="text-2xl font-bold text-slate-900">{{ count_completed }}</p>
                     </div>
                     <div
                         class="w-10 h-10 rounded-full bg-green-50 text-green-600 flex items-center justify-center text-xl">
@@ -69,8 +70,13 @@
                     <button
                         class="px-3 py-1.5 text-xs font-bold bg-white border border-slate-200 rounded shadow-sm text-slate-700">All
                         Applications</button>
-                    <button class="px-3 py-1.5 text-xs font-medium text-slate-500 hover:text-slate-700">Pending
-                        Action</button>
+                    <select
+                        class="px-3 py-1.5 text-xs font-medium text-slate-600 bg-transparent border-none outline-none cursor-pointer hover:text-slate-900">
+                        <option value="">Filter by Destination</option>
+                        {% for dest in destinations %}
+                        <option value="{{ dest.id }}">{{ dest.country }} - {{ dest.visa_type }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
 
                 <table class="w-full text-left border-collapse">
@@ -85,60 +91,79 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 text-sm">
-
-                        <tr class="hover:bg-slate-50 transition-colors bg-blue-50/30">
-                            <td class="px-6 py-4 font-mono font-bold text-brand-600">#VS-9925</td>
+                        {% for app in applications %}
+                        <tr
+                            class="hover:bg-slate-50 transition-colors {% if app.status == 'new' %}bg-blue-50/20{% endif %}">
+                            <td class="px-6 py-4 font-mono font-bold text-brand-600">#{{ app.reference }}</td>
                             <td class="px-6 py-4">
-                                <div class="font-medium text-slate-900">Karim Benz</div>
-                                <div class="text-xs text-slate-500">Global Travel • Amine</div>
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="flex items-center gap-2">
-                                    <div
-                                        class="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[10px]">
-                                        🇫🇷</div>
-                                    <span>France</span>
+                                <div class="font-medium text-slate-900">{{ app.first_name }} {{ app.last_name }}</div>
+                                <div class="text-xs text-slate-500">
+                                    {% if app.agency %}
+                                    {{ app.agency.company_name }}
+                                    {% else %}
+                                    Direct Client
+                                    {% endif %}
                                 </div>
                             </td>
                             <td class="px-6 py-4">
+                                <div class="flex items-center gap-2">
+                                    {% if app.destination.cover_image %}
+                                    <img src="{{ app.destination.cover_image.url }}"
+                                        class="w-6 h-4 object-cover rounded shadow-sm">
+                                    {% else %}
+                                    <div
+                                        class="w-6 h-4 bg-slate-200 rounded flex items-center justify-center text-[8px]">
+                                        🏳️</div>
+                                    {% endif %}
+                                    <span>{{ app.destination.country }}</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                {% if app.status == 'new' %}
                                 <span
                                     class="inline-flex items-center gap-1.5 bg-blue-100 text-blue-700 px-2.5 py-1 rounded-full text-xs font-bold">
                                     <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span> New
-                                    Application
                                 </span>
-                            </td>
-                            <td class="px-6 py-4 text-right">
-                                <button onclick="openProcessModal('new')"
-                                    class="bg-brand-600 text-white px-3 py-1.5 rounded text-xs font-bold shadow hover:bg-brand-700">Process</button>
-                            </td>
-                        </tr>
-
-                        <tr class="hover:bg-slate-50 transition-colors">
-                            <td class="px-6 py-4 font-mono font-bold text-slate-600">#VS-9921</td>
-                            <td class="px-6 py-4">
-                                <div class="font-medium text-slate-900">Amine Khelil</div>
-                                <div class="text-xs text-slate-500">Direct Client</div>
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="flex items-center gap-2">
-                                    <div
-                                        class="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[10px]">
-                                        🇺🇸</div>
-                                    <span>USA</span>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4">
+                                {% elif app.status == 'review' %}
+                                <span
+                                    class="bg-yellow-100 text-yellow-700 px-2.5 py-1 rounded-full text-xs font-bold border border-yellow-200">Under
+                                    Review</span>
+                                {% elif app.status == 'appointment' %}
                                 <span
                                     class="inline-flex items-center gap-1.5 bg-purple-50 text-purple-700 px-2.5 py-1 rounded-full text-xs font-bold border border-purple-100">
-                                    <i class="ph-bold ph-calendar"></i> Appt: 28 Oct
+                                    <i class="ph-bold ph-calendar">
+                                    </i> Appt: {{ app.embassy_appointment_date|date:"M d"|default:"Set Date" }}
                                 </span>
+                                {% elif app.status == 'embassy' %}
+                                <span
+                                    class="bg-orange-100 text-orange-700 px-2.5 py-1 rounded-full text-xs font-bold border border-orange-200">At
+                                    Embassy</span>
+                                {% elif app.status == 'ready' %}
+                                <span
+                                    class="bg-teal-100 text-teal-700 px-2.5 py-1 rounded-full text-xs font-bold border border-teal-200">Ready</span>
+                                {% elif app.status == 'completed' %}
+                                <span
+                                    class="bg-green-100 text-green-700 px-2.5 py-1 rounded-full text-xs font-bold border border-green-200">Completed</span>
+                                {% elif app.status == 'rejected' %}
+                                <span
+                                    class="bg-red-100 text-red-700 px-2.5 py-1 rounded-full text-xs font-bold border border-red-200">Rejected</span>
+                                {% endif %}
                             </td>
                             <td class="px-6 py-4 text-right">
-                                <button onclick="openProcessModal('appt')"
-                                    class="text-slate-500 hover:text-brand-600 border border-slate-200 px-3 py-1.5 rounded text-xs font-medium hover:bg-white hover:shadow-sm">Update</button>
+                                <button onclick="openProcessModal('{{ app.id }}')"
+                                    class="bg-brand-600 text-white px-3 py-1.5 rounded text-xs font-bold shadow hover:bg-brand-700">
+                                    Process
+                                </button>
                             </td>
                         </tr>
-
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="px-6 py-12 text-center text-slate-400">
+                                <i class="ph ph-files text-4xl mb-2"></i>
+                                <p>No visa applications found.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
             </div>
@@ -150,92 +175,123 @@
 <div id="process-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeProcessModal()">
     </div>
-    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-[80vh] flex overflow-hidden modal-enter">
 
-        <div class="w-1/2 bg-slate-100 border-r border-slate-200 flex flex-col p-6 items-center justify-center">
-            <div class="bg-white p-2 shadow-sm rounded-lg mb-4 w-48">
-                <div class="aspect-[3/4] bg-slate-200 rounded flex items-center justify-center text-slate-400">
-                    <i class="ph-fill ph-file-pdf text-4xl"></i>
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-6xl h-[90vh] flex overflow-hidden modal-enter">
+
+        <div class="w-7/12 bg-slate-50 border-r border-slate-200 flex flex-col p-0 overflow-y-auto">
+
+            <div class="p-6 border-b border-slate-200 bg-white sticky top-0 z-10">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <span
+                            class="text-[10px] font-bold bg-brand-100 text-brand-700 px-2 py-1 rounded uppercase tracking-wider"
+                            id="view-ref">REF-LOADING</span>
+                        <h2 class="text-xl font-bold text-slate-900 mt-2" id="view-applicant">Loading...</h2>
+                        <div class="flex items-center gap-2 text-xs text-slate-500 mt-1">
+                            <i class="ph-fill ph-buildings"></i> <span id="view-agency">-</span>
+                            <span class="text-slate-300">|</span>
+                            <i class="ph-fill ph-airplane-tilt"></i> <span id="view-destination">-</span>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase">Current Status</p>
+                        <span id="view-status-badge"
+                            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600 mt-1">
+                            Loading...
+                        </span>
+                    </div>
                 </div>
             </div>
-            <p class="text-sm font-bold text-slate-700">Passport_Scan.pdf</p>
-            <div class="flex gap-2 mt-4">
-                <button
-                    class="bg-white border border-slate-300 text-slate-700 px-3 py-1.5 rounded text-xs font-medium hover:bg-slate-50"><i
-                        class="ph-bold ph-eye"></i> View</button>
-                <button
-                    class="bg-white border border-slate-300 text-slate-700 px-3 py-1.5 rounded text-xs font-medium hover:bg-slate-50"><i
-                        class="ph-bold ph-download"></i> Download</button>
+
+            <div class="p-6 space-y-8">
+                <div>
+                    <h4 class="text-xs font-bold text-slate-500 uppercase mb-3 flex items-center gap-2">
+                        <i class="ph-bold ph-list-dashes"></i> Application Form Data
+                    </h4>
+                    <div class="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-50 border-b border-slate-200 text-xs uppercase text-slate-500">
+                                <tr>
+                                    <th class="px-4 py-3 font-semibold w-1/2">Question</th>
+                                    <th class="px-4 py-3 font-semibold w-1/2">Applicant Answer</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100" id="answers-table-body">
+                                <tr>
+                                    <td colspan="2" class="px-4 py-4 text-center text-slate-400 italic">Loading data...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="text-xs font-bold text-slate-500 uppercase mb-3 flex items-center gap-2">
+                        <i class="ph-bold ph-files"></i> Attached Documents
+                    </h4>
+                    <div class="space-y-3" id="documents-list">
+                        <div class="p-4 text-center text-slate-400 text-sm">Loading documents...</div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="w-1/2 flex flex-col bg-white">
-            <div class="p-6 border-b border-slate-100 flex justify-between items-center">
-                <div>
-                    <h2 class="text-lg font-bold text-slate-900">Process #VS-9925</h2>
-                    <p class="text-xs text-slate-500">Applicant: Karim Benz</p>
-                </div>
-                <button onclick="closeProcessModal()" class="text-slate-400 hover:text-slate-600"><i
+        <div class="w-5/12 flex flex-col bg-white">
+            <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <h3 class="font-bold text-slate-800">Processing Actions</h3>
+                <button onclick="closeProcessModal()"
+                    class="text-slate-400 hover:text-slate-600 p-1 hover:bg-slate-200 rounded transition-colors"><i
                         class="ph-bold ph-x text-lg"></i></button>
             </div>
 
             <div class="flex-1 overflow-y-auto p-6 space-y-6">
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Update Status</label>
-                    <select id="status-select" onchange="toggleFields()"
-                        class="w-full border border-slate-300 rounded-lg p-2.5 text-sm font-medium bg-white focus:ring-2 focus:ring-brand-500 outline-none">
-                        <option value="new">New Application</option>
-                        <option value="appt">Appointment Scheduled</option>
-                        <option value="embassy">Processing at Embassy</option>
-                        <option value="ready">Ready for Collection</option>
-                        <option value="rejected">Rejected</option>
-                    </select>
-                </div>
+                <form id="process-form">
+                    {% csrf_token %}
+                    <input type="hidden" id="process-id" name="application_id">
 
-                <div id="field-appointment"
-                    class="hidden space-y-4 p-4 bg-purple-50 rounded-xl border border-purple-100">
-                    <h4 class="text-xs font-bold text-purple-700 uppercase flex items-center gap-2"><i
-                            class="ph-fill ph-calendar-plus"></i> Appointment Details</h4>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div><label class="block text-[10px] font-bold text-purple-600 mb-1">Date</label><input
-                                type="date" class="w-full border border-purple-200 rounded p-2 text-sm"></div>
-                        <div><label class="block text-[10px] font-bold text-purple-600 mb-1">Time</label><input
-                                type="time" class="w-full border border-purple-200 rounded p-2 text-sm"></div>
-                    </div>
                     <div>
-                        <label class="block text-[10px] font-bold text-purple-600 mb-1">Upload Appointment Letter
-                            (PDF)</label>
-                        <input type="file"
-                            class="w-full text-xs text-slate-500 file:mr-2 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-purple-100 file:text-purple-700 hover:file:bg-purple-200">
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Update Workflow
+                            Status</label>
+                        <select id="status-select" name="status" onchange="toggleFields()"
+                            class="w-full border border-slate-300 rounded-lg p-3 text-sm font-medium bg-white focus:ring-2 focus:ring-brand-500 outline-none shadow-sm">
+                            <option value="new">New Application</option>
+                            <option value="review">Under Review</option>
+                            <option value="appointment">Appointment Scheduled</option>
+                            <option value="embassy">Submitted to Embassy</option>
+                            <option value="ready">Ready for Collection</option>
+                            <option value="completed">Completed</option>
+                            <option value="rejected">Rejected</option>
+                        </select>
                     </div>
-                </div>
 
-                <div id="field-ready" class="hidden space-y-4 p-4 bg-green-50 rounded-xl border border-green-100">
-                    <h4 class="text-xs font-bold text-green-700 uppercase flex items-center gap-2"><i
-                            class="ph-fill ph-check-circle"></i> Finalization</h4>
-                    <div>
-                        <label class="block text-[10px] font-bold text-green-600 mb-1">Upload Visa Scan / Voucher
-                            (Optional)</label>
-                        <input type="file"
-                            class="w-full text-xs text-slate-500 file:mr-2 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-green-100 file:text-green-700 hover:file:bg-green-200">
+                    <div id="field-appointment"
+                        class="hidden space-y-4 p-4 bg-purple-50 rounded-xl border border-purple-100 mt-4 animate-fade-in">
+                        <h4 class="text-xs font-bold text-purple-700 uppercase flex items-center gap-2">
+                            <i class="ph-fill ph-calendar-plus"></i> Set Appointment
+                        </h4>
+                        <div>
+                            <label class="block text-[10px] font-bold text-purple-600 mb-1">Date & Time</label>
+                            <input type="datetime-local" id="process-appt-date" name="embassy_appointment_date"
+                                class="w-full border border-purple-200 rounded p-2 text-sm bg-white focus:outline-none focus:border-purple-400">
+                        </div>
                     </div>
-                </div>
 
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Admin Notes
-                        (Internal)</label>
-                    <textarea
-                        class="w-full border border-slate-300 rounded-lg p-2.5 text-sm h-20 resize-none focus:ring-2 focus:ring-brand-500"
-                        placeholder="e.g. Client missing bank statement..."></textarea>
-                </div>
+                    <div class="mt-6">
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Internal Notes</label>
+                        <textarea id="process-notes" name="admin_notes"
+                            class="w-full border border-slate-300 rounded-lg p-3 text-sm h-32 resize-none focus:ring-2 focus:ring-brand-500 shadow-sm"
+                            placeholder="Write internal remarks here (e.g. 'Pending payment', 'Missing signature')..."></textarea>
+                    </div>
+                </form>
             </div>
 
-            <div class="p-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
+            <div class="p-5 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 shrink-0">
                 <button onclick="closeProcessModal()"
-                    class="px-4 py-2 border border-slate-300 bg-white rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50">Cancel</button>
-                <button onclick="saveChanges()"
-                    class="px-6 py-2 bg-brand-600 text-white rounded-lg text-sm font-bold shadow-md hover:bg-brand-700 flex items-center gap-2">
-                    <i class="ph-bold ph-floppy-disk"></i> Save & Notify Client
+                    class="px-5 py-2.5 border border-slate-300 bg-white rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
+                <button onclick="saveProcessChanges()"
+                    class="px-6 py-2.5 bg-brand-600 text-white rounded-lg text-sm font-bold shadow-md hover:bg-brand-700 flex items-center gap-2 transition-transform active:scale-95">
+                    <i class="ph-bold ph-floppy-disk"></i> Save Changes
                 </button>
             </div>
         </div>
@@ -245,82 +301,59 @@
 <div id="manual-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeManualModal()">
     </div>
-    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg p-0 overflow-hidden modal-enter">
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden modal-enter">
 
         <div class="bg-brand-600 p-4 border-b border-brand-500 flex justify-between items-center text-white">
-            <h3 class="font-bold flex items-center gap-2">
-                <i class="ph-fill ph-folder-plus"></i> New Manual Application
+            <h3 class="font-bold flex items-center gap-2"><i class="ph-fill ph-folder-plus"></i> New Manual Application
             </h3>
             <button onclick="closeManualModal()" class="text-brand-100 hover:text-white"><i
                     class="ph-bold ph-x"></i></button>
         </div>
 
-        <form onsubmit="event.preventDefault(); submitManualApp();" class="p-6 space-y-4">
+        <form id="manual-form" method="POST" action="" class="p-6 space-y-4">
+            {% csrf_token %}
 
             <div>
-                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Assign to Agency /
-                    Client</label>
-                <select
-                    class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-brand-500 outline-none">
-                    <option value="direct">Direct Walk-in (New Client)</option>
-                    <option value="global">Global Travel Agency</option>
-                    <option value="sunshine">Sunshine Voyages</option>
-                    <option value="elite">Elite Tours</option>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Assign to Agency</label>
+                <select name="agency"
+                    class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-slate-50 focus:bg-white outline-none">
+                    <option value="">Direct Walk-in (No Agency)</option>
+                    {% for agency in agencies %}
+                    <option value="{{ agency.id }}">{{ agency.company_name }}</option>
+                    {% endfor %}
                 </select>
             </div>
 
             <div>
                 <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Destination</label>
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-2 gap-3 max-h-32 overflow-y-auto pr-1">
+                    {% for dest in destinations %}
                     <label
                         class="border border-slate-200 rounded-lg p-2 flex items-center gap-2 cursor-pointer hover:border-brand-500 hover:bg-brand-50">
-                        <input type="radio" name="dest" class="text-brand-600" checked>
-                        <span class="text-sm font-medium">France (Schengen)</span>
+                        <input type="radio" name="destination" value="{{ dest.id }}" class="text-brand-600">
+                        <span class="text-sm font-medium">{{ dest.country }} - {{ dest.visa_type }}</span>
                     </label>
-                    <label
-                        class="border border-slate-200 rounded-lg p-2 flex items-center gap-2 cursor-pointer hover:border-brand-500 hover:bg-brand-50">
-                        <input type="radio" name="dest" class="text-brand-600">
-                        <span class="text-sm font-medium">United States</span>
-                    </label>
-                    <label
-                        class="border border-slate-200 rounded-lg p-2 flex items-center gap-2 cursor-pointer hover:border-brand-500 hover:bg-brand-50">
-                        <input type="radio" name="dest" class="text-brand-600">
-                        <span class="text-sm font-medium">Turkey</span>
-                    </label>
-                    <label
-                        class="border border-slate-200 rounded-lg p-2 flex items-center gap-2 cursor-pointer hover:border-brand-500 hover:bg-brand-50">
-                        <input type="radio" name="dest" class="text-brand-600">
-                        <span class="text-sm font-medium">Canada</span>
-                    </label>
+                    {% endfor %}
                 </div>
             </div>
 
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="block text-xs font-bold text-slate-500 uppercase mb-1">First Name</label>
-                    <input type="text"
-                        class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-brand-500">
+                    <input type="text" name="first_name" required
+                        class="w-full border border-slate-300 rounded-lg p-2.5 text-sm">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Last Name</label>
-                    <input type="text"
-                        class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-brand-500">
+                    <input type="text" name="last_name" required
+                        class="w-full border border-slate-300 rounded-lg p-2.5 text-sm">
                 </div>
             </div>
 
             <div>
                 <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Passport Number</label>
-                <input type="text"
-                    class="w-full border border-slate-300 rounded-lg p-2.5 text-sm font-mono uppercase focus:ring-2 focus:ring-brand-500">
-            </div>
-
-            <div>
-                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Passport Scan</label>
-                <div
-                    class="border-2 border-dashed border-slate-300 rounded-lg p-4 text-center cursor-pointer hover:bg-slate-50 hover:border-brand-300 transition-colors">
-                    <i class="ph-duotone ph-upload-simple text-2xl text-slate-400"></i>
-                    <p class="text-xs text-slate-500 mt-1">Click to upload or drag file here</p>
-                </div>
+                <input type="text" name="passport_number" required
+                    class="w-full border border-slate-300 rounded-lg p-2.5 text-sm font-mono uppercase">
             </div>
 
             <div class="pt-2">
@@ -334,56 +367,138 @@
 </div>
 
 <script>
-    // === PROCESS MODAL LOGIC ===
-    const modal = document.getElementById('process-modal');
-    const select = document.getElementById('status-select');
+    // === PROCESS MODAL LOGIC (AJAX POWERED) ===
+    const processModal = document.getElementById('process-modal');
+    const statusSelect = document.getElementById('status-select');
     const fieldAppt = document.getElementById('field-appointment');
-    const fieldReady = document.getElementById('field-ready');
 
-    function openProcessModal(state) {
-        modal.classList.remove('hidden');
-        fieldAppt.classList.add('hidden');
-        fieldReady.classList.add('hidden');
-        if (state === 'new') select.value = 'new';
-        if (state === 'appt') { select.value = 'appt'; fieldAppt.classList.remove('hidden'); }
+    // 1. OPEN MODAL & FETCH DATA
+    function openProcessModal(appId) {
+        // Show Modal immediately
+        processModal.classList.remove('hidden');
+
+        // Show Loading State in UI while fetching
+        document.getElementById('view-ref').innerText = 'LOADING...';
+        document.getElementById('view-applicant').innerText = 'Fetching Data...';
+        document.getElementById('answers-table-body').innerHTML = '<tr><td colspan="2" class="px-4 py-8 text-center"><i class="ph-bold ph-spinner animate-spin text-2xl text-brand-600"></i></td></tr>';
+        document.getElementById('documents-list').innerHTML = '';
+
+        // AJAX CALL to your Django API
+        // Ensure you have: path("api/visa/<int:app_id>/", get_visa_details)
+        fetch(`/admin_panel/api/visa/${appId}/`)
+            .then(response => {
+                if (!response.ok) throw new Error("Network response was not ok");
+                return response.json();
+            })
+            .then(data => {
+                populateModalData(data);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert("Failed to load application data. Please try again.");
+                closeProcessModal();
+            });
     }
 
-    function closeProcessModal() { modal.classList.add('hidden'); }
+    // 2. POPULATE UI WITH DATA
+    function populateModalData(data) {
+        // --- A. Header Info ---
+        document.getElementById('process-id').value = data.id;
+        document.getElementById('view-ref').innerText = '#' + data.reference;
+        document.getElementById('view-applicant').innerText = data.applicant; // "First Last"
+        document.getElementById('view-agency').innerText = data.agency_name || 'Direct Client';
+        document.getElementById('view-destination').innerText = data.destination || 'Unknown';
+
+        // --- B. Status & Notes ---
+        statusSelect.value = data.status;
+        console.log('status selected', statusSelect.value)
+        console.log('status selected 2', data.status)
+        toggleFields(); // Show/Hide Appt field based on status
+        document.getElementById('process-notes').value = data.admin_notes || '';
+        if (data.appointment_date) {
+            document.getElementById('process-appt-date').value = data.appointment_date;
+        }
+
+        // --- C. Answers Table (Dynamic Construction) ---
+        const tableBody = document.getElementById('answers-table-body');
+        tableBody.innerHTML = ''; // Clear loading spinner
+
+        if (data.answers && data.answers.length > 0) {
+            data.answers.forEach(ans => {
+                const row = `
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-4 py-3 border-b border-slate-100 font-medium text-slate-600">${ans.label}</td>
+                        <td class="px-4 py-3 border-b border-slate-100 font-bold text-slate-900">${ans.value}</td>
+                    </tr>
+                `;
+                tableBody.insertAdjacentHTML('beforeend', row);
+            });
+        } else {
+            tableBody.innerHTML = '<tr><td colspan="2" class="px-4 py-4 text-center text-slate-400 italic">No additional form data provided.</td></tr>';
+        }
+
+        // --- D. Documents List (Dynamic Construction) ---
+        const docsContainer = document.getElementById('documents-list');
+        docsContainer.innerHTML = '';
+
+        if (data.documents && data.documents.length > 0) {
+            data.documents.forEach(doc => {
+                // Determine icon color based on validation status
+                let statusColor = 'bg-slate-100 text-slate-600';
+                if (doc.status === 'valid') statusColor = 'bg-green-100 text-green-600';
+                if (doc.status === 'rejected') statusColor = 'bg-red-100 text-red-600';
+
+                const docCard = `
+                    <div class="flex items-center justify-between bg-white p-3 rounded-lg border border-slate-200 shadow-sm group hover:border-brand-300 transition-all">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg ${statusColor} flex items-center justify-center text-lg">
+                                <i class="ph-fill ph-file-pdf"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs font-bold text-slate-700">${doc.name}</p>
+                                <p class="text-[10px] text-slate-400 uppercase font-bold">${doc.status}</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-2 opacity-100">
+                            <a href="${doc.url}" target="_blank" class="p-2 text-slate-500 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors" title="View File">
+                                <i class="ph-bold ph-eye"></i>
+                            </a>
+                        </div>
+                    </div>
+                `;
+                docsContainer.insertAdjacentHTML('beforeend', docCard);
+            });
+        } else {
+            docsContainer.innerHTML = '<div class="p-4 border border-dashed border-slate-300 rounded-lg text-center text-slate-400 text-sm">No documents uploaded.</div>';
+        }
+    }
+
+    // 3. UTILITIES
+    function closeProcessModal() {
+        processModal.classList.add('hidden');
+    }
 
     function toggleFields() {
-        const val = select.value;
-        fieldAppt.classList.add('hidden');
-        fieldReady.classList.add('hidden');
-        if (val === 'appt') fieldAppt.classList.remove('hidden');
-        if (val === 'ready') fieldReady.classList.remove('hidden');
+        const val = statusSelect.value;
+        if (val === 'appointment') {
+            fieldAppt.classList.remove('hidden');
+        } else {
+            fieldAppt.classList.add('hidden');
+        }
     }
 
-    function saveChanges() {
+    function saveProcessChanges() {
         const btn = document.querySelector('#process-modal button:last-child');
+        const originalText = btn.innerHTML;
         btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Saving...';
-        setTimeout(() => { alert("Status updated! Client notified."); location.reload(); }, 1000);
-    }
 
-    // === MANUAL APP MODAL LOGIC (NEW) ===
-    const manualModal = document.getElementById('manual-modal');
-
-    function openManualModal() {
-        manualModal.classList.remove('hidden');
-    }
-
-    function closeManualModal() {
-        manualModal.classList.add('hidden');
-    }
-
-    function submitManualApp() {
-        const btn = document.querySelector('#manual-modal button[type="submit"]');
-        btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Creating...';
+        // In a real app, you would use fetch() with POST here to submit the form data
+        // For now, we simulate success
         setTimeout(() => {
-            alert("Manual Application Created Successfully!");
-            closeManualModal();
-            btn.innerHTML = 'Create Application'; // Reset
-            // In a real app, this would append the new row to the table
-        }, 1000);
+            alert("Application updated successfully!");
+            closeProcessModal();
+            location.reload();
+        }, 800);
     }
 </script>
 

@@ -8,6 +8,8 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.shortcuts import render
 from agencies.views import admin_agencies_view
+from users.views import admin_users_view
+from visas.views import admin_visa_app_view, get_visa_details
 
 
 # ======================
@@ -26,24 +28,12 @@ def admin_accounting_view(request):
     return render(request, 'admin/accounting.html')
 
 
-# def admin_agencies_view(request):
-#     return render(request, 'admin/agencies.html')
-
-
-def admin_users_view(request):
-    return render(request, 'admin/users.html')
-
-
 def admin_cms_view(request):
     return render(request, 'admin/cms.html')
 
 
 def admin_ferry_requests_view(request):
     return render(request, 'admin/ferry_requests.html')
-
-
-def admin_visa_app_view(request):
-    return render(request, 'admin/visa_application.html')
 
 
 # ======================
@@ -98,6 +88,8 @@ admin_urls = [
     path("admin_panel/ferries/", admin_ferry_requests_view,
          name="admin_ferry_requests"),
     path("admin_panel/visas/", admin_visa_app_view, name="admin_visa_app"),
+    path("admin_panel/api/visa/<int:app_id>/",
+         get_visa_details, name="api_visa_details"),
 ]
 urlpatterns += admin_urls
 
