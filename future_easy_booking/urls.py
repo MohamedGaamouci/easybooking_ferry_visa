@@ -7,9 +7,9 @@ from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
 from django.shortcuts import render
-from agencies.views import admin_agencies_view
+from agencies.views import admin_agencies_view, get_agencies_api
 from users.views import admin_users_view
-from visas.views import admin_visa_app_view, get_visa_details
+from visas.views import visa_list_view, get_visa_details, update_visa_application, get_visa_destinations_api, visa_create_view, get_visa_schema
 
 
 # ======================
@@ -82,14 +82,32 @@ admin_urls = [
     path("admin_panel/dashboard/", admin_dashboard_view, name="admin_dashboard"),
     path("admin_panel/settings/", admin_setting_view, name="admin_setting"),
     path("admin_panel/accounting/", admin_accounting_view, name="admin_accounting"),
+
+
+
     path("admin_panel/agencies/", admin_agencies_view, name="admin_agencies"),
+    path("admin_panel/api/agencies/", get_agencies_api,
+         name="api_agencies"),  # <--- Add this
+
+
+
     path("admin_panel/users/", admin_users_view, name="admin_users"),
     path("admin_panel/cms/", admin_cms_view, name="admin_cms"),
     path("admin_panel/ferries/", admin_ferry_requests_view,
          name="admin_ferry_requests"),
-    path("admin_panel/visas/", admin_visa_app_view, name="admin_visa_app"),
+    path("admin_panel/visas/", visa_list_view, name="admin_visa_app"),
     path("admin_panel/api/visa/<int:app_id>/",
          get_visa_details, name="api_visa_details"),
+    path("admin_panel/api/visa/update/",
+         update_visa_application, name="api_visa_update"),
+    # In your patterns:
+    path("admin_panel/api/visa/destinations/",
+         get_visa_destinations_api, name="api_visa_destinations"),
+    # 2. CREATE (The Missing Link) - Add this line
+    path("admin_panel/visas/create/", visa_create_view,
+         name="visa_create"),  # <--- Here
+    path("admin_panel/api/visa/schema/<int:destination_id>/",
+         get_visa_schema, name="api_visa_schema"),
 ]
 urlpatterns += admin_urls
 

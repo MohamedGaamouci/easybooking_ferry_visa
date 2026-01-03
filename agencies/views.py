@@ -2,6 +2,9 @@ from django.shortcuts import render
 from django.db.models import Sum
 from .models import Agency
 from finance.models import Account
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_GET
+from django.http import JsonResponse
 
 
 def admin_agencies_view(request):
@@ -38,3 +41,16 @@ def admin_agencies_view(request):
     }
 
     return render(request, 'admin/agencies.html', context)
+
+
+@login_required
+@require_GET
+def get_agencies_api(request):
+    """
+    API: Returns a list of active agencies for the dropdown.
+    """
+    agencies = Agency.objects.filter(status='active').values(
+        'id', 'company_name'
+    ).order_by('company_name')
+
+    return JsonResponse({'agencies': list(agencies)})

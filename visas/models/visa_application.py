@@ -52,7 +52,7 @@ class VisaApplication(models.Model):
 
     # Admin Notes
     embassy_appointment_date = models.DateTimeField(null=True, blank=True)
-    admin_notes = models.TextField(blank=True)
+    admin_notes = models.TextField(null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
