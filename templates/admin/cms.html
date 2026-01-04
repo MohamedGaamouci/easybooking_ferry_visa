@@ -341,6 +341,19 @@
                         </div>
                     </div>
                 </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Visa Conditions /
+                        Requirements</label>
+                    <div class="relative">
+                        <textarea name="conditions" rows="4" placeholder="• Valid Passport&#10;• 2 Photos"
+                            onfocus="if(this.value==='') this.value='• ';"
+                            onkeydown="if(event.key === 'Enter') { event.preventDefault(); this.value = this.value + '\n• '; }"
+                            class="w-full border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-purple-500 outline-none bg-slate-50 leading-relaxed"></textarea>
+                        <p class="text-[10px] text-slate-400 mt-1 italic text-right">Press Enter to add a new point.</p>
+                    </div>
+                </div>
+
                 <div
                     class="flex items-center justify-between bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                     <div>
@@ -359,9 +372,7 @@
                     </label>
                 </div>
 
-
                 <div>
-
                     <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Cover Image</label>
                     <input type="file" name="cover_image" accept="image/*"
                         class="w-full border border-slate-300 rounded-lg p-2 text-sm bg-white file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100">
@@ -700,7 +711,8 @@
                 net_price: form.querySelector('[name="net_price"]').value,
                 selling_price: form.querySelector('[name="selling_price"]').value,
                 processing_time: form.querySelector('[name="processing_time"]').value,
-                is_active: form.querySelector('[name="is_active"]').checked
+                is_active: form.querySelector('[name="is_active"]').checked,
+                conditions: form.querySelector('[name="conditions"]').value
             },
             required_docs: [],
             visa_form_fields: []
@@ -786,6 +798,7 @@
         form.querySelector('[name="selling_price"]').value = d.selling_price;
         form.querySelector('[name="processing_time"]').value = d.processing_time;
         form.querySelector('[name="is_active"]').checked = d.is_active;
+        form.querySelector('[name="conditions"]').value = d.conditions || '';
 
         // 2. Fill Documents
         const docContainer = document.getElementById('docs-container');

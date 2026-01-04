@@ -22,6 +22,9 @@ class VisaDestination(models.Model):
         max_length=50, help_text="e.g. 15-20 Days")
     is_active = models.BooleanField(default=True)
 
+    conditions = models.TextField(
+        blank=True, null=True, help_text="Visa conditions with bullet points")
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

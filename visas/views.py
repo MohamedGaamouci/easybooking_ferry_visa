@@ -502,6 +502,7 @@ def visa_destination_update_view(request, pk):
         dest_data = data.get('visa_destination', {})
         docs_list = data.get('required_docs', [])
         fields_list = data.get('visa_form_fields', [])
+        print(dest_data)
 
         # 2. Save Everything Safely
         with transaction.atomic():
