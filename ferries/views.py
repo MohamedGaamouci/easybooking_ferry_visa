@@ -8,6 +8,11 @@ from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required, permission_required
 from .models import Port
 from .form import PortForm
+from django.shortcuts import render
+
+
+def admin_ferry_requests_view(request):
+    return render(request, 'admin/ferry_requests.html')
 
 # --- CREATE PORT ---
 

@@ -14,37 +14,46 @@
     </header>
 
     <div class="px-8 pt-6 pb-2 bg-white border-b border-slate-200 flex flex-wrap gap-4 items-center justify-between">
-        <div class="relative flex-1 max-w-md">
-            <i class="ph ph-magnifying-glass absolute left-3 top-2.5 text-slate-400"></i>
-            <input type="text" placeholder="Search Name, Email, or Agency..."
-                class="pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:border-brand-500 w-full shadow-sm">
-        </div>
+        <form method="GET" class="flex-1 flex gap-4 w-full">
 
-        <div class="flex gap-3">
-            <select
-                class="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white text-slate-600 shadow-sm cursor-pointer hover:border-slate-300">
-                <option value="">All Roles</option>
-                <option value="admin">Platform Admin</option>
-                <option value="manager">Agency Manager</option>
-                <option value="agent">Agent</option>
-            </select>
+            <div class="relative flex-1 max-w-md">
+                <i class="ph ph-magnifying-glass absolute left-3 top-2.5 text-slate-400"></i>
+                <input type="text" name="q" value="{{ search_query }}" placeholder="Search Name, Email, or Agency..."
+                    class="pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:border-brand-500 w-full shadow-sm">
+            </div>
 
-            <select
-                class="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white text-slate-600 shadow-sm cursor-pointer hover:border-slate-300">
-                <option value="">All Agencies</option>
-                <option value="none">Platform Staff (No Agency)</option>
-                {% for agency in agencies %}
-                <option value="{{ agency.id }}">{{ agency.company_name }}</option>
-                {% endfor %}
-            </select>
+            <div class="flex gap-3">
 
-            <select
-                class="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white text-slate-600 shadow-sm cursor-pointer hover:border-slate-300">
-                <option value="">Status</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-            </select>
-        </div>
+                <select name="role" id="filter-role" onchange="this.form.submit()"
+                    class="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white text-slate-600 shadow-sm cursor-pointer hover:border-slate-300">
+                    <option value="">All Roles</option>
+                    {% for role in roles %}
+                    <option value="{{ role.id }}">{{ role.name }}</option>
+                    {% endfor %}
+                </select>
+
+                <select name="agency" id="filter-agency" onchange="this.form.submit()"
+                    class="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white text-slate-600 shadow-sm cursor-pointer hover:border-slate-300">
+                    <option value="">All Agencies</option>
+                    <option value="none">Platform Staff (No Agency)</option>
+                    {% for agency in agencies %}
+                    <option value="{{ agency.id }}">{{ agency.company_name }}</option>
+                    {% endfor %}
+                </select>
+
+                <select name="status" id="filter-status" onchange="this.form.submit()"
+                    class="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white text-slate-600 shadow-sm cursor-pointer hover:border-slate-300">
+                    <option value="">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                </select>
+
+                {% if search_query or current_role or current_agency or current_status %}
+                <a href="{% url 'user_management' %}"
+                    class="px-3 py-2 text-sm text-red-500 hover:bg-red-50 rounded-lg font-medium transition-colors">Clear</a>
+                {% endif %}
+            </div>
+        </form>
     </div>
 
     <div class="flex-1 overflow-y-auto p-8 bg-slate-50/50">
@@ -67,7 +76,7 @@
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-3">
                                 <div
-                                    class="w-9 h-9 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-xs uppercase">
+                                    class="w-9 h-9 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-xs uppercase border border-slate-300">
                                     {{ user.first_name|slice:":1" }}{{ user.last_name|slice:":1" }}
                                 </div>
                                 <div>
@@ -85,8 +94,8 @@
                                 Admin</span>
                             {% elif user.role %}
                             <span
-                                class="bg-blue-50 text-blue-700 px-2 py-1 rounded text-[10px] font-bold uppercase border border-blue-100">{{
-                                user.role.name }}</span>
+                                class="bg-blue-50 text-blue-700 px-2 py-1 rounded text-[10px] font-bold uppercase border border-blue-100">
+                                {{user.role.name }}</span>
                             {% else %}
                             <span
                                 class="bg-slate-100 text-slate-500 px-2 py-1 rounded text-[10px] font-bold uppercase border border-slate-200">No
@@ -96,14 +105,14 @@
 
                         <td class="px-6 py-4">
                             {% if user.agency %}
-                            <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-2 text-slate-700">
                                 <i class="ph-fill ph-buildings text-slate-400"></i>
-                                <span class="font-medium text-slate-700">{{ user.agency.company_name }}</span>
+                                <span class="font-medium">{{ user.agency.company_name }}</span>
                             </div>
                             {% else %}
-                            <div class="flex items-center gap-2">
-                                <i class="ph-fill ph-globe text-slate-400"></i>
-                                <span class="text-xs text-slate-400 italic">Platform Staff</span>
+                            <div class="flex items-center gap-2 text-slate-400">
+                                <i class="ph-fill ph-globe"></i>
+                                <span class="text-xs italic">Platform Staff</span>
                             </div>
                             {% endif %}
                         </td>
@@ -130,14 +139,9 @@
                         </td>
 
                         <td class="px-6 py-4 text-right">
-                            <button onclick="openUserModal('edit', this)" data-id="{{ user.id }}"
-                                data-first="{{ user.first_name }}" data-last="{{ user.last_name }}"
-                                data-email="{{ user.email }}" data-phone="{{ user.phone }}"
-                                data-state="{{ user.state }}" data-role="{{ user.role.id|default:'' }}"
-                                data-agency="{{ user.agency.id|default:'' }}"
-                                data-active="{{ user.is_active|yesno:'true,false' }}"
-                                class="p-1.5 text-slate-500 hover:text-brand-600 hover:bg-brand-50 rounded border border-transparent hover:border-brand-200 transition-all">
-                                <i class="ph-bold ph-pencil-simple"></i>
+                            <button onclick="openUserModal('edit', '{{ user.id }}')"
+                                class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded border border-transparent hover:border-blue-200 transition-all">
+                                <i class="ph-bold ph-pencil-simple text-lg"></i>
                             </button>
                         </td>
                     </tr>
@@ -145,7 +149,11 @@
                     <tr>
                         <td colspan="6" class="px-6 py-12 text-center text-slate-400">
                             <i class="ph ph-users text-4xl mb-2"></i>
-                            <p>No users found matching your search.</p>
+                            <p>No users found matching your criteria.</p>
+                            {% if search_query %}
+                            <a href="{% url 'user_management' %}"
+                                class="text-blue-600 font-bold text-sm mt-2 hover:underline">Clear Filters</a>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}
@@ -157,15 +165,11 @@
 
 <div id="user_modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeUserModal()"></div>
-
     <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden modal-enter">
-
         <div class="bg-slate-900 p-4 flex justify-between items-center text-white">
-            <h3 class="font-bold text-lg flex items-center gap-2">
-                <i class="ph-bold ph-user"></i> <span id="modal-title">Add New User</span>
-            </h3>
-            <button onclick="closeUserModal()" class="hover:bg-slate-700 p-1 rounded"><i
-                    class="ph-bold ph-x text-lg"></i></button>
+            <h3 class="font-bold text-lg flex items-center gap-2"><i class="ph-bold ph-user"></i> <span
+                    id="modal-title">Add New User</span></h3>
+            <button onclick="closeUserModal()"><i class="ph-bold ph-x text-lg"></i></button>
         </div>
 
         <div class="p-6 overflow-y-auto max-h-[80vh]">
@@ -174,45 +178,34 @@
                 <input type="hidden" id="user-id" name="user_id">
 
                 <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">First Name *</label>
-                        <input type="text" id="input-first" name="first_name" required
-                            class="w-full border border-slate-300 rounded-lg p-2.5 text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Last Name *</label>
-                        <input type="text" id="input-last" name="last_name" required
-                            class="w-full border border-slate-300 rounded-lg p-2.5 text-sm">
-                    </div>
+                    <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">First Name *</label><input
+                            type="text" name="first_name" required
+                            class="w-full border border-slate-300 rounded-lg p-2.5 text-sm"></div>
+                    <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Last Name *</label><input
+                            type="text" name="last_name" required
+                            class="w-full border border-slate-300 rounded-lg p-2.5 text-sm"></div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Phone *</label>
-                        <input type="tel" id="input-phone" name="phone" required
-                            class="w-full border border-slate-300 rounded-lg p-2.5 text-sm">
-                    </div>
+                    <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Phone *</label><input
+                            type="tel" name="phone" required
+                            class="w-full border border-slate-300 rounded-lg p-2.5 text-sm"></div>
                     <div>
                         <label class="block text-xs font-bold text-slate-500 uppercase mb-1">State *</label>
-                        <select id="input-state" name="state" required
+                        <input name="state" type="text"
                             class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white">
-                            <option value="">Select State...</option>
-                            <option value="Algiers">Algiers</option>
-                            <option value="Oran">Oran</option>
-                            <option value="Setif">Setif</option>
-                        </select>
+
+
                     </div>
                 </div>
 
                 <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                    <h4 class="text-xs font-bold text-slate-900 mb-3 uppercase flex items-center gap-2">
-                        <i class="ph-fill ph-lock-key-open text-brand-500"></i> Access & Permissions
-                    </h4>
+                    <h4 class="text-xs font-bold text-slate-900 mb-3 uppercase flex items-center gap-2"><i
+                            class="ph-fill ph-lock-key-open text-brand-500"></i> Access & Permissions</h4>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-[10px] text-slate-500 mb-1">Role</label>
-                            <select id="input-role" name="role"
-                                class="w-full border border-slate-300 rounded-lg p-2 text-sm bg-white">
+                            <select name="role" class="w-full border border-slate-300 rounded-lg p-2 text-sm bg-white">
                                 <option value="">Select Role...</option>
                                 {% for role in roles %}
                                 <option value="{{ role.id }}">{{ role.name }}</option>
@@ -221,49 +214,45 @@
                         </div>
                         <div>
                             <label class="block text-[10px] text-slate-500 mb-1">Agency (Optional)</label>
-                            <select id="input-agency" name="agency"
+                            <select name="agency"
                                 class="w-full border border-slate-300 rounded-lg p-2 text-sm bg-white">
                                 <option value="">None (Platform Staff)</option>
                                 {% for agency in agencies %}
                                 <option value="{{ agency.id }}">{{ agency.company_name }}</option>
                                 {% endfor %}
                             </select>
-                            <p class="text-[10px] text-slate-400 mt-1">Leave empty if user belongs to the platform.</p>
                         </div>
                     </div>
                 </div>
 
-                <div class="space-y-3">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Email (Username) *</label>
-                        <input type="email" id="input-email" name="email" required
-                            class="w-full border border-slate-300 rounded-lg p-2.5 text-sm">
-                    </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Email (Username) *</label>
+                    <input type="email" name="email" required
+                        class="w-full border border-slate-300 rounded-lg p-2.5 text-sm">
+                </div>
 
-                    <div id="password-section">
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Password</label>
-                        <div class="relative">
-                            <input type="text" id="input-password" name="password"
-                                class="w-full border border-slate-300 rounded-lg p-2.5 text-sm font-mono text-slate-700 bg-white">
-                            <button type="button" onclick="generateUserPassword()"
-                                class="absolute right-2 top-2 text-xs bg-slate-200 px-2 py-1 rounded hover:bg-slate-300 font-bold text-slate-600">Generate</button>
-                        </div>
+                <div id="password-section">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Password</label>
+                    <div class="relative">
+                        <input type="text" id="input-password" name="password"
+                            class="w-full border border-slate-300 rounded-lg p-2.5 text-sm font-mono text-slate-700 bg-white">
+                        <button type="button" onclick="generateUserPassword()"
+                            class="absolute right-2 top-2 text-xs bg-slate-200 px-2 py-1 rounded hover:bg-slate-300 font-bold text-slate-600">Generate</button>
                     </div>
+                </div>
 
-                    <div id="status-section" class="hidden pt-2">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" id="input-active"
-                                class="w-4 h-4 text-brand-600 rounded border-gray-300 focus:ring-brand-500">
-                            <span class="text-sm text-slate-700 font-medium">User Account Active</span>
-                        </label>
-                    </div>
+                <div id="status-section" class="hidden pt-2">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" name="is_active" class="w-4 h-4 text-blue-600 rounded">
+                        <span class="text-sm text-slate-700 font-medium">User Account Active</span>
+                    </label>
                 </div>
 
                 <div class="pt-4 flex gap-3 border-t border-slate-100">
                     <button type="button" onclick="closeUserModal()"
                         class="flex-1 py-2.5 border border-slate-300 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50">Cancel</button>
                     <button type="submit" id="save-btn"
-                        class="flex-1 py-2.5 bg-brand-600 text-white rounded-lg text-sm font-bold shadow hover:bg-brand-700">Save
+                        class="flex-1 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold shadow hover:bg-slate-800">Save
                         User</button>
                 </div>
             </form>
@@ -272,62 +261,106 @@
 </div>
 
 <script>
+    let editingUserId = null;
     const userModal = document.getElementById('user_modal');
     const userForm = document.getElementById('user_form');
 
-    function openUserModal(mode, button = null) {
+    // --- 1. FILTER LOGIC ---
+    document.addEventListener("DOMContentLoaded", function () {
+        const params = new URLSearchParams(window.location.search);
+
+        const filters = {
+            'role': 'filter-role',
+            'agency': 'filter-agency',
+            'status': 'filter-status'
+        };
+
+        for (const [param, elementId] of Object.entries(filters)) {
+            const value = params.get(param);
+            const element = document.getElementById(elementId);
+            if (value && element) element.value = value;
+        }
+    });
+
+    // --- 2. MODAL LOGIC ---
+    function openUserModal(mode, id = null) {
         userForm.reset();
 
         if (mode === 'new') {
-            // NEW USER
+            editingUserId = null;
             document.getElementById('modal-title').innerText = 'Add New User';
-            document.getElementById('user-id').value = '';
             document.getElementById('password-section').classList.remove('hidden');
             document.getElementById('status-section').classList.add('hidden');
-            document.getElementById('input-password').required = true;
-            generateUserPassword(); // Auto generate for new
-
+            generateUserPassword();
+            userModal.classList.remove('hidden');
         } else {
-            // EDIT USER
+            editingUserId = id;
             document.getElementById('modal-title').innerText = 'Edit User Details';
-            document.getElementById('user-id').value = button.dataset.id;
 
-            // Populate
-            document.getElementById('input-first').value = button.dataset.first;
-            document.getElementById('input-last').value = button.dataset.last;
-            document.getElementById('input-email').value = button.dataset.email;
-            document.getElementById('input-phone').value = button.dataset.phone;
-            document.getElementById('input-state').value = button.dataset.state;
-            document.getElementById('input-role').value = button.dataset.role;
-            document.getElementById('input-agency').value = button.dataset.agency;
+            // Fetch User Details from Backend
+            fetch(`/admin_panel/api/user/${id}/`)
+                .then(res => res.json())
+                .then(data => {
+                    const u = data.user;
+                    userForm.querySelector('[name="first_name"]').value = u.first_name;
+                    userForm.querySelector('[name="last_name"]').value = u.last_name;
+                    userForm.querySelector('[name="email"]').value = u.email;
+                    userForm.querySelector('[name="phone"]').value = u.phone;
+                    userForm.querySelector('[name="state"]').value = u.state;
+                    userForm.querySelector('[name="role"]').value = u.role_id;
+                    userForm.querySelector('[name="agency"]').value = u.agency_id;
+                    userForm.querySelector('[name="is_active"]').checked = u.is_active;
 
-            // Handle Checkbox
-            document.getElementById('input-active').checked = (button.dataset.active === 'true');
-
-            // Handle UI Changes
-            document.getElementById('password-section').classList.add('hidden'); // Hide pass on edit
-            document.getElementById('input-password').required = false;
-            document.getElementById('status-section').classList.remove('hidden'); // Show status toggle
+                    // Update UI for Edit Mode
+                    document.getElementById('password-section').classList.add('hidden');
+                    document.getElementById('status-section').classList.remove('hidden');
+                    userModal.classList.remove('hidden');
+                });
         }
-
-        userModal.classList.remove('hidden');
     }
 
     function closeUserModal() {
         userModal.classList.add('hidden');
     }
 
+    // --- 3. SAVE LOGIC ---
     function saveUser() {
         const btn = document.getElementById('save-btn');
         const originalText = btn.innerText;
         btn.innerText = 'Saving...';
+        btn.disabled = true;
 
-        setTimeout(() => {
-            alert('User Saved Successfully!');
-            closeUserModal();
-            btn.innerText = originalText;
-            window.location.reload();
-        }, 800);
+        const formData = new FormData(userForm);
+
+        // Ensure this URL name matches users/urls.py
+        let url = "{% url 'user_create' %}";
+        if (editingUserId) {
+            url = `/admin_panel/api/user/update/${editingUserId}/`;
+        }
+
+        fetch(url, {
+            method: "POST",
+            body: formData,
+            headers: { "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value }
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    closeUserModal();
+                    alert("✅ Saved Successfully!");
+                    window.location.reload();
+                } else {
+                    alert("⚠️ Error: " + data.message);
+                    btn.innerText = originalText;
+                    btn.disabled = false;
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert("System Error");
+                btn.innerText = originalText;
+                btn.disabled = false;
+            });
     }
 
     function generateUserPassword() {
@@ -337,5 +370,4 @@
         document.getElementById('input-password').value = pass;
     }
 </script>
-
 {% endblock %}

@@ -3,20 +3,16 @@ URL configuration for future_easy_booking project.
 """
 
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.shortcuts import render
 from agencies.views import admin_agencies_view, get_agencies_api
-from users.views import admin_users_view
-from visas.views import *
-from core.views import *
-from ferries.views import *
-
 
 # ======================
 # Admin Views
 # ======================
+
 
 def admin_dashboard_view(request):
     return render(request, 'admin/dashboard.html')
@@ -28,10 +24,6 @@ def admin_setting_view(request):
 
 def admin_accounting_view(request):
     return render(request, 'admin/accounting.html')
-
-
-def admin_ferry_requests_view(request):
-    return render(request, 'admin/ferry_requests.html')
 
 
 # ======================
@@ -89,49 +81,18 @@ admin_urls = [
 
 
 
-    path("admin_panel/users/", admin_users_view, name="admin_users"),
-    path("admin_panel/cms/", cms_dashboard_view, name="admin_cms"),
-    path("admin_panel/ferries/", admin_ferry_requests_view,
-         name="admin_ferry_requests"),
-    # Port Management
-    path('admin_panel/api/ferry/port/create/',
-         port_create_view, name='port_create'),
-    path('admin_panel/api/ferry/port/<int:pk>/', port_detail_api,
-         name='port_detail'),       # For Edit Modal (GET)
-    path('admin_panel/api/ferry/port/update/<int:pk>/', port_update_view,
-         name='port_update'),  # For Save (POST)
+    #  USERS
+    path('admin_panel/', include('users.urls')),
 
-    # Provider Management (Unified Save View)
-    path('admin_panel/api/ferry/provider/create/',
-         provider_save_view, name='provider_create'),
-    path('admin_panel/api/ferry/provider/update/<int:pk>/',
-         provider_save_view, name='provider_update'),
-    path('admin_panel/api/ferry/provider/<int:pk>/',
-         provider_detail_api, name='provider_detail'),
+    #   CMS
+    path('admin_panel/', include('core.urls')),
 
+    #     ferry urls
+    path('admin_panel/', include('ferries.urls')),
 
-    path("admin_panel/visas/", visa_list_view, name="admin_visa_app"),
-    path("admin_panel/api/visa/<int:app_id>/",
-         get_visa_details, name="api_visa_details"),
-    path("admin_panel/api/visa/update/",
-         update_visa_application, name="api_visa_update"),
-    # In your patterns:
-    path("admin_panel/api/visa/destinations/",
-         get_visa_destinations_api, name="api_visa_destinations"),
-    # 2. CREATE (The Missing Link) - Add this line
-    path("admin_panel/visas/create/", visa_create_view,
-         name="visa_create"),  # <--- Here
-    path("admin_panel/api/visa/schema/<int:destination_id>/",
-         get_visa_schema, name="api_visa_schema"),
-    path('admin_panel/visas/new-destination',
-         visa_destination_create_view, name='visa_destination_create'),
-    # 2. GET DETAILS (For Edit Modal)
-    path('admin_panel/api/visa/destination/<int:pk>/', visa_destination_detail_api,
-         name='api_visa_destination_detail'),
+    #       visa urls
+    path('admin_panel/', include('visas.urls'))
 
-    # 3. UPDATE (For Saving Edits)
-    path('admin_panel/api/visa/update_destination/<int:pk>/',
-         visa_destination_update_view, name='visa_destination_update'),
 ]
 urlpatterns += admin_urls
 
