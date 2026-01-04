@@ -23,6 +23,7 @@ class VisaApplication(models.Model):
         # Step 6: Client picked it up
         ('completed', 'Completed'),
         ('rejected', 'Rejected'),                   # Exception: Refused
+        ('cancelled', 'Cancelled')
     )
 
     reference = models.CharField(

@@ -51,7 +51,10 @@ def visa_list_view(request):
         'embassy': VisaApplication.objects.filter(status='embassy').count(),
         'completed': VisaApplication.objects.filter(status='completed').count(),
         'rejected': VisaApplication.objects.filter(status='rejected').count(),
+        'cancelled': VisaApplication.objects.filter(status='cancelled').count(),
+        'ready': VisaApplication.objects.filter(status='ready').count(),
     }
+    print(stats)
 
     # --- B. MAIN QUERY ---
     # Optimized: select_related fetches Agency & Destination in the same SQL query
