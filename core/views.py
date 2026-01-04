@@ -2,6 +2,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db.models import Q
 from django.shortcuts import render
 from visas.models import VisaDestination
+from ferries.models import Port, Provider
 # Include your Ferry Provider model import here if needed
 
 
@@ -39,11 +40,18 @@ def cms_dashboard_view(request):
     except EmptyPage:
         visa_destinations = paginator.page(paginator.num_pages)
 
+    # ferries
+    # --- FERRY SECTION DATA ---
+    ferry_providers = Provider.objects.all().order_by('name')
+    ports = Port.objects.all().order_by('country', 'city')
+
     context = {
         'visa_destinations': visa_destinations,
         'search_query': search_query,   # To keep search box populated
         'status_filter': status_filter,  # To keep dropdown selected
         # 'ferry_providers': ... (Keep your existing ferry logic here)
+        'ferry_providers': ferry_providers,
+        'ports': ports,
     }
 
     return render(request, 'admin/cms.html', context)

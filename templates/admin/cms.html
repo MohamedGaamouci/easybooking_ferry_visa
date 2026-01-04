@@ -16,86 +16,169 @@
     <div class="flex-1 overflow-y-auto p-8">
         <div class="max-w-7xl mx-auto space-y-12">
 
-            <section>
-                <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center gap-2">
-                        <h2 class="text-lg font-bold text-slate-900">Ferry Providers</h2>
-                        <span class="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded font-medium">System
-                            Status</span>
+            <section class="space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div class="flex items-center gap-4">
+                        <h2 class="text-lg font-bold text-slate-900">Ferry Management</h2>
+
+                        <div class="flex bg-slate-100 p-1 rounded-lg">
+                            <button onclick="switchFerryTab('providers')" id="tab-btn-providers"
+                                class="px-4 py-1.5 text-xs font-bold rounded-md shadow-sm bg-white text-slate-800 transition-all">
+                                Providers
+                            </button>
+                            <button onclick="switchFerryTab('ports')" id="tab-btn-ports"
+                                class="px-4 py-1.5 text-xs font-bold rounded-md text-slate-500 hover:text-slate-700 transition-all">
+                                Ports
+                            </button>
+                        </div>
                     </div>
-                    <button onclick="openFerryModal('new')"
+
+                    <button id="btn-add-ferry" onclick="openProviderModal('new')"
                         class="bg-white border border-slate-300 text-slate-700 px-4 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-slate-50 flex items-center gap-2 transition-colors">
                         <i class="ph-bold ph-plus"></i> Add Provider
                     </button>
                 </div>
 
-                <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+                <div id="tab-content-providers"
+                    class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden animate-fade-in">
                     <table class="w-full text-left border-collapse">
                         <thead
                             class="bg-slate-50 text-xs uppercase text-slate-500 font-semibold border-b border-slate-200">
                             <tr>
                                 <th class="px-6 py-4">Logo</th>
                                 <th class="px-6 py-4">Provider Name</th>
-                                <th class="px-6 py-4">Service Markup</th>
+                                <th class="px-6 py-4">Code</th>
+                                <th class="px-6 py-4">Contact</th>
                                 <th class="px-6 py-4">Status</th>
                                 <th class="px-6 py-4 text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 text-sm">
+                            {% for provider in ferry_providers %}
+                            <tr class="hover:bg-slate-50 group transition-colors">
+                                <td class="px-6 py-4">
+                                    <div
+                                        class="w-10 h-10 bg-slate-100 rounded flex items-center justify-center overflow-hidden border border-slate-200">
+                                        {% if provider.logo %}
+                                        <img src="{{ provider.logo.url }}" class="w-full h-full object-cover">
+                                        {% else %}
+                                        <i class="ph-fill ph-boat text-xl text-slate-300"></i>
+                                        {% endif %}
+                                    </div>
+                                </td>
 
-                            <tr class="hover:bg-slate-50 group">
-                                <td class="px-6 py-4">
-                                    <div class="w-10 h-10 bg-slate-100 rounded flex items-center justify-center"><i
-                                            class="ph-fill ph-anchor text-xl text-slate-400"></i></div>
+                                <td class="px-6 py-4 font-bold text-slate-800">{{ provider.name }}</td>
+
+                                <td
+                                    class="px-6 py-4 text-xs font-mono text-slate-500 bg-slate-100 px-2 py-1 rounded w-fit">
+                                    {{ provider.code }}</td>
+
+                                <td class="px-6 py-4 text-xs text-slate-500">
+                                    {% if provider.contact_email %}
+                                    <div class="flex items-center gap-1"><i class="ph-bold ph-envelope"></i>
+                                        {{provider.contact_email }}</div>
+                                    {% endif %}
+
+                                    {% if provider.contact_phone %}
+                                    <div class="flex items-center gap-1 mt-1"><i class="ph-bold ph-phone"></i>
+                                        {{provider.contact_phone }}</div>
+                                    {% endif %}
                                 </td>
-                                <td class="px-6 py-4 font-bold text-slate-800">Corsica Linea</td>
+
                                 <td class="px-6 py-4">
+                                    {% if provider.is_active %}
                                     <span
-                                        class="bg-brand-50 text-brand-700 border border-brand-100 px-2 py-1 rounded font-bold text-xs">+
-                                        15%</span>
+                                        class="inline-flex items-center gap-1.5 text-green-600 font-bold text-xs bg-green-50 px-2 py-1 rounded-full border border-green-100">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Active
+                                    </span>
+                                    {% else %}
+                                    <span
+                                        class="inline-flex items-center gap-1.5 text-slate-500 font-bold text-xs bg-slate-100 px-2 py-1 rounded-full border border-slate-200">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> Disabled
+                                    </span>
+                                    {% endif %}
                                 </td>
-                                <td class="px-6 py-4"><span
-                                        class="flex items-center gap-1.5 text-green-600 font-bold text-xs"><span
-                                            class="w-2 h-2 rounded-full bg-green-500"></span> Active</span></td>
+
                                 <td class="px-6 py-4 text-right">
-                                    <div class="flex justify-end gap-2">
-                                        <button onclick="openFerryModal('edit')"
-                                            class="w-8 h-8 rounded hover:bg-slate-200 flex items-center justify-center text-slate-500"><i
+                                    <div
+                                        class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button onclick="openProviderModal('edit', '{{ provider.id }}')"
+                                            class="w-8 h-8 rounded hover:bg-purple-50 hover:text-purple-600 flex items-center justify-center text-slate-400 transition-colors">
+                                            <i class="ph-bold ph-pencil-simple"></i>
+                                        </button>
+                                        <button onclick="deleteFerryItem('provider', '{{ provider.id }}')"
+                                            class="w-8 h-8 rounded hover:bg-red-50 hover:text-red-500 flex items-center justify-center text-slate-400 transition-colors">
+                                            <i class="ph-bold ph-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="px-6 py-8 text-center text-slate-400 italic">No providers added
+                                    yet.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="tab-content-ports"
+                    class="hidden bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden animate-fade-in">
+                    <table class="w-full text-left border-collapse">
+                        <thead
+                            class="bg-slate-50 text-xs uppercase text-slate-500 font-semibold border-b border-slate-200">
+                            <tr>
+                                <th class="px-6 py-4">Port Name</th>
+                                <th class="px-6 py-4">Code</th>
+                                <th class="px-6 py-4">City</th>
+                                <th class="px-6 py-4">Country</th>
+                                <th class="px-6 py-4">Status</th>
+                                <th class="px-6 py-4 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 text-sm">
+                            {% for port in ports %}
+                            <tr class="hover:bg-slate-50 group transition-colors">
+                                <td class="px-6 py-4 font-bold text-slate-800 flex items-center gap-2">
+                                    <i class="ph-fill ph-anchor text-slate-300"></i> {{ port.name }}
+                                </td>
+                                <td
+                                    class="px-6 py-4 text-xs font-mono text-slate-500 bg-slate-100 px-2 py-1 rounded w-fit">
+                                    {{ port.code }}</td>
+                                <td class="px-6 py-4 text-slate-600">{{ port.city }}</td>
+                                <td class="px-6 py-4 text-slate-600">{{ port.country }}</td>
+                                <td class="px-6 py-4">
+                                    {% if port.is_active %}
+                                    <span
+                                        class="inline-flex items-center gap-1.5 text-green-600 font-bold text-xs bg-green-50 px-2 py-1 rounded-full border border-green-100">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Active
+                                    </span>
+                                    {% else %}
+                                    <span
+                                        class="inline-flex items-center gap-1.5 text-slate-500 font-bold text-xs bg-slate-100 px-2 py-1 rounded-full border border-slate-200">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> Disabled
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <div
+                                        class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button onclick="openPortModal('edit', '{{ port.id }}')"
+                                            class="w-8 h-8 rounded hover:bg-purple-50 hover:text-purple-600 flex items-center justify-center text-slate-400 transition-colors"><i
                                                 class="ph-bold ph-pencil-simple"></i></button>
-                                        <button onclick="confirmDelete()"
-                                            class="w-8 h-8 rounded hover:bg-red-50 flex items-center justify-center text-red-500"><i
+                                        <button onclick="deleteFerryItem('port', '{{ port.id }}')"
+                                            class="w-8 h-8 rounded hover:bg-red-50 hover:text-red-500 flex items-center justify-center text-slate-400 transition-colors"><i
                                                 class="ph-bold ph-trash"></i></button>
                                     </div>
                                 </td>
                             </tr>
-
-                            <tr class="hover:bg-slate-50 group">
-                                <td class="px-6 py-4">
-                                    <div class="w-10 h-10 bg-slate-100 rounded flex items-center justify-center"><i
-                                            class="ph-fill ph-flag text-xl text-slate-400"></i></div>
-                                </td>
-                                <td class="px-6 py-4 font-bold text-slate-800">Balearia</td>
-                                <td class="px-6 py-4">
-                                    <span
-                                        class="bg-slate-100 text-slate-600 border border-slate-200 px-2 py-1 rounded font-bold text-xs">+
-                                        € 10.00</span>
-                                </td>
-                                <td class="px-6 py-4"><span
-                                        class="flex items-center gap-1.5 text-orange-500 font-bold text-xs"><span
-                                            class="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
-                                        Maintenance</span></td>
-                                <td class="px-6 py-4 text-right">
-                                    <div class="flex justify-end gap-2">
-                                        <button onclick="openFerryModal('edit')"
-                                            class="w-8 h-8 rounded hover:bg-slate-200 flex items-center justify-center text-slate-500"><i
-                                                class="ph-bold ph-pencil-simple"></i></button>
-                                        <button onclick="confirmDelete()"
-                                            class="w-8 h-8 rounded hover:bg-red-50 flex items-center justify-center text-red-500"><i
-                                                class="ph-bold ph-trash"></i></button>
-                                    </div>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="px-6 py-8 text-center text-slate-400 italic">No ports added yet.
                                 </td>
                             </tr>
-
+                            {% endfor %}
                         </tbody>
                     </table>
                 </div>
@@ -439,71 +522,107 @@
     </div>
 </div>
 
-<div id="ferry-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
-    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeFerryModal()">
+<div id="provider-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeProviderModal()">
     </div>
     <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden modal-enter">
-        <div class="bg-blue-700 p-4 flex justify-between items-center text-white shrink-0">
-            <h3 class="font-bold flex items-center gap-2"><i class="ph-bold ph-anchor"></i> Manage Ferry Provider
-            </h3>
-            <button onclick="closeFerryModal()"><i class="ph-bold ph-x"></i></button>
+        <div class="bg-blue-600 p-4 flex justify-between items-center text-white shrink-0">
+            <h3 class="font-bold flex items-center gap-2"><i class="ph-bold ph-boat"></i> <span
+                    id="prov-modal-title">Add Provider</span></h3>
+            <button onclick="closeProviderModal()"><i class="ph-bold ph-x"></i></button>
         </div>
-        <div class="p-6">
-            <form onsubmit="event.preventDefault(); saveFerry();" class="space-y-6">
-
+        <form id="provider-form" class="p-6 space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+                <div class="col-span-2">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Provider Name <span
+                            class="text-red-500">*</span></label>
+                    <input type="text" name="name" required
+                        class="w-full border border-slate-300 rounded-lg p-2 text-sm">
+                </div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Provider Name</label>
-                    <input type="text" placeholder="e.g. Trasmediterranea"
-                        class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Code <span
+                            class="text-red-500">*</span></label>
+                    <input type="text" name="code" required
+                        class="w-full border border-slate-300 rounded-lg p-2 text-sm font-mono uppercase"
+                        placeholder="e.g. BAL">
                 </div>
-
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Logo URL</label>
-                    <input type="text" placeholder="https://..."
-                        class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Phone</label>
+                    <input type="text" name="contact_phone"
+                        class="w-full border border-slate-300 rounded-lg p-2 text-sm">
                 </div>
+                <div class="col-span-2">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Email</label>
+                    <input type="email" name="contact_email"
+                        class="w-full border border-slate-300 rounded-lg p-2 text-sm">
+                </div>
+                <div class="col-span-2">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Logo</label>
+                    <input type="file" name="logo" accept="image/*"
+                        class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                </div>
+            </div>
 
-                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Service Fee /
-                        Markup</label>
-                    <div class="flex gap-4">
-                        <div class="w-full">
-                            <label class="block text-[10px] font-bold text-slate-400 mb-1">Value</label>
-                            <input type="number" value="5"
-                                class="w-full border border-slate-300 rounded-lg p-2.5 text-sm font-bold text-blue-700">
-                        </div>
-                        <div class="w-1/2">
-                            <label class="block text-[10px] font-bold text-slate-400 mb-1">Unit</label>
-                            <select class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white">
-                                <option value="percent" selected>Percent (%)</option>
-                                <option value="flat">Flat (€)</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
+            <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" name="is_active" checked class="rounded text-blue-600 focus:ring-blue-500">
+                    <span class="text-sm font-medium text-slate-700">Active Status</span>
+                </label>
+                <button type="submit"
+                    class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg shadow hover:bg-blue-700 text-sm">Save
+                    Provider</button>
+            </div>
+        </form>
+    </div>
+</div>
 
-                <div class="flex items-center justify-between">
-                    <span class="text-sm font-bold text-slate-700">System Status</span>
-                    <label class="flex items-center cursor-pointer">
-                        <div class="relative inline-block w-12 h-6 align-middle select-none">
-                            <input type="checkbox" checked
-                                class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer border-slate-300" />
-                            <label
-                                class="toggle-label block overflow-hidden h-6 rounded-full bg-slate-200 cursor-pointer"></label>
-                        </div>
-                        <span class="ml-2 text-xs font-medium text-slate-500">Active</span>
-                    </label>
-                </div>
-
-                <div class="pt-4 border-t border-slate-100 flex justify-end gap-3">
-                    <button type="button" onclick="closeFerryModal()"
-                        class="px-4 py-2 text-slate-500 font-bold text-sm">Cancel</button>
-                    <button type="submit"
-                        class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg shadow hover:bg-blue-700">Save
-                        Provider</button>
-                </div>
-            </form>
+<div id="port-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closePortModal()"></div>
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden modal-enter">
+        <div class="bg-slate-700 p-4 flex justify-between items-center text-white shrink-0">
+            <h3 class="font-bold flex items-center gap-2"><i class="ph-bold ph-anchor"></i> <span
+                    id="port-modal-title">Add Port</span></h3>
+            <button onclick="closePortModal()"><i class="ph-bold ph-x"></i></button>
         </div>
+        <form id="port-form" class="p-6 space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+                <div class="col-span-2">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Port Name <span
+                            class="text-red-500">*</span></label>
+                    <input type="text" name="name" required
+                        class="w-full border border-slate-300 rounded-lg p-2 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Code <span
+                            class="text-red-500">*</span></label>
+                    <input type="text" name="code" required
+                        class="w-full border border-slate-300 rounded-lg p-2 text-sm font-mono uppercase"
+                        placeholder="e.g. ALG">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">City <span
+                            class="text-red-500">*</span></label>
+                    <input type="text" name="city" required
+                        class="w-full border border-slate-300 rounded-lg p-2 text-sm">
+                </div>
+                <div class="col-span-2">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Country <span
+                            class="text-red-500">*</span></label>
+                    <input type="text" name="country" required
+                        class="w-full border border-slate-300 rounded-lg p-2 text-sm">
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" name="is_active" checked class="rounded text-slate-600 focus:ring-slate-500">
+                    <span class="text-sm font-medium text-slate-700">Active Status</span>
+                </label>
+                <button type="submit"
+                    class="bg-slate-700 text-white font-bold py-2 px-6 rounded-lg shadow hover:bg-slate-800 text-sm">Save
+                    Port</button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -879,6 +998,69 @@
         const row = selectEl.closest('.question-row');
         if (selectEl.value === 'select') row.querySelector('.options-container').classList.remove('hidden');
         else row.querySelector('.options-container').classList.add('hidden');
+    }
+</script>
+
+
+<!-- ferries -->
+<script>
+    // --- TAB LOGIC ---
+    function switchFerryTab(tab) {
+        // 1. Update Buttons
+        const btnProv = document.getElementById('tab-btn-providers');
+        const btnPort = document.getElementById('tab-btn-ports');
+        const btnAdd = document.getElementById('btn-add-ferry');
+
+        // Reset Styles
+        btnProv.className = "px-4 py-1.5 text-xs font-bold rounded-md text-slate-500 hover:text-slate-700 transition-all";
+        btnPort.className = "px-4 py-1.5 text-xs font-bold rounded-md text-slate-500 hover:text-slate-700 transition-all";
+
+        // Active Style
+        const activeClass = "px-4 py-1.5 text-xs font-bold rounded-md shadow-sm bg-white text-slate-800 transition-all";
+
+        // 2. Toggle Content & Button Text
+        if (tab === 'providers') {
+            document.getElementById('tab-content-providers').classList.remove('hidden');
+            document.getElementById('tab-content-ports').classList.add('hidden');
+            btnProv.className = activeClass;
+            btnAdd.innerHTML = '<i class="ph-bold ph-plus"></i> Add Provider';
+            btnAdd.setAttribute('onclick', "openProviderModal('new')");
+        } else {
+            document.getElementById('tab-content-providers').classList.add('hidden');
+            document.getElementById('tab-content-ports').classList.remove('hidden');
+            btnPort.className = activeClass;
+            btnAdd.innerHTML = '<i class="ph-bold ph-plus"></i> Add Port';
+            btnAdd.setAttribute('onclick', "openPortModal('new')");
+        }
+    }
+
+    // --- MODAL LOGIC (PROVIDERS) ---
+    function openProviderModal(mode, id = null) {
+        const modal = document.getElementById('provider-modal');
+        const form = document.getElementById('provider-form');
+        document.getElementById('prov-modal-title').innerText = mode === 'new' ? 'Add Provider' : 'Edit Provider';
+
+        // Clear form if new, Fetch if edit (Implement Fetch logic similar to Visa)
+        if (mode === 'new') form.reset();
+
+        modal.classList.remove('hidden');
+    }
+    function closeProviderModal() {
+        document.getElementById('provider-modal').classList.add('hidden');
+    }
+
+    // --- MODAL LOGIC (PORTS) ---
+    function openPortModal(mode, id = null) {
+        const modal = document.getElementById('port-modal');
+        const form = document.getElementById('port-form');
+        document.getElementById('port-modal-title').innerText = mode === 'new' ? 'Add Port' : 'Edit Port';
+
+        if (mode === 'new') form.reset();
+
+        modal.classList.remove('hidden');
+    }
+    function closePortModal() {
+        document.getElementById('port-modal').classList.add('hidden');
     }
 </script>
 
