@@ -575,12 +575,10 @@ def visa_destination_detail_api(request, pk):
             'net_price': str(dest.net_price),
             'selling_price': str(dest.selling_price),
             'processing_time': dest.processing_time,
+            'conditions': dest.conditions,
             'is_active': dest.is_active,
         },
         'documents': documents,
         'questions': questions
     }
-    print('-'*50)
-    print('json response:: ', data)
-    print('-'*50)
     return JsonResponse(data)
