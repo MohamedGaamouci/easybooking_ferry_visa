@@ -106,10 +106,10 @@
                                             class="w-8 h-8 rounded hover:bg-purple-50 hover:text-purple-600 flex items-center justify-center text-slate-400 transition-colors">
                                             <i class="ph-bold ph-pencil-simple"></i>
                                         </button>
-                                        <button onclick="deleteFerryItem('provider', '{{ provider.id }}')"
+                                        <!-- <button onclick="deleteFerryItem('provider', '{{ provider.id }}')"
                                             class="w-8 h-8 rounded hover:bg-red-50 hover:text-red-500 flex items-center justify-center text-slate-400 transition-colors">
                                             <i class="ph-bold ph-trash"></i>
-                                        </button>
+                                        </button> -->
                                     </div>
                                 </td>
                             </tr>
@@ -1278,12 +1278,12 @@
             <td class="px-3 py-2 text-center">
                 <input type="checkbox" class="route-active w-4 h-4 rounded text-blue-600" ${data.is_active !== false ? 'checked' : ''}>
             </td>
-            <td class="px-3 py-2 text-center">
-                <button type="button" onclick="document.getElementById('route-${rowId}').remove()" 
-                        class="text-slate-300 hover:text-red-500 transition-colors">
-                    <i class="ph-bold ph-trash"></i>
-                </button>
-            </td>
+            // <td class="px-3 py-2 text-center">
+            //     <button type="button" onclick="document.getElementById('route-${rowId}').remove()" 
+            //             class="text-slate-300 hover:text-red-500 transition-colors">
+            //         <i class="ph-bold ph-trash"></i>
+            //     </button>
+            // </td>
         </tr>
         `;
 
