@@ -102,97 +102,138 @@
             </section>
 
             <section>
-                <div class="flex items-center justify-between mb-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                     <div class="flex items-center gap-2">
                         <h2 class="text-lg font-bold text-slate-900">Visa Destinations</h2>
                         <span
                             class="bg-purple-100 text-purple-700 text-xs px-2 py-0.5 rounded font-medium">Catalog</span>
                     </div>
-                    <button onclick="openVisaModal('new')"
-                        class="bg-brand-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md hover:bg-brand-700 transition-colors flex items-center gap-2">
-                        <i class="ph-bold ph-plus-circle"></i> Add New Visa
-                    </button>
+
+                    <div class="flex items-center gap-3">
+
+                        <form method="GET" class="flex items-center gap-2">
+                            <div class="relative">
+                                <i class="ph-bold ph-magnifying-glass absolute left-3 top-2.5 text-slate-400"></i>
+                                <input type="text" name="q" value="{{ search_query }}"
+                                    placeholder="Search country, type..."
+                                    class="pl-9 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none w-48 shadow-sm">
+                            </div>
+
+                            <select name="status" id="status-filter-select" onchange="this.form.submit()"
+                                class="py-2 pl-3 pr-8 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none bg-white shadow-sm cursor-pointer">
+                                <option value="">All Status</option>
+                                <option value="active">Active Only</option>
+                                <option value="disabled">Disabled</option>
+                            </select>
+
+                            <button type="submit" class="hidden"></button>
+                        </form>
+
+                        <button onclick="openVisaModal('new')"
+                            class="bg-brand-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md hover:bg-brand-700 transition-colors flex items-center gap-2 ml-2">
+                            <i class="ph-bold ph-plus-circle"></i> Add New
+                        </button>
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-
+                    {% for dest in visa_destinations %}
                     <div
-                        class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden group hover:shadow-md transition-shadow relative">
-                        <div class="h-40 bg-cover bg-center"
-                            style="background-image: url('https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=600');">
-                            <div class="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors">
-                            </div>
+                        class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden group hover:shadow-md transition-shadow relative {% if not dest.is_active %}opacity-75 grayscale{% endif %}">
+
+                        <div class="h-40 bg-slate-100 bg-cover bg-center relative"
+                            style="background-image: url('{% if dest.cover_image %}{{ dest.cover_image.url }}{% else %}https://placehold.co/600x400?text=No+Image{% endif %}');">
+
+                            <div class="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors"></div>
 
                             <div class="absolute top-2 left-2">
+                                {% if dest.is_active %}
                                 <span
                                     class="bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-sm">Active</span>
-                            </div>
-
-                            <div
-                                class="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onclick="openVisaModal('edit')"
-                                    class="w-8 h-8 bg-white/90 rounded-full flex items-center justify-center text-slate-700 hover:text-brand-600 shadow-sm"><i
-                                        class="ph-bold ph-pencil-simple"></i></button>
-                                <button onclick="confirmDelete()"
-                                    class="w-8 h-8 bg-white/90 rounded-full flex items-center justify-center text-red-500 hover:bg-red-50 shadow-sm"><i
-                                        class="ph-bold ph-trash"></i></button>
-                            </div>
-                            <div class="absolute bottom-3 left-4 text-white">
-                                <h3 class="font-bold text-lg">France</h3>
-                                <p class="text-xs opacity-90">Schengen Area</p>
-                            </div>
-                        </div>
-                        <div class="p-4 flex justify-between items-center border-t border-slate-100">
-                            <div>
-                                <p class="text-xs text-slate-500 uppercase font-bold">Base Price</p>
-                                <p class="font-bold text-slate-900">€ 120.00</p>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-xs text-slate-500 uppercase font-bold">Fee (Flat)</p>
-                                <p class="font-bold text-green-600">+ € 20.00</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div
-                        class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden group hover:shadow-md transition-shadow relative opacity-75">
-                        <div class="h-40 bg-cover bg-center grayscale"
-                            style="background-image: url('https://images.unsplash.com/photo-1500539746430-b9df74fa191b?q=80&w=600');">
-                            <div class="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors">
-                            </div>
-
-                            <div class="absolute top-2 left-2">
+                                {% else %}
                                 <span
                                     class="bg-slate-500 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-sm">Disabled</span>
+                                {% endif %}
                             </div>
 
                             <div
                                 class="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onclick="openVisaModal('edit')"
-                                    class="w-8 h-8 bg-white/90 rounded-full flex items-center justify-center text-slate-700 hover:text-brand-600 shadow-sm"><i
-                                        class="ph-bold ph-pencil-simple"></i></button>
-                                <button onclick="confirmDelete()"
-                                    class="w-8 h-8 bg-white/90 rounded-full flex items-center justify-center text-red-500 hover:bg-red-50 shadow-sm"><i
-                                        class="ph-bold ph-trash"></i></button>
+                                <button onclick="openVisaModal('edit', '{{ dest.id }}')"
+                                    class="w-8 h-8 bg-white/90 rounded-full flex items-center justify-center text-slate-700 hover:text-brand-600 shadow-sm transition-colors">
+                                    <i class="ph-bold ph-pencil-simple"></i>
+                                </button>
+                                <button onclick="confirmDelete('{{ dest.id }}')"
+                                    class="w-8 h-8 bg-white/90 rounded-full flex items-center justify-center text-red-500 hover:bg-red-50 shadow-sm transition-colors">
+                                    <i class="ph-bold ph-trash"></i>
+                                </button>
                             </div>
+
                             <div class="absolute bottom-3 left-4 text-white">
-                                <h3 class="font-bold text-lg">United States</h3>
-                                <p class="text-xs opacity-90">B1/B2 Tourism</p>
+                                <h3 class="font-bold text-lg">{{ dest.country }}</h3>
+                                <div class="flex flex-col">
+                                    <span class="text-xs opacity-90 font-medium">{{ dest.visa_type }}</span>
+                                    {% if dest.visa_name %}
+                                    <span class="text-[10px] opacity-75">{{ dest.visa_name }}</span>
+                                    {% endif %}
+                                </div>
                             </div>
                         </div>
+
                         <div class="p-4 flex justify-between items-center border-t border-slate-100">
                             <div>
-                                <p class="text-xs text-slate-500 uppercase font-bold">Base Price</p>
-                                <p class="font-bold text-slate-900">€ 280.00</p>
+                                <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Embassy Price
+                                </p>
+                                <p class="font-bold text-slate-900 text-sm">€ {{ dest.net_price }}</p>
                             </div>
                             <div class="text-right">
-                                <p class="text-xs text-slate-500 uppercase font-bold">Fee (Flat)</p>
-                                <p class="font-bold text-green-600">+ € 35.00</p>
+                                <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Selling Price
+                                </p>
+                                <p class="font-bold text-green-600 text-sm">€ {{ dest.selling_price }}</p>
                             </div>
                         </div>
                     </div>
-
+                    {% empty %}
+                    <div
+                        class="col-span-full py-12 text-center text-slate-400 border-2 border-dashed border-slate-200 rounded-xl">
+                        <i class="ph-duotone ph-airplane-tilt text-4xl mb-2"></i>
+                        <p>No destinations found matching your criteria.</p>
+                        {% if search_query or status_filter %}
+                        <a href="?" class="text-brand-600 font-bold text-sm mt-2 hover:underline">Clear Filters</a>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
                 </div>
+
+                {% if visa_destinations.has_other_pages %}
+                <div class="mt-8 flex items-center justify-between border-t border-slate-200 pt-4">
+                    <div class="text-sm text-slate-500">
+                        Showing page <span class="font-bold text-slate-900">{{ visa_destinations.number }}</span>
+                        of {{ visa_destinations.paginator.num_pages }}
+                    </div>
+
+                    <div class="flex gap-2">
+                        {% if visa_destinations.has_previous %}
+                        <a href="?page={{ visa_destinations.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}"
+                            class="px-3 py-1.5 border border-slate-300 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">
+                            Previous
+                        </a>
+                        {% else %}
+                        <span
+                            class="px-3 py-1.5 border border-slate-100 rounded-lg text-sm font-bold text-slate-300 cursor-not-allowed">Previous</span>
+                        {% endif %}
+
+                        {% if visa_destinations.has_next %}
+                        <a href="?page={{ visa_destinations.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}"
+                            class="px-3 py-1.5 border border-slate-300 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">
+                            Next
+                        </a>
+                        {% else %}
+                        <span
+                            class="px-3 py-1.5 border border-slate-100 rounded-lg text-sm font-bold text-slate-300 cursor-not-allowed">Next</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
             </section>
 
         </div>
@@ -201,78 +242,188 @@
 </main>
 
 <div id="visa-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
-    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeVisaModal()">
-    </div>
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeVisaModal()"></div>
+    <style>
+        /* Toggle Checkbox Logic */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #68D391;
+            /* Green border */
+        }
+
+        .toggle-checkbox:checked+.toggle-label {
+            background-color: #68D391;
+            /* Green background */
+        }
+
+        .toggle-checkbox {
+            right: auto;
+            left: 0;
+            transition: all 0.3s ease-in-out;
+        }
+
+        .toggle-checkbox:checked {
+            left: auto;
+            right: 0;
+        }
+    </style>
+
     <div
-        class="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden modal-enter flex flex-col max-h-[90vh]">
-        <div class="bg-purple-700 p-4 flex justify-between items-center text-white shrink-0">
-            <h3 class="font-bold flex items-center gap-2"><i class="ph-bold ph-passport"></i> Manage Visa
-                Destination</h3>
-            <button onclick="closeVisaModal()"><i class="ph-bold ph-x"></i></button>
-        </div>
-        <div class="p-6 overflow-y-auto">
-            <form onsubmit="event.preventDefault(); saveVisa();" class="space-y-6">
-                <div class="grid grid-cols-2 gap-4">
-                    <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Country
-                            Name</label><input type="text"
-                            class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-purple-500 outline-none">
+        class="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-[85vh] flex flex-col overflow-hidden modal-enter">
+
+        <div class="bg-purple-700 p-4 shrink-0 text-white">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-lg flex items-center gap-2">
+                    <i class="ph-bold ph-passport"></i> Create New Visa Destination
+                </h3>
+                <button onclick="closeVisaModal()" class="hover:bg-purple-600 p-1 rounded transition-colors">
+                    <i class="ph-bold ph-x text-lg"></i>
+                </button>
+            </div>
+
+            <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider">
+                <div class="flex-1">
+                    <div class="flex justify-between mb-1 opacity-90">
+                        <span>1. Basic Info</span>
+                        <span id="step-indicator">Step 1 of 3</span>
                     </div>
-                    <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Visa
-                            Type</label><input type="text"
-                            class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-purple-500 outline-none">
+                    <div class="w-full bg-purple-900/30 h-1.5 rounded-full overflow-hidden">
+                        <div id="progress-bar" class="bg-white h-full w-1/3 transition-all duration-300"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <form id="visa-wizard-form" class="flex-1 overflow-hidden relative bg-slate-50">
+            {% csrf_token %}
+
+            <div id="step-1" class="absolute inset-0 p-8 overflow-y-auto space-y-6 transition-transform duration-300">
+                <div class="grid grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Country Name <span
+                                class="text-red-500">*</span></label>
+                        <input type="text" name="country" required placeholder="e.g. France"
+                            class="w-full border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-purple-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Visa Name</label>
+                        <input type="text" name="visa_name" placeholder="e.g. France Schengen 2025"
+                            class="w-full border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-purple-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Visa Type <span
+                                class="text-red-500">*</span></label>
+                        <input type="text" name="visa_type" required placeholder="e.g. Tourist, Business"
+                            class="w-full border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-purple-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Processing Time</label>
+                        <input type="text" name="processing_time" placeholder="e.g. 10-15 Days"
+                            class="w-full border border-slate-300 rounded-lg p-3 text-sm">
                     </div>
                 </div>
 
-                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Pricing Strategy</label>
-                    <div class="grid grid-cols-3 gap-4">
-                        <div><label class="block text-[10px] font-bold text-slate-400 mb-1">Embassy Base Cost
-                                (€)</label><input type="number"
-                                class="w-full border border-slate-300 rounded-lg p-2.5 text-sm font-bold"></div>
-
-                        <div class="col-span-2 flex gap-2">
-                            <div class="w-full">
-                                <label class="block text-[10px] font-bold text-slate-400 mb-1">Agency Markup</label>
-                                <input type="number" value="20.00"
-                                    class="w-full border border-slate-300 rounded-lg p-2.5 text-sm font-bold text-green-700">
-                            </div>
-                            <div class="w-1/2">
-                                <label class="block text-[10px] font-bold text-slate-400 mb-1">Type</label>
-                                <select class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white">
-                                    <option value="flat" selected>Flat (€)</option>
-                                    <option value="percent">Percent (%)</option>
-                                </select>
-                            </div>
+                <div class="grid grid-cols-2 gap-6 bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Net Price (Embassy)</label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-2.5 text-slate-400 font-bold">€</span>
+                            <input type="number" step="0.01" name="net_price" required
+                                class="w-full border border-slate-300 rounded-lg p-2.5 pl-7 text-sm font-bold">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Selling Price</label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-2.5 text-slate-400 font-bold">€</span>
+                            <input type="number" step="0.01" name="selling_price" required
+                                class="w-full border border-slate-300 rounded-lg p-2.5 pl-7 text-sm font-bold text-green-600">
                         </div>
                     </div>
                 </div>
-
-                <div><label class="block text-xs font-bold text-slate-500 uppercase mb-2">Requirements
-                        List</label><textarea
-                        class="w-full border border-slate-300 rounded-lg p-3 text-sm h-32 focus:ring-2 focus:ring-purple-500 outline-none"></textarea>
-                </div>
-
-                <div class="flex items-center justify-between border-t border-slate-100 pt-4">
-                    <span class="text-sm font-bold text-slate-700">Client Visibility</span>
+                <div
+                    class="flex items-center justify-between bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase">Client Visibility</label>
+                        <p class="text-[10px] text-slate-500">If unchecked, this destination is hidden from clients.</p>
+                    </div>
                     <label class="flex items-center cursor-pointer">
                         <div class="relative inline-block w-12 h-6 align-middle select-none">
-                            <input type="checkbox" checked
-                                class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer border-slate-300" />
+                            <input type="checkbox" name="is_active" checked
+                                class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer border-slate-300 transition-all duration-300" />
                             <label
                                 class="toggle-label block overflow-hidden h-6 rounded-full bg-slate-200 cursor-pointer"></label>
                         </div>
-                        <span class="ml-2 text-xs font-medium text-slate-500">Active</span>
+                        <span class="ml-2 text-xs font-bold text-slate-700 uppercase"
+                            id="active-status-text">Active</span>
                     </label>
                 </div>
 
-                <div class="pt-4 flex justify-end gap-3">
-                    <button type="button" onclick="closeVisaModal()"
-                        class="px-4 py-2 text-slate-500 font-bold text-sm">Cancel</button>
-                    <button type="submit"
-                        class="bg-purple-600 text-white font-bold py-2 px-6 rounded-lg shadow hover:bg-purple-700">Save
-                        Visa</button>
+
+                <div>
+
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Cover Image</label>
+                    <input type="file" name="cover_image" accept="image/*"
+                        class="w-full border border-slate-300 rounded-lg p-2 text-sm bg-white file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100">
                 </div>
-            </form>
+            </div>
+
+            <div id="step-2"
+                class="absolute inset-0 p-8 overflow-y-auto space-y-6 translate-x-full transition-transform duration-300 hidden">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h4 class="font-bold text-slate-800">Required Documents</h4>
+                        <p class="text-xs text-slate-500">What files must the client upload?</p>
+                    </div>
+                    <button type="button" onclick="addDocRow()"
+                        class="text-xs font-bold text-purple-600 bg-purple-50 hover:bg-purple-100 px-3 py-2 rounded-lg transition-colors border border-purple-200">
+                        <i class="ph-bold ph-plus"></i> Add Document
+                    </button>
+                </div>
+
+                <div id="docs-container" class="space-y-3">
+                    <div class="text-center py-10 text-slate-400 border-2 border-dashed border-slate-200 rounded-xl"
+                        id="docs-empty-state">
+                        No documents required yet. Click "Add Document" to start.
+                    </div>
+                </div>
+            </div>
+
+            <div id="step-3"
+                class="absolute inset-0 p-8 overflow-y-auto space-y-6 translate-x-full transition-transform duration-300 hidden">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h4 class="font-bold text-slate-800">Application Form Questions</h4>
+                        <p class="text-xs text-slate-500">Build the questions the client must answer.</p>
+                    </div>
+                    <button type="button" onclick="addQuestionRow()"
+                        class="text-xs font-bold text-purple-600 bg-purple-50 hover:bg-purple-100 px-3 py-2 rounded-lg transition-colors border border-purple-200">
+                        <i class="ph-bold ph-plus"></i> Add Question
+                    </button>
+                </div>
+
+                <div id="questions-container" class="space-y-3">
+                    <div class="text-center py-10 text-slate-400 border-2 border-dashed border-slate-200 rounded-xl"
+                        id="questions-empty-state">
+                        No custom questions added.
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <div class="p-4 border-t border-slate-200 bg-white flex justify-between items-center shrink-0 z-10">
+            <button type="button" id="btn-back" onclick="changeStep(-1)" disabled
+                class="px-5 py-2.5 rounded-lg text-sm font-bold text-slate-400 border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                Back
+            </button>
+            <button type="button" id="btn-next" onclick="changeStep(1)"
+                class="px-8 py-2.5 rounded-lg text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 shadow-md hover:-translate-y-0.5 transition-all flex items-center gap-2">
+                Next Step <i class="ph-bold ph-arrow-right"></i>
+            </button>
+            <button type="button" id="btn-submit" onclick="submitVisaWizard()"
+                class="hidden px-8 py-2.5 rounded-lg text-sm font-bold text-white bg-green-600 hover:bg-green-700 shadow-md hover:-translate-y-0.5 transition-all flex items-center gap-2">
+                <i class="ph-bold ph-check"></i> Create Destination
+            </button>
         </div>
     </div>
 </div>
@@ -371,6 +522,350 @@
         if (confirm("Are you sure you want to delete this item? This action cannot be undone.")) {
             alert("Item deleted.");
         }
+    }
+</script>
+
+
+
+<!-- active filter -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // 1. Get the 'status' parameter from the URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const currentStatus = urlParams.get('status');
+
+        // 2. Find the dropdown
+        const selectEl = document.getElementById('status-filter-select');
+
+        // 3. Set the value if it exists
+        if (currentStatus && selectEl) {
+            selectEl.value = currentStatus;
+        }
+    });
+</script>
+
+<script>
+    // --- 1. GLOBAL STATE ---
+    let currentStep = 1;
+    const totalSteps = 3;
+    let editingDestId = null;
+
+    // DOM Elements
+    const step1 = document.getElementById('step-1');
+    const step2 = document.getElementById('step-2');
+    const step3 = document.getElementById('step-3');
+    const progressBar = document.getElementById('progress-bar');
+    const stepIndicator = document.getElementById('step-indicator');
+    const btnBack = document.getElementById('btn-back');
+    const btnNext = document.getElementById('btn-next');
+    const btnSubmit = document.getElementById('btn-submit');
+
+    // --- 2. OPEN MODAL ---
+    function openVisaModal(mode, id = null) {
+        const modal = document.getElementById('visa-modal');
+        const form = document.getElementById('visa-wizard-form');
+        const title = modal.querySelector('h3');
+        const submitBtn = document.getElementById('btn-submit'); // Fix selector
+
+        // RESET STEPS
+        currentStep = 1;
+        updateWizardUI();
+
+        // Show Step 1, Hide others
+        resetStepClasses(step1, true);
+        resetStepClasses(step2, false);
+        resetStepClasses(step3, false);
+
+        modal.classList.remove('hidden');
+
+        if (mode === 'new') {
+            // === CREATE MODE ===
+            editingDestId = null;
+            title.innerHTML = '<i class="ph-bold ph-passport"></i> Create New Visa Destination';
+            submitBtn.innerHTML = '<i class="ph-bold ph-check"></i> Create Destination';
+
+            form.reset();
+
+            // Reset Dynamic Containers to default empty state
+            document.getElementById('docs-container').innerHTML =
+                '<div class="text-center py-10 text-slate-400 border-2 border-dashed border-slate-200 rounded-xl" id="docs-empty-state">No documents required yet. Click "Add Document" to start.</div>';
+
+            document.getElementById('questions-container').innerHTML =
+                '<div class="text-center py-10 text-slate-400 border-2 border-dashed border-slate-200 rounded-xl" id="questions-empty-state">No custom questions added.</div>';
+
+        } else if (mode === 'edit' && id) {
+            // === EDIT MODE ===
+            editingDestId = id;
+            title.innerHTML = '<i class="ph-bold ph-pencil"></i> Edit Visa Destination';
+            submitBtn.innerHTML = '<i class="ph-bold ph-floppy-disk"></i> Save Changes';
+
+            fetch(`/admin_panel/api/visa/destination/${id}/`)
+                .then(res => {
+                    if (!res.ok) throw new Error("API URL not found");
+                    return res.json();
+                })
+                .then(data => {
+                    if (data.status === 'success') {
+                        populateVisaModal(data);
+                    } else {
+                        closeVisaModal();
+                        alert("Error loading data: " + data.message);
+                    }
+                })
+                .catch(err => {
+                    closeVisaModal();
+                    console.error(err);
+                    alert("System Error: " + err.message);
+                });
+        }
+    }
+
+    // --- 3. CLOSE MODAL ---
+    function closeVisaModal() {
+        document.getElementById('visa-modal').classList.add('hidden');
+    }
+
+    // --- 4. NAVIGATION ---
+    function changeStep(direction) {
+        // Validate Step 1
+        if (currentStep === 1 && direction === 1) {
+            const required = step1.querySelectorAll('[required]');
+            let valid = true;
+            required.forEach(input => {
+                if (!input.value) { input.classList.add('border-red-500'); valid = false; }
+                else { input.classList.remove('border-red-500'); }
+            });
+            if (!valid) return alert("Please fill in required fields.");
+        }
+
+        // Hide Current Step
+        const currentEl = getStepEl(currentStep);
+        currentEl.classList.add('hidden');
+        currentEl.classList.add(direction === 1 ? '-translate-x-full' : 'translate-x-full');
+
+        // Update Index
+        currentStep += direction;
+
+        // Show New Step
+        const newEl = getStepEl(currentStep);
+        newEl.classList.remove('hidden', 'translate-x-full', '-translate-x-full');
+
+        updateWizardUI();
+    }
+
+    function resetStepClasses(el, isVisible) {
+        if (isVisible) {
+            el.classList.remove('hidden', 'translate-x-full', '-translate-x-full');
+        } else {
+            el.classList.add('hidden', 'translate-x-full');
+        }
+    }
+
+    function getStepEl(step) {
+        if (step === 1) return step1;
+        if (step === 2) return step2;
+        if (step === 3) return step3;
+    }
+
+    function updateWizardUI() {
+        const percent = (currentStep / totalSteps) * 100;
+        progressBar.style.width = `${percent}%`;
+        stepIndicator.innerText = `Step ${currentStep} of ${totalSteps}`;
+
+        btnBack.disabled = currentStep === 1;
+        if (currentStep === totalSteps) {
+            btnNext.classList.add('hidden');
+            btnSubmit.classList.remove('hidden');
+        } else {
+            btnNext.classList.remove('hidden');
+            btnSubmit.classList.add('hidden');
+        }
+    }
+
+    // --- 5. SUBMIT LOGIC ---
+    function submitVisaWizard() {
+        const btn = document.getElementById('btn-submit');
+        const originalText = btn.innerHTML;
+
+        btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Saving...';
+        btn.disabled = true;
+
+        const form = document.getElementById('visa-wizard-form');
+
+        const payload = {
+            visa_destination: {
+                country: form.querySelector('[name="country"]').value,
+                visa_name: form.querySelector('[name="visa_name"]').value,
+                visa_type: form.querySelector('[name="visa_type"]').value,
+                net_price: form.querySelector('[name="net_price"]').value,
+                selling_price: form.querySelector('[name="selling_price"]').value,
+                processing_time: form.querySelector('[name="processing_time"]').value,
+                is_active: form.querySelector('[name="is_active"]').checked
+            },
+            required_docs: [],
+            visa_form_fields: []
+        };
+
+        // Collect Docs
+        document.querySelectorAll('.doc-row').forEach(row => {
+            const name = row.querySelector('.doc-name').value;
+            if (name) {
+                payload.required_docs.push({
+                    name: name,
+                    description: row.querySelector('.doc-desc').value,
+                    is_required: row.querySelector('.doc-req').checked
+                });
+            }
+        });
+
+        // Collect Questions
+        document.querySelectorAll('.question-row').forEach((row, index) => {
+            const label = row.querySelector('.q-label').value;
+            if (label) {
+                payload.visa_form_fields.push({
+                    label: label,
+                    field_type: row.querySelector('.q-type').value,
+                    options: row.querySelector('.q-options').value,
+                    is_required: row.querySelector('.q-req').checked,
+                    order_index: index
+                });
+            }
+        });
+
+        const formData = new FormData();
+        formData.append('json_data', JSON.stringify(payload));
+        const fileInput = form.querySelector('[name="cover_image"]');
+        if (fileInput.files.length > 0) {
+            formData.append('cover_image', fileInput.files[0]);
+        }
+
+        let url = "{% url 'visa_destination_create' %}";
+        if (editingDestId) {
+            url = `/admin_panel/api/visa/update_destination/${editingDestId}/`;
+        }
+
+        fetch(url, {
+            method: "POST",
+            body: formData,
+            headers: { "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value }
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    closeVisaModal();
+                    alert(editingDestId ? "✅ Updated Successfully!" : "✅ Created Successfully!");
+                    window.location.reload();
+                } else {
+                    closeVisaModal();
+                    alert("⚠️ Error: " + data.message);
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            })
+            .catch(err => {
+                closeVisaModal();
+                console.error(err);
+                alert("❌ System Error");
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            });
+    }
+
+    // --- 6. HELPERS (Populate & Add Rows) ---
+
+    // NOTE: This function was fixing the crash logic
+    function populateVisaModal(data) {
+        const d = data.destination;
+        const form = document.getElementById('visa-wizard-form');
+
+        // 1. Fill Info
+        form.querySelector('[name="country"]').value = d.country;
+        form.querySelector('[name="visa_name"]').value = d.visa_name || '';
+        form.querySelector('[name="visa_type"]').value = d.visa_type;
+        form.querySelector('[name="net_price"]').value = d.net_price;
+        form.querySelector('[name="selling_price"]').value = d.selling_price;
+        form.querySelector('[name="processing_time"]').value = d.processing_time;
+        form.querySelector('[name="is_active"]').checked = d.is_active;
+
+        // 2. Fill Documents
+        const docContainer = document.getElementById('docs-container');
+        docContainer.innerHTML = ''; // Wipe everything
+
+        if (data.documents && data.documents.length > 0) {
+            data.documents.forEach(doc => { addDocRowWithData(doc); });
+        } else {
+            // Restore Empty State if no docs
+            docContainer.innerHTML = '<div class="text-center py-10 text-slate-400 border-2 border-dashed border-slate-200 rounded-xl" id="docs-empty-state">No documents required yet.</div>';
+        }
+
+        // 3. Fill Questions
+        const qContainer = document.getElementById('questions-container');
+        qContainer.innerHTML = ''; // Wipe everything
+
+        if (data.questions && data.questions.length > 0) {
+            data.questions.forEach(q => { addQuestionRowWithData(q); });
+        } else {
+            // Restore Empty State if no questions
+            qContainer.innerHTML = '<div class="text-center py-10 text-slate-400 border-2 border-dashed border-slate-200 rounded-xl" id="questions-empty-state">No custom questions added.</div>';
+        }
+    }
+
+    function addDocRow() { addDocRowWithData({}); }
+    function addQuestionRow() { addQuestionRowWithData({}); }
+
+    function addDocRowWithData(data = {}) {
+        // SAFE CHECK: Only hide if element exists
+        const emptyState = document.getElementById('docs-empty-state');
+        if (emptyState) { emptyState.classList.add('hidden'); }
+
+        const id = Date.now() + Math.random();
+        const html = `
+        <div class="doc-row grid grid-cols-12 gap-3 bg-white p-3 rounded-lg border border-slate-200 shadow-sm animate-fade-in items-start" id="doc-${id}">
+            <div class="col-span-4"><input type="text" value="${data.name || ''}" placeholder="Name" class="doc-name w-full text-sm border-slate-200 rounded p-2 bg-slate-50" required></div>
+            <div class="col-span-6"><input type="text" value="${data.description || ''}" placeholder="Desc" class="doc-desc w-full text-sm border-slate-200 rounded p-2 bg-slate-50"></div>
+            <div class="col-span-2 flex items-center justify-end gap-2 pt-2">
+                <label class="flex items-center gap-1"><input type="checkbox" ${data.is_required !== false ? 'checked' : ''} class="doc-req w-4 h-4 text-purple-600 rounded"><span class="text-[10px] font-bold text-slate-500">Req.</span></label>
+                <button type="button" onclick="document.getElementById('doc-${id}').remove()" class="text-red-400 hover:text-red-600"><i class="ph-bold ph-trash"></i></button>
+            </div>
+        </div>`;
+        document.getElementById('docs-container').insertAdjacentHTML('beforeend', html);
+    }
+
+    function addQuestionRowWithData(data = {}) {
+        // SAFE CHECK: Only hide if element exists
+        const emptyState = document.getElementById('questions-empty-state');
+        if (emptyState) { emptyState.classList.add('hidden'); }
+
+        const id = Date.now() + Math.random();
+        const html = `
+        <div class="question-row bg-white p-4 rounded-lg border border-slate-200 shadow-sm animate-fade-in space-y-3" id="q-${id}">
+            <div class="flex justify-between items-start">
+                <div class="flex-1 grid grid-cols-2 gap-4">
+                    <input type="text" value="${data.label || ''}" placeholder="Label" class="q-label w-full text-sm border-slate-200 rounded p-2 border font-bold">
+                    <select onchange="toggleOptions(this)" class="q-type w-full text-sm border-slate-200 rounded p-2 border bg-slate-50">
+                        <option value="text" ${data.field_type === 'text' ? 'selected' : ''}>Text</option>
+                        <option value="date" ${data.field_type === 'date' ? 'selected' : ''}>Date</option>
+                        <option value="select" ${data.field_type === 'select' ? 'selected' : ''}>Dropdown</option>
+                        <option value="checkbox" ${data.field_type === 'checkbox' ? 'selected' : ''}>Checkbox</option>
+                        <option value="number" ${data.field_type === 'number' ? 'selected' : ''}>Number</option>
+                    </select>
+                </div>
+                <button type="button" onclick="document.getElementById('q-${id}').remove()" class="ml-4 text-red-400 hover:text-red-600 p-1"><i class="ph-bold ph-trash"></i></button>
+            </div>
+            <div class="options-container ${data.field_type === 'select' ? '' : 'hidden'}">
+                <input type="text" value="${data.options || ''}" placeholder="Options..." class="q-options w-full text-xs border-slate-200 rounded p-2 bg-yellow-50 border border-yellow-200">
+            </div>
+            <div class="flex items-center gap-2">
+                <label class="flex items-center gap-2 bg-slate-50 px-2 py-1 rounded border border-slate-200"><input type="checkbox" ${data.is_required !== false ? 'checked' : ''} class="q-req w-3 h-3 text-purple-600 rounded"><span class="text-xs font-bold text-slate-500">Required</span></label>
+            </div>
+        </div>`;
+        document.getElementById('questions-container').insertAdjacentHTML('beforeend', html);
+    }
+
+    function toggleOptions(selectEl) {
+        const row = selectEl.closest('.question-row');
+        if (selectEl.value === 'select') row.querySelector('.options-container').classList.remove('hidden');
+        else row.querySelector('.options-container').classList.add('hidden');
     }
 </script>
 

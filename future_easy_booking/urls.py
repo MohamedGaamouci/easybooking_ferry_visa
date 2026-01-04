@@ -9,7 +9,8 @@ from django.conf.urls.static import static
 from django.shortcuts import render
 from agencies.views import admin_agencies_view, get_agencies_api
 from users.views import admin_users_view
-from visas.views import visa_list_view, get_visa_details, update_visa_application, get_visa_destinations_api, visa_create_view, get_visa_schema
+from visas.views import *
+from core.views import *
 
 
 # ======================
@@ -26,10 +27,6 @@ def admin_setting_view(request):
 
 def admin_accounting_view(request):
     return render(request, 'admin/accounting.html')
-
-
-def admin_cms_view(request):
-    return render(request, 'admin/cms.html')
 
 
 def admin_ferry_requests_view(request):
@@ -92,7 +89,7 @@ admin_urls = [
 
 
     path("admin_panel/users/", admin_users_view, name="admin_users"),
-    path("admin_panel/cms/", admin_cms_view, name="admin_cms"),
+    path("admin_panel/cms/", cms_dashboard_view, name="admin_cms"),
     path("admin_panel/ferries/", admin_ferry_requests_view,
          name="admin_ferry_requests"),
     path("admin_panel/visas/", visa_list_view, name="admin_visa_app"),
@@ -108,6 +105,15 @@ admin_urls = [
          name="visa_create"),  # <--- Here
     path("admin_panel/api/visa/schema/<int:destination_id>/",
          get_visa_schema, name="api_visa_schema"),
+    path('admin_panel/visas/new-destination',
+         visa_destination_create_view, name='visa_destination_create'),
+    # 2. GET DETAILS (For Edit Modal)
+    path('admin_panel/api/visa/destination/<int:pk>/', visa_destination_detail_api,
+         name='api_visa_destination_detail'),
+
+    # 3. UPDATE (For Saving Edits)
+    path('admin_panel/api/visa/update_destination/<int:pk>/',
+         visa_destination_update_view, name='visa_destination_update'),
 ]
 urlpatterns += admin_urls
 

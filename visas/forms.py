@@ -182,33 +182,3 @@ class VisaApplicationDocumentForm(forms.ModelForm):
                     _("Unsupported file extension. Allowed: PDF, JPG, PNG."))
 
         return uploaded_file
-
-
-# ==========================================
-# 4. Create Visa Application Form
-# ==========================================
-
-class CreateVisaApplicationForm(forms.ModelForm):
-    """
-    Validates the standard inputs for a new Visa Application.
-    Used in the 'Add Manual Application' modal.
-    """
-    class Meta:
-        model = VisaApplication
-        fields = ['agency', 'destination', 'first_name',
-                  'last_name', 'passport_number']
-
-    def clean_passport_number(self):
-        # Security: Force Uppercase & Trim whitespace
-        data = self.cleaned_data['passport_number']
-        if data:
-            return data.strip().upper()
-        return data
-
-    def clean_destination(self):
-        # Integrity: Ensure the destination is actually active
-        destination = self.cleaned_data.get('destination')
-        if destination and not destination.is_active:
-            raise ValidationError(
-                _("This destination is currently not accepting applications."))
-        return destination

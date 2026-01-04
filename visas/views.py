@@ -1,8 +1,8 @@
-from .models import VisaApplication
+from .models import VisaApplication, VisaForm
 from .forms import (
     VisaApplicationForm,
     VisaApplicationAnswerForm,
-    VisaApplicationDocumentForm
+    VisaApplicationDocumentForm, UpdateVisaStatusForm, VisaDestinationForm, VisaRequiredDocumentForm, VisaFormFieldForm
 )
 from django.views.decorators.http import require_POST
 from django.shortcuts import reverse
@@ -18,13 +18,8 @@ from django.shortcuts import render
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib.auth.decorators import login_required, permission_required
 
-# forms import
-from .forms import UpdateVisaStatusForm
-from django.shortcuts import redirect
 from django.contrib import messages
 
-from .forms import CreateVisaApplicationForm
-from .models import VisaApplicationAnswer, VisaApplicationDocument
 import json
 # ========================================================
 # 1. READ ALL (List View with Pagination & Stats)
@@ -391,3 +386,200 @@ def visa_create_view(request):
         # System Errors (Server fault)
         print(f"System Error: {e}")
         return JsonResponse({'status': 'error', 'message': "System Error occurred."}, status=500)
+
+
+# ================================================================================================================
+# 6. CREATE THE DESTINATION WITH IT'S DOCS AND FORM
+# ================================================================================================================
+
+@login_required
+@permission_required('visas.add_visadestination', raise_exception=True)
+@require_POST
+def visa_destination_create_view(request):
+    try:
+        # 1. Parse JSON Payload
+        json_str = request.POST.get('json_data')
+        if not json_str:
+            return JsonResponse({'status': 'error', 'message': 'No data received'}, status=400)
+
+        data = json.loads(json_str)
+
+        # Extract the 3 parts
+        dest_data = data.get('visa_destination', {})
+        docs_list = data.get('required_docs', [])
+        fields_list = data.get('visa_form_fields', [])
+
+        # Start Atomic Transaction (All or Nothing)
+        with transaction.atomic():
+
+            # ====================================================
+            # STEP 1: CREATE DESTINATION
+            # ====================================================
+            # We pass request.FILES to handle the 'cover_image'
+            dest_form = VisaDestinationForm(
+                data=dest_data, files=request.FILES)
+
+            if not dest_form.is_valid():
+                # Get the first error message
+                first_error = next(iter(dest_form.errors.values()))[0]
+                raise ValueError(f"Destination Error: {first_error}")
+
+            destination = dest_form.save()
+
+            # ====================================================
+            # STEP 2: CREATE REQUIRED DOCUMENTS
+            # ====================================================
+            for doc_item in docs_list:
+                # Add the foreign key ID manually
+                doc_item['destination'] = destination.id
+
+                doc_form = VisaRequiredDocumentForm(data=doc_item)
+                if not doc_form.is_valid():
+                    raise ValueError(
+                        f"Document Error ({doc_item.get('name')}): {doc_form.errors.as_text()}")
+
+                doc_form.save()
+
+            # ====================================================
+            # STEP 3: CREATE VISA FORM & QUESTIONS
+            # ====================================================
+            # A. Create the parent Form Container (Version 1)
+            # We create this manually since it doesn't need validation from the frontend
+            visa_form = VisaForm.objects.create(
+                destination=destination,
+                version=1,
+                is_active=True
+            )
+
+            # B. Create Fields attached to this Form
+            for field_item in fields_list:
+                # Add Foreign Key
+                field_item['form'] = visa_form.id
+
+                field_form = VisaFormFieldForm(data=field_item)
+                if not field_form.is_valid():
+                    raise ValueError(
+                        f"Question Error ({field_item.get('label')}): {field_form.errors.as_text()}")
+
+                field_form.save()
+
+        # Success
+        messages.success(
+            request, f"Visa Destination '{destination.country}' created successfully.")
+        return JsonResponse({'status': 'success'})
+
+    except ValueError as ve:
+        # Validation Errors (User input issues)
+        return JsonResponse({'status': 'error', 'message': str(ve)}, status=400)
+
+    except Exception as e:
+        # System Errors
+        print(f"CRITICAL ERROR: {str(e)}")
+        return JsonResponse({'status': 'error', 'message': "System Error. Check logs."}, status=500)
+
+
+# ================================================================================================================
+# 6. GET VISA DESTINAITON WITH THE ID AND IT'S NESTED TABLES
+# ================================================================================================================
+
+@login_required
+@permission_required('visas.change_visadestination', raise_exception=True)
+@require_POST
+def visa_destination_update_view(request, pk):
+    """
+    METHOD: POST
+    ACTION: Save the edited data.
+    """
+    try:
+        dest = get_object_or_404(VisaDestination, pk=pk)
+
+        # 1. Parse Data
+        json_str = request.POST.get('json_data')
+        if not json_str:
+            return JsonResponse({'status': 'error', 'message': 'No data received'}, status=400)
+
+        data = json.loads(json_str)
+        dest_data = data.get('visa_destination', {})
+        docs_list = data.get('required_docs', [])
+        fields_list = data.get('visa_form_fields', [])
+
+        # 2. Save Everything Safely
+        with transaction.atomic():
+            # A. Update Main Info
+            form = VisaDestinationForm(
+                instance=dest, data=dest_data, files=request.FILES)
+            if not form.is_valid():
+                raise ValueError(
+                    f"Info Error: {next(iter(form.errors.values()))[0]}")
+            form.save()
+
+            # B. Update Documents (Wipe old -> Add new)
+            dest.required_documents.all().delete()
+            for item in docs_list:
+                item['destination'] = dest.id
+                d_form = VisaRequiredDocumentForm(data=item)
+                if d_form.is_valid():
+                    d_form.save()
+
+            # C. Update Questions (Wipe old -> Add new)
+            active_form = dest.forms.filter(is_active=True).first()
+            if not active_form:
+                active_form = VisaForm.objects.create(
+                    destination=dest, version=1)
+
+            active_form.fields.all().delete()
+            for item in fields_list:
+                item['form'] = active_form.id
+                f_form = VisaFormFieldForm(data=item)
+                if f_form.is_valid():
+                    f_form.save()
+
+        return JsonResponse({'status': 'success'})
+
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
+@login_required
+@require_GET
+def visa_destination_detail_api(request, pk):
+    """
+    METHOD: GET
+    ACTION: Fetch current data to populate the modal.
+    """
+    # 1. Get the Destination
+    dest = get_object_or_404(VisaDestination, pk=pk)
+
+    # 2. Get Related Documents
+    documents = list(dest.required_documents.values(
+        'id', 'name', 'description', 'is_required'))
+
+    # 3. Get Related Questions (from the active form)
+    questions = []
+    active_form = dest.forms.filter(
+        is_active=True).order_by('-version').first()
+    if active_form:
+        questions = list(active_form.fields.values(
+            'id', 'label', 'field_type', 'options', 'is_required', 'order_index'
+        ))
+
+    # 4. Return as JSON
+    data = {
+        'status': 'success',
+        'destination': {
+            'id': dest.id,
+            'country': dest.country,
+            'visa_name': dest.visa_name,
+            'visa_type': dest.visa_type,
+            'net_price': str(dest.net_price),
+            'selling_price': str(dest.selling_price),
+            'processing_time': dest.processing_time,
+            'is_active': dest.is_active,
+        },
+        'documents': documents,
+        'questions': questions
+    }
+    print('-'*50)
+    print('json response:: ', data)
+    print('-'*50)
+    return JsonResponse(data)
