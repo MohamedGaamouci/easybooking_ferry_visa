@@ -522,18 +522,36 @@
     </div>
 </div>
 
+<select id="master-port-select" class="hidden">
+    <option value="">Select Port...</option>
+    {% for port in ports %}
+    {% if port.is_active %}
+    <option value="{{ port.id }}">{{ port.name }} ({{ port.code }})</option>
+    {% endif %}
+    {% endfor %}
+</select>
+
 <div id="provider-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeProviderModal()">
     </div>
-    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden modal-enter">
+
+    <div
+        class="relative bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden modal-enter">
+
         <div class="bg-blue-600 p-4 flex justify-between items-center text-white shrink-0">
             <h3 class="font-bold flex items-center gap-2"><i class="ph-bold ph-boat"></i> <span
-                    id="prov-modal-title">Add Provider</span></h3>
+                    id="prov-modal-title">Manage Provider</span></h3>
             <button onclick="closeProviderModal()"><i class="ph-bold ph-x"></i></button>
         </div>
-        <form id="provider-form" class="p-6 space-y-4">
-            <div class="grid grid-cols-2 gap-4">
+
+        <form id="provider-form" onsubmit="event.preventDefault(); saveProvider();"
+            class="flex-1 overflow-y-auto p-6 space-y-6">
+
+            <div class="grid grid-cols-2 gap-4 border-b border-slate-100 pb-6">
                 <div class="col-span-2">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Basic Information</h4>
+                </div>
+                <div>
                     <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Provider Name <span
                             class="text-red-500">*</span></label>
                     <input type="text" name="name" required
@@ -543,8 +561,12 @@
                     <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Code <span
                             class="text-red-500">*</span></label>
                     <input type="text" name="code" required
-                        class="w-full border border-slate-300 rounded-lg p-2 text-sm font-mono uppercase"
-                        placeholder="e.g. BAL">
+                        class="w-full border border-slate-300 rounded-lg p-2 text-sm font-mono uppercase">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Email</label>
+                    <input type="email" name="contact_email"
+                        class="w-full border border-slate-300 rounded-lg p-2 text-sm">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Phone</label>
@@ -552,24 +574,55 @@
                         class="w-full border border-slate-300 rounded-lg p-2 text-sm">
                 </div>
                 <div class="col-span-2">
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Email</label>
-                    <input type="email" name="contact_email"
-                        class="w-full border border-slate-300 rounded-lg p-2 text-sm">
-                </div>
-                <div class="col-span-2">
                     <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Logo</label>
                     <input type="file" name="logo" accept="image/*"
                         class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
                 </div>
+                <div class="col-span-2">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" name="is_active" checked
+                            class="rounded text-blue-600 focus:ring-blue-500">
+                        <span class="text-sm font-medium text-slate-700">Provider Active Status</span>
+                    </label>
+                </div>
             </div>
 
-            <div class="flex items-center justify-between pt-4 border-t border-slate-100">
-                <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" name="is_active" checked class="rounded text-blue-600 focus:ring-blue-500">
-                    <span class="text-sm font-medium text-slate-700">Active Status</span>
-                </label>
-                <button type="submit"
-                    class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg shadow hover:bg-blue-700 text-sm">Save
+            <div>
+                <div class="flex justify-between items-center mb-3">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Operating Routes</h4>
+                    <button type="button" onclick="addRouteRow()"
+                        class="text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg border border-blue-200 transition-colors">
+                        <i class="ph-bold ph-plus"></i> Add Route
+                    </button>
+                </div>
+
+                <div class="border border-slate-200 rounded-xl overflow-hidden">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-50 text-xs text-slate-500 uppercase font-semibold">
+                            <tr>
+                                <th class="px-3 py-2">Origin Port</th>
+                                <th class="px-3 py-2 text-center"><i class="ph-bold ph-arrows-left-right"></i></th>
+                                <th class="px-3 py-2">Destination Port</th>
+                                <th class="px-3 py-2">Notes</th>
+                                <th class="px-3 py-2 w-16 text-center">Active</th>
+                                <th class="px-3 py-2 w-10"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="routes-container" class="divide-y divide-slate-100 bg-white">
+                        </tbody>
+                    </table>
+
+                    <div id="routes-empty-state" class="p-8 text-center text-slate-400 italic text-sm">
+                        No routes added. Click "Add Route" to define connections.
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-4 border-t border-slate-100 flex justify-end gap-3">
+                <button type="button" onclick="closeProviderModal()"
+                    class="px-4 py-2 text-slate-500 font-bold text-sm hover:bg-slate-50 rounded-lg">Cancel</button>
+                <button type="submit" id="btn-save-provider"
+                    class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg shadow hover:bg-blue-700 text-sm transition-all">Save
                     Provider</button>
             </div>
         </form>
@@ -584,7 +637,7 @@
                     id="port-modal-title">Add Port</span></h3>
             <button onclick="closePortModal()"><i class="ph-bold ph-x"></i></button>
         </div>
-        <form id="port-form" class="p-6 space-y-4">
+        <form id="port-form" onsubmit="event.preventDefault(); savePort();" class="p-6 space-y-4">
             <div class="grid grid-cols-2 gap-4">
                 <div class="col-span-2">
                     <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Port Name <span
@@ -1063,5 +1116,246 @@
         document.getElementById('port-modal').classList.add('hidden');
     }
 </script>
+<!-- crud operations -->
+<script>
+    // --- PORT SAVE LOGIC ---
+    function savePort() {
+        const form = document.getElementById('port-form');
+        const formData = new FormData(form);
+        const btn = form.querySelector('button[type="submit"]');
+        const originalText = btn.innerText;
+
+        // Loading State
+        btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Saving...';
+        btn.disabled = true;
+
+        // Determine URL (Create vs Update)
+        // We need a variable 'editingPortId' similar to what we did for Visa
+        // (Ensure you declare 'let editingPortId = null;' at the top of your script)
+
+        let url = "{% url 'port_create' %}";
+        if (editingPortId) {
+            url = `/admin_panel/api/ferry/port/update/${editingPortId}/`;
+        }
+
+        fetch(url, {
+            method: "POST",
+            body: formData,
+            headers: {
+                "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    closePortModal();
+                    alert("✅ " + data.message);
+                    window.location.reload();
+                } else {
+                    alert("⚠️ Error: " + data.message);
+                    btn.innerText = originalText;
+                    btn.disabled = false;
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert("❌ System Error");
+                btn.innerText = originalText;
+                btn.disabled = false;
+            });
+    }
+    let editingPortId = null; // Global Variable
+
+    function openPortModal(mode, id = null) {
+        const modal = document.getElementById('port-modal');
+        const form = document.getElementById('port-form');
+        document.getElementById('port-modal-title').innerText = mode === 'new' ? 'Add Port' : 'Edit Port';
+
+        modal.classList.remove('hidden');
+
+        if (mode === 'new') {
+            editingPortId = null;
+            form.reset();
+        } else {
+            editingPortId = id;
+            // Fetch Data for Edit
+            fetch(`/admin_panel/api/ferry/port/${id}/`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        const p = data.port;
+                        form.querySelector('[name="name"]').value = p.name;
+                        form.querySelector('[name="code"]').value = p.code;
+                        form.querySelector('[name="city"]').value = p.city;
+                        form.querySelector('[name="country"]').value = p.country;
+                        form.querySelector('[name="is_active"]').checked = p.is_active;
+                    }
+                });
+        }
+    }
+
+</script>
+<script>
+    // --- GLOBAL VARS ---
+    let editingProviderId = null;
+
+    // --- 1. MODAL OPEN/CLOSE ---
+    function openProviderModal(mode, id = null) {
+        const modal = document.getElementById('provider-modal');
+        const form = document.getElementById('provider-form');
+        const title = document.getElementById('prov-modal-title');
+
+        // Reset UI
+        document.getElementById('routes-container').innerHTML = '';
+        document.getElementById('routes-empty-state').classList.remove('hidden');
+
+        modal.classList.remove('hidden');
+
+        if (mode === 'new') {
+            editingProviderId = null;
+            title.innerText = 'Add New Provider';
+            form.reset();
+        } else {
+            editingProviderId = id;
+            title.innerText = 'Edit Provider';
+
+            // Fetch Data
+            fetch(`/admin_panel/api/ferry/provider/${id}/`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        const p = data.provider;
+                        // Fill Basic Info
+                        form.querySelector('[name="name"]').value = p.name;
+                        form.querySelector('[name="code"]').value = p.code;
+                        form.querySelector('[name="contact_email"]').value = p.contact_email;
+                        form.querySelector('[name="contact_phone"]').value = p.contact_phone;
+                        form.querySelector('[name="is_active"]').checked = p.is_active;
+
+                        // Fill Routes
+                        if (data.routes && data.routes.length > 0) {
+                            data.routes.forEach(route => addRouteRow(route));
+                        }
+                    }
+                })
+                .catch(err => alert("Error loading provider data."));
+        }
+    }
+
+    function closeProviderModal() {
+        document.getElementById('provider-modal').classList.add('hidden');
+    }
+
+    // --- 2. DYNAMIC ROUTE ROWS ---
+    function addRouteRow(data = {}) {
+        const container = document.getElementById('routes-container');
+        document.getElementById('routes-empty-state').classList.add('hidden');
+
+        const rowId = Date.now() + Math.random();
+
+        // Get Port Options from Master Select
+        const portOptions = document.getElementById('master-port-select').innerHTML;
+
+        const html = `
+        <tr id="route-${rowId}" class="route-row group hover:bg-slate-50 transition-colors" data-route-id="${data.id || ''}">
+            <td class="px-3 py-2">
+                <select class="route-origin w-full border border-slate-300 rounded p-1.5 text-xs bg-white outline-none focus:border-blue-500">
+                    ${portOptions}
+                </select>
+            </td>
+            <td class="px-3 py-2 text-center text-slate-300">
+                <i class="ph-bold ph-arrow-right"></i>
+            </td>
+            <td class="px-3 py-2">
+                <select class="route-dest w-full border border-slate-300 rounded p-1.5 text-xs bg-white outline-none focus:border-blue-500">
+                    ${portOptions}
+                </select>
+            </td>
+            <td class="px-3 py-2">
+                <input type="text" class="route-notes w-full border border-slate-300 rounded p-1.5 text-xs outline-none focus:border-blue-500" 
+                       placeholder="Optional notes" value="${data.notes || ''}">
+            </td>
+            <td class="px-3 py-2 text-center">
+                <input type="checkbox" class="route-active w-4 h-4 rounded text-blue-600" ${data.is_active !== false ? 'checked' : ''}>
+            </td>
+            <td class="px-3 py-2 text-center">
+                <button type="button" onclick="document.getElementById('route-${rowId}').remove()" 
+                        class="text-slate-300 hover:text-red-500 transition-colors">
+                    <i class="ph-bold ph-trash"></i>
+                </button>
+            </td>
+        </tr>
+        `;
+
+        container.insertAdjacentHTML('beforeend', html);
+
+        // Set Selected Values (must be done after HTML injection)
+        const newRow = document.getElementById(`route-${rowId}`);
+        if (data.origin_id) newRow.querySelector('.route-origin').value = data.origin_id;
+        if (data.destination_id) newRow.querySelector('.route-dest').value = data.destination_id;
+    }
+
+    // --- 3. SAVE LOGIC ---
+    function saveProvider() {
+        const form = document.getElementById('provider-form');
+        const btn = document.getElementById('btn-save-provider');
+        const originalText = btn.innerText;
+
+        btn.innerText = 'Saving...';
+        btn.disabled = true;
+
+        // 1. Gather Routes
+        const routes = [];
+        document.querySelectorAll('.route-row').forEach(row => {
+            const origin = row.querySelector('.route-origin').value;
+            const dest = row.querySelector('.route-dest').value;
+
+            if (origin && dest) {
+                routes.push({
+                    id: row.dataset.routeId || null,
+                    origin_id: origin,
+                    destination_id: dest,
+                    notes: row.querySelector('.route-notes').value,
+                    is_active: row.querySelector('.route-active').checked
+                });
+            }
+        });
+
+        // 2. Prepare Form Data
+        const formData = new FormData(form);
+        formData.append('routes_json', JSON.stringify(routes));
+
+        // 3. Send Request
+        let url = "{% url 'provider_create' %}";
+        if (editingProviderId) {
+            url = `/admin_panel/api/ferry/provider/update/${editingProviderId}/`;
+        }
+
+        fetch(url, {
+            method: "POST",
+            body: formData,
+            headers: { "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value }
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    closeProviderModal();
+                    alert("✅ Saved Successfully!");
+                    window.location.reload();
+                } else {
+                    alert("⚠️ Error: " + data.message);
+                    btn.innerText = originalText;
+                    btn.disabled = false;
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert("System Error");
+                btn.innerText = originalText;
+                btn.disabled = false;
+            });
+    }
+</script>
+
 
 {% endblock %}

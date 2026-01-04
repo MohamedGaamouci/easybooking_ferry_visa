@@ -11,6 +11,7 @@ from agencies.views import admin_agencies_view, get_agencies_api
 from users.views import admin_users_view
 from visas.views import *
 from core.views import *
+from ferries.views import *
 
 
 # ======================
@@ -92,6 +93,23 @@ admin_urls = [
     path("admin_panel/cms/", cms_dashboard_view, name="admin_cms"),
     path("admin_panel/ferries/", admin_ferry_requests_view,
          name="admin_ferry_requests"),
+    # Port Management
+    path('admin_panel/api/ferry/port/create/',
+         port_create_view, name='port_create'),
+    path('admin_panel/api/ferry/port/<int:pk>/', port_detail_api,
+         name='port_detail'),       # For Edit Modal (GET)
+    path('admin_panel/api/ferry/port/update/<int:pk>/', port_update_view,
+         name='port_update'),  # For Save (POST)
+
+    # Provider Management (Unified Save View)
+    path('admin_panel/api/ferry/provider/create/',
+         provider_save_view, name='provider_create'),
+    path('admin_panel/api/ferry/provider/update/<int:pk>/',
+         provider_save_view, name='provider_update'),
+    path('admin_panel/api/ferry/provider/<int:pk>/',
+         provider_detail_api, name='provider_detail'),
+
+
     path("admin_panel/visas/", visa_list_view, name="admin_visa_app"),
     path("admin_panel/api/visa/<int:app_id>/",
          get_visa_details, name="api_visa_details"),
