@@ -1,0 +1,245 @@
+{% extends 'admin/base_admin.html' %}
+{% load static %}
+
+{% block content %}
+
+<main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0 z-10">
+        <h1 class="text-xl font-bold text-slate-900">Incoming Requests</h1>
+        <div class="flex items-center gap-4">
+            <div class="relative">
+                <i class="ph-bold ph-magnifying-glass absolute left-3 top-2.5 text-slate-400"></i>
+                <input type="text" id="admin-search" oninput="debounceLoad()" placeholder="Search ref, agency..."
+                    class="pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-brand-500 w-64 transition-all">
+            </div>
+            <button class="relative p-2 text-slate-400 hover:text-brand-600 transition-colors">
+                <i class="ph-bold ph-bell text-xl"></i>
+                <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+            </button>
+        </div>
+    </header>
+
+    <div class="flex-1 overflow-y-auto p-8">
+        <div class="max-w-7xl mx-auto space-y-8">
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div
+                    class="bg-white p-5 rounded-xl border border-slate-200 shadow-soft flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">New Requests</p>
+                        <p class="text-2xl font-bold text-slate-900 mt-1" id="stat-new">-</p>
+                    </div>
+                    <div
+                        class="w-10 h-10 rounded-full bg-blue-50 text-brand-600 flex items-center justify-center text-xl">
+                        <i class="ph-fill ph-tray"></i>
+                    </div>
+                </div>
+                <div
+                    class="bg-white p-5 rounded-xl border border-slate-200 shadow-soft flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Pending Offer</p>
+                        <p class="text-2xl font-bold text-slate-900 mt-1" id="stat-pending">-</p>
+                    </div>
+                    <div
+                        class="w-10 h-10 rounded-full bg-yellow-50 text-yellow-600 flex items-center justify-center text-xl">
+                        <i class="ph-fill ph-hourglass"></i>
+                    </div>
+                </div>
+                <div
+                    class="bg-white p-5 rounded-xl border border-slate-200 shadow-soft flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Confirmed</p>
+                        <p class="text-2xl font-bold text-slate-900 mt-1" id="stat-confirmed">-</p>
+                    </div>
+                    <div
+                        class="w-10 h-10 rounded-full bg-green-50 text-green-600 flex items-center justify-center text-xl">
+                        <i class="ph-fill ph-check-circle"></i>
+                    </div>
+                </div>
+                <div
+                    class="bg-white p-5 rounded-xl border border-slate-200 shadow-soft flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Revenue</p>
+                        <p class="text-2xl font-bold text-slate-900 mt-1" id="stat-revenue">-</p>
+                    </div>
+                    <div
+                        class="w-10 h-10 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center text-xl">
+                        <i class="ph-fill ph-currency-eur"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-xl shadow-soft overflow-hidden">
+
+                <div class="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
+                    <div class="flex items-center gap-2">
+                        <button onclick="loadAdminData()" class="p-2 hover:bg-slate-200 rounded-lg transition-colors"
+                            title="Refresh">
+                            <i class="ph-bold ph-arrow-clockwise"></i>
+                        </button>
+                        <span class="text-sm font-bold text-slate-700">All Incoming Requests</span>
+                    </div>
+                </div>
+
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr
+                            class="text-xs font-semibold text-slate-400 uppercase border-b border-slate-200 bg-slate-50/30">
+                            <th class="px-6 py-4">Status</th>
+                            <th class="px-6 py-4">Reference</th>
+                            <th class="px-6 py-4">Agency / Agent</th>
+                            <th class="px-6 py-4">Trip Details</th>
+                            <th class="px-6 py-4">Dates</th>
+                            <th class="px-6 py-4 text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-table-body" class="divide-y divide-slate-100 text-sm">
+                        <tr>
+                            <td colspan="6" class="px-6 py-8 text-center text-slate-400">Loading data...</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="p-4 border-t border-slate-200 flex items-center justify-between bg-slate-50/50">
+                    <span class="text-xs text-slate-500" id="page-info">Showing - of -</span>
+                    <div class="flex gap-2">
+                        <button id="btn-prev" onclick="changePage(-1)"
+                            class="px-3 py-1 border border-slate-200 rounded bg-white text-slate-600 text-xs font-bold hover:bg-slate-50 disabled:opacity-50">Previous</button>
+                        <button id="btn-next" onclick="changePage(1)"
+                            class="px-3 py-1 border border-slate-200 rounded bg-white text-slate-600 text-xs font-bold hover:bg-slate-50 disabled:opacity-50">Next</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</main>
+
+<script>
+    let currentPage = 1;
+    let debounceTimer;
+
+    // --- 1. SETUP DYNAMIC URLS ---
+    // This ensures the link is always correct, even if you change urls.py later
+    const API_LIST_URL = "{% url 'api_admin_list' %}";
+
+    // We create a base URL pattern for the detail page
+    // We put a placeholder '000' that we will replace with the actual Ref in JS
+    const PROCESS_PAGE_URL = "{% url 'admin_process' '000' %}";
+
+    // --- INITIAL LOAD ---
+    document.addEventListener("DOMContentLoaded", () => {
+        loadAdminData();
+    });
+
+    // --- 2. LOAD DATA ---
+    function loadAdminData() {
+        const search = document.getElementById('admin-search').value;
+        const tbody = document.getElementById('admin-table-body');
+
+        // Show loading state
+        tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-slate-400"><i class="ph-bold ph-spinner animate-spin text-2xl"></i></td></tr>';
+
+        // Use the dynamic Django URL
+        const url = `${API_LIST_URL}?page=${currentPage}&search=${search}`;
+
+        fetch(url)
+            .then(res => {
+                if (!res.ok) throw new Error("Network response was not ok");
+                return res.json();
+            })
+            .then(data => {
+                // A. Update Stats
+                document.getElementById('stat-new').innerText = data.stats.new || 0;
+                document.getElementById('stat-pending').innerText = data.stats.pending_offer || 0;
+                document.getElementById('stat-confirmed').innerText = data.stats.confirmed || 0;
+
+                // Format Revenue
+                const rev = parseFloat(data.stats.revenue || 0).toLocaleString(undefined, { minimumFractionDigits: 2 });
+                document.getElementById('stat-revenue').innerText = "DA " + rev;
+
+                // B. Update Table
+                tbody.innerHTML = '';
+                if (data.data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-12 text-center text-slate-400 italic">No requests found.</td></tr>';
+                    return;
+                }
+
+                data.data.forEach(row => {
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-50 transition-colors group border-b border-slate-100 cursor-pointer";
+
+                    // Generate the specific detail link
+                    // Replace the placeholder '000' with the actual reference
+                    const detailLink = PROCESS_PAGE_URL.replace('000', row.reference);
+                    tr.onclick = () => window.location.href = detailLink;
+
+                    tr.innerHTML = `
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-2">
+                                ${getStatusDot(row.status)}
+                                <span class="font-bold text-slate-700 text-xs uppercase bg-slate-100 px-2 py-0.5 rounded border border-slate-200">${row.status_label}</span>
+                            </div>
+                            <div class="text-[10px] text-slate-400 mt-1 pl-4">${row.created_ago}</div>
+                        </td>
+                        <td class="px-6 py-4"><span class="font-mono font-bold text-slate-900 text-xs">${row.reference}</span></td>
+                        <td class="px-6 py-4">
+                            <div class="font-semibold text-slate-900">${row.agency_name}</div>
+                            <div class="text-xs text-slate-500">${row.agency_user}</div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="font-medium text-slate-700">${row.provider_name}</span>
+                            </div>
+                            <div class="text-xs text-slate-500">${row.route_str} • ${row.pax_count} Pax</div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="font-medium text-slate-700">${row.departure}</div>
+                            <div class="text-xs text-slate-400">${row.trip_type}</div>
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <button class="bg-white border border-slate-200 text-slate-600 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-brand-50 hover:text-brand-600 hover:border-brand-200 transition-all shadow-sm">
+                                Process
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                // C. Update Pagination
+                document.getElementById('page-info').innerText = `Page ${data.pagination.current_page} of ${data.pagination.total_pages}`;
+                document.getElementById('btn-prev').disabled = !data.pagination.has_previous;
+                document.getElementById('btn-next').disabled = !data.pagination.has_next;
+            })
+            .catch(err => {
+                console.error("Error loading admin data:", err);
+                tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-red-500">Error loading data. Check console.</td></tr>`;
+            });
+    }
+
+    // --- HELPER: STATUS DOTS ---
+    function getStatusDot(status) {
+        if (status === 'pending') return '<span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse ring-2 ring-blue-100"></span>';
+        if (status === 'offer_sent') return '<span class="w-2 h-2 rounded-full bg-yellow-500 ring-2 ring-yellow-100"></span>';
+        if (status === 'confirmed') return '<span class="w-2 h-2 rounded-full bg-green-500 ring-2 ring-green-100"></span>';
+        if (status === 'cancelled' || status === 'rejected') return '<span class="w-2 h-2 rounded-full bg-red-500 ring-2 ring-red-100"></span>';
+        return '<span class="w-2 h-2 rounded-full bg-slate-300"></span>';
+    }
+
+    // --- UTILITIES ---
+    function changePage(d) {
+        currentPage += d;
+        loadAdminData();
+    }
+
+    function debounceLoad() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            currentPage = 1;
+            loadAdminData();
+        }, 500);
+    }
+</script>
+
+{% endblock %}

@@ -1,0 +1,362 @@
+{% extends 'admin/base_admin.html' %}
+{% load static %}
+
+{% block content %}
+
+<main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0 z-10">
+        <div class="flex items-center gap-2 text-sm text-slate-500">
+            <a href="{% url 'ferries_requests' %}"
+                class="hover:text-slate-900 cursor-pointer transition-colors">Requests</a>
+            <i class="ph-bold ph-caret-right text-xs"></i>
+            <span class="font-medium text-slate-900">{{ req.reference }}</span>
+
+            {% if req.status == 'pending' %}
+            <span
+                class="ml-2 bg-blue-100 text-blue-700 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide">New
+                Request</span>
+            {% elif req.status == 'offer_sent' %}
+            <span
+                class="ml-2 bg-yellow-100 text-yellow-700 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide">Offer
+                Sent</span>
+            {% elif req.status == 'confirmed' %}
+            <span
+                class="ml-2 bg-green-100 text-green-700 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide">Confirmed</span>
+            {% else %}
+            <span
+                class="ml-2 bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide">
+                {{req.status }}</span>
+            {% endif %}
+        </div>
+
+        <div class="flex gap-3">
+            <button onclick="reject_offer('{{ req.id }}', this)"
+                class="text-red-600 hover:bg-red-50 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-transparent hover:border-red-200">
+                Reject Request
+            </button>
+        </div>
+
+    </header>
+
+    <div class="flex-1 overflow-y-auto p-6 md:p-8">
+        <div class="max-w-7xl mx-auto grid grid-cols-12 gap-6">
+
+            <div class="col-span-12 lg:col-span-7 space-y-6">
+
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex items-center gap-4">
+                    <div
+                        class="w-12 h-12 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-xl">
+                        <i class="ph-fill ph-briefcase"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-900">{{ req.agency.company_name }}</h3>
+                        <p class="text-xs text-slate-500">
+                            Agent: {{ req.agency.users.first.get_full_name|default:"Unknown" }} •
+                            <span class="text-green-600 font-medium">Verified Partner</span>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="bg-slate-50 p-4 border-b border-slate-200 flex justify-between items-center">
+                        <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                            <i class="ph-fill ph-list-magnifying-glass text-slate-400"></i> Request Details
+                        </h3>
+                    </div>
+
+                    <div class="p-5 space-y-6">
+                        <section>
+                            <h4 class="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-1">
+                                <i class="ph-bold ph-map-pin"></i> Trip Details
+                            </h4>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-[10px] font-semibold text-slate-400 mb-1">Provider</label>
+                                    <input disabled value="{{ req.route.provider.name }}"
+                                        class="w-full bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg p-2 font-bold">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-semibold text-slate-400 mb-1">Trip Type</label>
+                                    <input disabled value="{{ req.get_trip_type_display }}"
+                                        class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg p-2 font-medium">
+                                </div>
+                                <div class="col-span-2">
+                                    <label class="block text-[10px] font-semibold text-slate-400 mb-1">Route</label>
+                                    <input disabled
+                                        value="{{ req.route.origin.name }} ↔ {{ req.route.destination.name }}"
+                                        class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg p-2 font-medium">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-semibold text-slate-400 mb-1">Departure</label>
+                                    <input disabled value="{{ req.departure_date }}"
+                                        class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg p-2 font-medium">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-semibold text-slate-400 mb-1">Return</label>
+                                    <input disabled value="{{ req.return_date|default:'-' }}"
+                                        class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg p-2 font-medium">
+                                </div>
+                            </div>
+                        </section>
+
+                        <hr class="border-slate-100">
+
+                        <section>
+                            <h4 class="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-1">
+                                <i class="ph-bold ph-armchair"></i> Preferences
+                            </h4>
+                            <div class="mb-4">
+                                <label class="block text-[10px] font-semibold text-slate-400 mb-1">Cabin
+                                    Preference</label>
+                                <input disabled value="{{ req.accommodation }}"
+                                    class="w-full bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg p-2 font-bold">
+                            </div>
+                        </section>
+
+                        <hr class="border-slate-100">
+
+                        <section>
+                            <h4 class="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-1">
+                                <i class="ph-bold ph-users"></i> Passenger Manifest ({{ passenger_count }})
+                            </h4>
+                            <div class="space-y-3">
+                                {% for p in req.passengers_data %}
+                                <div class="bg-slate-50 border border-slate-200 rounded-lg p-3 relative text-sm">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span
+                                            class="text-xs font-bold text-slate-500 uppercase bg-white px-2 py-0.5 rounded border border-slate-200">
+                                            {{p.type }}</span>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div><span class="text-[10px] text-slate-400 block">Name</span> <span
+                                                class="font-bold text-slate-800">
+                                                {{ p.first_name }} {{ p.last_name}}</span></div>
+                                        <div><span class="text-[10px] text-slate-400 block">Passport</span> <span
+                                                class="font-mono text-slate-600">{{ p.passport_number }}</span></div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </section>
+
+                        {% if req.vehicle_data %}
+                        <hr class="border-slate-100">
+                        <section>
+                            <h4 class="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-1">
+                                <i class="ph-bold ph-car"></i> Vehicle
+                            </h4>
+                            <div class="grid grid-cols-2 gap-4 mb-3">
+                                <div>
+                                    <label
+                                        class="block text-[10px] font-semibold text-slate-400 mb-1">Type/Model</label>
+                                    <input disabled value="{{ req.vehicle_data.type }} - {{ req.vehicle_data.model }}"
+                                        class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg p-2 font-medium">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-semibold text-slate-400 mb-1">Plate
+                                        Number</label>
+                                    <input disabled value="{{ req.vehicle_data.plate }}"
+                                        class="w-full bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg p-2 font-bold font-mono uppercase">
+                                </div>
+                            </div>
+                        </section>
+                        {% endif %}
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-span-12 lg:col-span-5 space-y-6">
+
+                <div
+                    class="bg-white rounded-xl shadow-card border border-slate-200 overflow-hidden relative sticky top-6">
+                    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-500 to-green-500"></div>
+
+                    <div class="p-6">
+                        <h3 class="font-bold text-lg text-slate-900 mb-6 flex items-center gap-2">
+                            <i class="ph-fill ph-currency-eur text-brand-600"></i> Set Pricing
+                        </h3>
+
+                        <div class="grid grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Net Price
+                                    (Cost)</label>
+                                <div class="relative group">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-slate-400">DA</span>
+                                    </div>
+                                    <input type="number" id="net-price" oninput="calculateMargin()"
+                                        value="{{ req.net_price|default_if_none:'' }}" placeholder="0.00"
+                                        class="w-full border-2 border-slate-200 rounded-xl py-3 pl-10 pr-4 text-slate-900 font-bold focus:border-slate-400 focus:outline-none transition-colors bg-slate-50">
+                                </div>
+                                <p class="text-[10px] text-slate-400 mt-1">Visible only to you</p>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-brand-600 uppercase mb-2">Sell Price
+                                    (Client)</label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-brand-600 font-bold">DA</span>
+                                    </div>
+                                    <input type="number" id="sell-price" oninput="calculateMargin()"
+                                        value="{{ req.selling_price|default_if_none:'' }}" placeholder="0.00"
+                                        class="w-full border-2 border-brand-100 rounded-xl py-3 pl-10 pr-4 text-brand-700 font-bold focus:border-brand-500 focus:outline-none transition-colors bg-white shadow-sm">
+                                </div>
+                                <p class="text-[10px] text-brand-500 mt-1">Client sees this price</p>
+                            </div>
+                        </div>
+
+                        <div
+                            class="mt-8 bg-slate-50 rounded-xl p-4 border border-slate-200 flex justify-between items-center">
+                            <div>
+                                <span class="block text-xs text-slate-500 uppercase font-semibold">Estimated
+                                    Profit</span>
+                                <span id="margin-display" class="text-2xl font-bold text-slate-300">DA 0.00</span>
+                            </div>
+                            <div class="text-right">
+                                <span id="margin-percent" class="block text-sm font-medium text-slate-400">0%
+                                    Margin</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 p-6 border-t border-slate-200 space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Notes for Client
+                                (Optional)</label>
+                            <textarea id="notes"
+                                class="w-full border border-slate-200 rounded-lg p-3 text-sm focus:border-brand-500 outline-none h-20 resize-none bg-white"
+                                placeholder="e.g. Exact dates not available, proposed +1 day."></textarea>
+                        </div>
+
+                        <div class="flex justify-end gap-3 pt-2">
+                            <button onclick="sendOffer()"
+                                class="w-full px-6 py-3 bg-brand-600 text-white font-bold rounded-xl shadow-lg shadow-brand-200 hover:bg-brand-700 hover:shadow-xl transition-all flex items-center justify-center gap-2">
+                                <i class="ph-bold ph-paper-plane-right"></i> Send Offer to Client
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<script>
+    // 1. Margin Logic
+    function calculateMargin() {
+        const net = parseFloat(document.getElementById('net-price').value) || 0;
+        const sell = parseFloat(document.getElementById('sell-price').value) || 0;
+        const display = document.getElementById('margin-display');
+        const percentDisplay = document.getElementById('margin-percent');
+
+        if (sell > 0) {
+            const margin = sell - net;
+            const percent = ((margin / sell) * 100).toFixed(1);
+
+            display.innerText = `DA ${margin.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+            percentDisplay.innerText = `${percent}% Margin`;
+
+            if (margin < 0) {
+                display.classList.remove('text-slate-300', 'text-green-600');
+                display.classList.add('text-red-600');
+            } else {
+                display.classList.remove('text-slate-300', 'text-red-600');
+                display.classList.add('text-green-600');
+            }
+        } else {
+            display.innerText = "DA 0.00";
+            display.className = "text-2xl font-bold text-slate-300";
+            percentDisplay.innerText = "0% Margin";
+        }
+    }
+
+    // 2. Send Offer (API)
+    function sendOffer() {
+        const netPrice = document.getElementById('net-price').value;
+        const sellPrice = document.getElementById('sell-price').value;
+        const notes = document.getElementById('notes').value;
+
+        if (!sellPrice) {
+            alert("Please enter a Sell Price first.");
+            return;
+        }
+
+        const btn = document.querySelector('button[onclick="sendOffer()"]');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Sending...';
+        btn.disabled = true;
+
+        const payload = {
+            net_price: netPrice,
+            sell_price: sellPrice,
+            notes: notes
+        };
+
+        // Note: Using 'api_admin_offer' per your updated urls.py
+        fetch("{% url 'api_admin_offer' req.reference %}", {
+            method: "POST",
+            body: JSON.stringify(payload),
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": "{{ csrf_token }}"
+            }
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert("Offer sent successfully!");
+                    // Redirect back to list or reload
+                    window.location.href = "{% url 'ferries_requests' %}";
+                } else {
+                    alert("Error: " + data.message);
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            })
+            .catch(err => {
+                alert("System Error: " + err);
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            });
+    }
+
+    function reject_offer(ref, btn) {
+        if (!ref) return;
+
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Rejecting...';
+        btn.disabled = true;
+
+        fetch(`/admin_panel/api/request/reject/${ref}/`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": "{{ csrf_token }}"
+            }
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert(data.message);
+                    window.location.href = "{% url 'ferries_requests' %}";
+                } else {
+                    throw new Error(data.message);
+                }
+            })
+            .catch(err => {
+                alert("System Error: " + err.message);
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            });
+    }
+
+    // Run calc on load (if values exist)
+    document.addEventListener("DOMContentLoaded", calculateMargin);
+</script>
+
+{% endblock %}

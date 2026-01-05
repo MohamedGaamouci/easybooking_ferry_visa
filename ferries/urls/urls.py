@@ -2,8 +2,6 @@ from django.urls import path
 from ..views import *
 
 urlpatterns = [
-    path("ferries/", admin_ferry_requests_view,
-         name="admin_ferry_requests"),
     # Port Management
     path('api/ferry/port/create/',
          port_create_view, name='port_create'),
@@ -19,4 +17,18 @@ urlpatterns = [
          provider_save_view, name='provider_update'),
     path('api/ferry/provider/<int:pk>/',
          provider_detail_api, name='provider_detail'),
+
+
+    # --- ADMIN PAGES ---
+    path('requests/', admin_requests_view, name='ferries_requests'),
+    path('requests/process/<str:reference>/',
+         admin_process_view, name='admin_process'),
+
+    # --- ADMIN APIS ---
+    path('api/requests/list/', get_admin_requests_api, name='api_admin_list'),
+    path('api/requests/offer/<str:reference>/',
+         admin_send_offer_api, name='api_admin_offer'),
+
+    path('api/request/reject/<int:pk>/',
+         admin_reject_request, name='api_reject_offer')
 ]

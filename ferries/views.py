@@ -1,4 +1,6 @@
 # Assuming you have a basic ProviderForm
+# Ensure you have this from previous steps
+from django.db.models import Sum, Count, Q
 from .models import FerryRequest
 from django.db.models import Q
 from django.core.paginator import Paginator
@@ -12,15 +14,12 @@ from django.db import transaction
 import json
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
-from django.views.decorators.http import require_POST, require_GET
+from django.views.decorators.http import require_POST, require_GET, require_http_methods
 from django.contrib.auth.decorators import login_required, permission_required
 from .models import Port, FerryRequest
 from .form import PortForm
 from django.shortcuts import render
 
-
-def admin_ferry_requests_view(request):
-    return render(request, 'admin/ferry_requests.html')
 
 # --- CREATE PORT ---
 
@@ -199,7 +198,9 @@ def provider_save_view(request, pk=None):
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
 
-# client side ------------------------------
+# ------------------------------------------------------------ client side ------------------------------------------------------------
+# ------------------------------------------------------------ client side ------------------------------------------------------------
+# ------------------------------------------------------------ client side ------------------------------------------------------------
 @login_required
 def ferries_view(request):
     """
@@ -536,6 +537,173 @@ def respond_to_offer_api(request, reference):
             'new_status': req.status,
             'new_label': req.client_status_label
         })
+
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
+# ------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------
+
+
+# ==========================================
+# 1. ADMIN: LIST & STATS API
+# ==========================================
+@login_required
+@require_GET
+def get_admin_requests_api(request):
+    """
+    Returns data for the Admin Dashboard: Stats + Paginated List
+    """
+    # 1. Base Query
+    qs = FerryRequest.objects.all().select_related(
+        'agency', 'route', 'route__provider').order_by('-created_at')
+
+    # 2. Search (Ref, Agency Name, Provider)
+    search = request.GET.get('search', '').strip()
+    if search:
+        qs = qs.filter(
+            Q(reference__icontains=search) |
+            Q(agency__company_name__icontains=search) |
+            Q(route__provider__name__icontains=search)
+        )
+
+    # 3. Calculate Stats (Live Data)
+    stats = {
+        'new': qs.filter(status='pending').count(),
+        'pending_offer': qs.filter(status='offer_sent').count(),
+        'confirmed': qs.filter(status='confirmed').count(),
+        # Calculate revenue (Sum of selling_price for confirmed requests today/total)
+        'revenue': qs.filter(status='confirmed').aggregate(total=Sum('selling_price'))['total'] or 0
+    }
+
+    # 4. Pagination
+    page_number = request.GET.get('page', 1)
+    paginator = Paginator(qs, 10)
+    page_obj = paginator.get_page(page_number)
+
+    # 5. Serialize List
+    data = []
+    for req in page_obj:
+        data.append({
+            'id': req.id,
+            'reference': req.reference,
+            'agency_name': req.agency.company_name,
+            'agency_user': req.agency.users.first().get_full_name() if req.agency.users.exists() else "Unknown",
+            'provider_name': req.route.provider.name,
+            'route_str': f"{req.route.origin.code} ↔ {req.route.destination.code}",
+            'trip_type': req.get_trip_type_display(),
+            'departure': req.departure_date.strftime('%d %b %Y'),
+            'pax_count': len(req.passengers_data),
+            'status': req.status,
+            'status_label': req.admin_status_label,  # Use the property from model
+            # Simplified for now
+            'created_ago': req.created_at.strftime('%H:%M %d/%m'),
+        })
+
+    return JsonResponse({
+        'status': 'success',
+        'stats': stats,
+        'data': data,
+        'pagination': {
+            'current_page': page_obj.number,
+            'total_pages': paginator.num_pages,
+            'has_next': page_obj.has_next(),
+            'has_previous': page_obj.has_previous(),
+            'total_items': paginator.count
+        }
+    })
+
+# ==========================================
+# 2. ADMIN: PAGE VIEWS
+# ==========================================
+
+
+@login_required
+def admin_requests_view(request):
+    """Renders the HTML List Page"""
+    return render(request, 'admin/incoming_requests.html')
+
+
+@login_required
+def admin_process_view(request, reference):
+    """Renders the Detail/Process Page (Server-Side Render for initial details)"""
+    req = get_object_or_404(FerryRequest, reference=reference)
+
+    user = request.user
+
+    # is_agency_user = hasattr(user, 'agency')
+
+    # print('is agency user:: ', is_agency_user)
+    # print(user)
+
+    if (
+        user.is_authenticated and req.status == 'pending'
+    ):
+        req.status = 'processing'
+        req.save(update_fields=['status'])
+
+    # We pass the object directly to the template for easy rendering
+    context = {
+        'req': req,
+        'passenger_count': len(req.passengers_data),
+        'has_vehicle': bool(req.vehicle_data)
+    }
+    return render(request, 'admin/process_request.html', context)
+
+# ==========================================
+# 3. ADMIN: ACTIONS (Send Offer)
+# ==========================================
+
+
+@login_required
+@require_POST
+def admin_send_offer_api(request, reference):
+    """
+    Updates pricing and moves status to 'offer_sent'
+    """
+    try:
+        req = get_object_or_404(FerryRequest, reference=reference)
+        data = json.loads(request.body)
+
+        net_price = data.get('net_price')
+        sell_price = data.get('sell_price')
+        notes = data.get('notes')  # Optional admin notes
+
+        if not sell_price:
+            return JsonResponse({'status': 'error', 'message': 'Selling price is required.'}, status=400)
+
+        # Update Logic
+        req.net_price = net_price
+        req.selling_price = sell_price
+        req.status = 'offer_sent'
+        # You could save 'notes' to a new field in model if needed
+
+        req.save()
+
+        return JsonResponse({'status': 'success', 'message': 'Offer sent successfully.'})
+
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
+@login_required
+@require_POST
+def admin_reject_request(request, pk):
+    print('enter .............')
+    """
+    Updates pricing and moves status to 'offer_sent'
+    """
+    try:
+        req = get_object_or_404(FerryRequest, pk=pk)
+        req.status = 'rejected'
+        # You could save 'notes' to a new field in model if needed
+
+        req.save()
+
+        return JsonResponse({'status': 'success', 'message': 'Offre Rejected successefully.'})
 
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
