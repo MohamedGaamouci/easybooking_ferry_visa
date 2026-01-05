@@ -1,0 +1,283 @@
+{% extends 'client/base_client.html' %}
+{% load static %}
+
+{% block content %}
+
+<main class="max-w-7xl mx-auto px-6 pt-8 pb-12">
+
+    <div class="text-center mb-12">
+        <h1 class="text-3xl font-bold text-slate-900 mb-3">Visa Application Center</h1>
+        <p class="text-slate-500 mb-8">Select a destination to view requirements and apply.</p>
+        <div class="relative max-w-md mx-auto">
+            <i class="ph ph-magnifying-glass absolute left-4 top-3 text-slate-400 text-lg"></i>
+            <input type="text" id="search-input" oninput="debounceLoad()"
+                placeholder="Search country (e.g. Canada, Turkey)..."
+                class="w-full pl-12 pr-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none shadow-sm transition-all">
+        </div>
+    </div>
+
+    <div id="destinations-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 min-h-[300px]">
+        <div class="col-span-full text-center py-12">
+            <i class="ph-duotone ph-spinner animate-spin text-3xl text-slate-400"></i>
+        </div>
+    </div>
+
+    <div id="pagination-controls" class="flex justify-center gap-2 mt-12 hidden">
+        <button id="btn-prev" onclick="changePage(-1)"
+            class="px-4 py-2 border rounded-lg bg-white hover:bg-slate-50 disabled:opacity-50">Prev</button>
+        <span id="page-indicator" class="px-4 py-2 text-slate-500 font-medium">Page 1</span>
+        <button id="btn-next" onclick="changePage(1)"
+            class="px-4 py-2 border rounded-lg bg-white hover:bg-slate-50 disabled:opacity-50">Next</button>
+    </div>
+
+</main>
+
+<div id="details-drawer-overlay" class="fixed inset-0 bg-slate-900/50 z-50 hidden fade-enter" onclick="closeDetails()">
+</div>
+
+<div id="details-drawer"
+    class="fixed top-0 right-0 h-full w-full max-w-md bg-white z-50 shadow-2xl flex flex-col slide-enter translate-x-full transition-transform duration-300">
+
+    <div class="h-48 bg-cover bg-center relative shrink-0" id="drawer-bg" style="background-color: #f1f5f9;">
+        <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+        <button onclick="closeDetails()"
+            class="absolute top-4 left-4 w-8 h-8 bg-black/30 backdrop-blur rounded-full flex items-center justify-center text-white hover:bg-black/50 transition-colors">
+            <i class="ph-bold ph-arrow-right"></i>
+        </button>
+        <div class="absolute bottom-6 left-6 text-white">
+            <span id="drawer-visa-type"
+                class="bg-brand-600 text-[10px] font-bold px-2 py-0.5 rounded mb-2 inline-block">Type</span>
+            <h2 id="drawer-country" class="text-3xl font-bold">Country</h2>
+        </div>
+    </div>
+
+    <div class="flex-1 overflow-y-auto p-6 space-y-6">
+
+        <div class="grid grid-cols-2 gap-3 text-center">
+            <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                <i class="ph-fill ph-clock text-brand-600 text-xl mb-1"></i>
+                <p class="text-[10px] text-slate-500 uppercase font-bold">Processing</p>
+                <p class="text-sm font-bold text-slate-900" id="drawer-time">-</p>
+            </div>
+            <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                <i class="ph-fill ph-money text-green-600 text-xl mb-1"></i>
+                <p class="text-[10px] text-slate-500 uppercase font-bold">Total Fee</p>
+                <p class="text-sm font-bold text-slate-900" id="drawer-price">-</p>
+            </div>
+        </div>
+
+        <div>
+            <h3 class="font-bold text-slate-900 text-lg mb-3 flex items-center gap-2">
+                <i class="ph-fill ph-list-checks text-brand-600"></i> Requirements
+            </h3>
+
+            <div class="prose prose-sm text-slate-600 space-y-3">
+                <p class="text-xs text-slate-500">Provide the following documents:</p>
+                <ul id="drawer-docs-list" class="list-disc pl-5 space-y-1 marker:text-brand-500 text-sm">
+                    <li>Loading...</li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="drawer-conditions-box" class="hidden">
+            <h3 class="font-bold text-slate-900 text-lg mb-2 flex items-center gap-2">
+                <i class="ph-fill ph-info text-amber-500"></i> Conditions
+            </h3>
+            <div class="bg-amber-50 border border-amber-100 rounded-xl p-4 text-sm text-amber-900 leading-relaxed whitespace-pre-line"
+                id="drawer-conditions-text">
+            </div>
+        </div>
+
+    </div>
+
+    <div class="p-6 border-t border-slate-100 bg-white">
+        <a id="btn-apply-now" href="#"
+            class="w-full bg-brand-600 text-white font-bold py-3.5 rounded-xl shadow-lg hover:bg-brand-700 transition-all flex items-center justify-center gap-2">
+            Start Application <i class="ph-bold ph-arrow-right"></i>
+        </a>
+    </div>
+</div>
+
+<script>
+    let currentPage = 1;
+    let debounceTimer;
+    let currentFilter = '';
+
+    const grid = document.getElementById('destinations-grid');
+    const drawer = document.getElementById('details-drawer');
+    const overlay = document.getElementById('details-drawer-overlay');
+
+    // --- 1. INITIAL LOAD ---
+    document.addEventListener("DOMContentLoaded", () => {
+        loadDestinations();
+    });
+
+    // --- 2. AJAX LOAD LIST ---
+    function loadDestinations() {
+        const search = document.getElementById('search-input').value;
+
+        // Append currentFilter to search if it's set
+        const finalSearch = currentFilter ? (search + " " + currentFilter).trim() : search;
+
+        // Show Loader
+        grid.innerHTML = '<div class="col-span-full text-center py-12"><i class="ph-duotone ph-spinner animate-spin text-3xl text-brand-600"></i></div>';
+
+        fetch(`/visas/api/list/?page=${currentPage}&search=${finalSearch}`)
+            .then(res => res.json())
+            .then(resp => {
+                grid.innerHTML = '';
+
+                if (resp.data.length === 0) {
+                    grid.innerHTML = '<div class="col-span-full text-center py-12 text-slate-500">No destinations found matching criteria.</div>';
+                    document.getElementById('pagination-controls').classList.add('hidden');
+                    return;
+                }
+
+                // Render Cards
+                resp.data.forEach(dest => {
+                    // Fallback image if none provided
+                    const imgUrl = dest.cover_image ? dest.cover_image : "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=800";
+                    const visaName = dest.visa_name || dest.visa_type;
+                    const priceDisplay = dest.price > 0 ? `DA ${dest.price.toLocaleString()}` : 'Free';
+
+                    const card = `
+                        <div onclick="openDetails(${dest.id})" class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer overflow-hidden group">
+                            <div class="h-32 bg-cover bg-center relative" style="background-image: url('${imgUrl}');">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                                <div class="absolute bottom-3 left-4 text-white">
+                                    <h3 class="font-bold text-lg">${dest.country}</h3>
+                                    <p class="text-xs opacity-90">${visaName}</p>
+                                </div>
+                                <div class="absolute top-3 right-3 bg-white/90 backdrop-blur text-slate-800 text-[10px] font-bold px-2 py-1 rounded shadow-sm">
+                                    ${dest.visa_type}
+                                </div>
+                            </div>
+                            <div class="p-4">
+                                <div class="flex justify-between items-center text-sm mb-3">
+                                    <span class="text-slate-500 flex items-center gap-1">
+                                        <i class="ph-fill ph-clock"></i> ${dest.processing_time}
+                                    </span>
+                                    <span class="font-bold text-slate-900">${priceDisplay}</span>
+                                </div>
+                                <button class="w-full py-2 rounded-lg bg-slate-50 text-brand-600 text-sm font-bold group-hover:bg-brand-600 group-hover:text-white transition-colors">
+                                    View Requirements
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    grid.insertAdjacentHTML('beforeend', card);
+                });
+
+                // Update Pagination
+                updatePagination(resp.pagination);
+            })
+            .catch(err => {
+                console.error(err);
+                grid.innerHTML = '<div class="col-span-full text-center text-red-500 py-12">Failed to load data.</div>';
+            });
+    }
+
+    // --- 3. AJAX LOAD DETAILS (Drawer) ---
+    function openDetails(destId) {
+        overlay.classList.remove('hidden');
+        drawer.classList.remove('translate-x-full');
+
+        // Reset Drawer Content to Loading state
+        document.getElementById('drawer-country').innerText = "Loading...";
+        document.getElementById('drawer-docs-list').innerHTML = "<li>Loading requirements...</li>";
+        document.getElementById('drawer-conditions-box').classList.add('hidden');
+
+        fetch(`/visas/api/detail/${destId}/`)
+            .then(res => res.json())
+            .then(data => {
+                // Populate Headers
+                document.getElementById('drawer-country').innerText = data.country;
+                document.getElementById('drawer-visa-type').innerText = data.visa_type;
+
+                // Image
+                const imgUrl = data.cover_image ? data.cover_image : "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=800";
+                document.getElementById('drawer-bg').style.backgroundImage = `url('${imgUrl}')`;
+
+                // Stats
+                document.getElementById('drawer-time').innerText = data.processing_time;
+                document.getElementById('drawer-price').innerText = data.price > 0 ? `DA ${data.price.toLocaleString()}` : "Free";
+
+                // Documents List
+                const list = document.getElementById('drawer-docs-list');
+                list.innerHTML = '';
+                if (data.documents && data.documents.length > 0) {
+                    data.documents.forEach(doc => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `<strong>${doc.name}</strong>${doc.description ? `: ${doc.description}` : ''}`;
+                        list.appendChild(li);
+                    });
+                } else {
+                    list.innerHTML = '<li class="italic text-slate-400">No specific documents listed.</li>';
+                }
+
+                // Conditions (Display only if data exists)
+                const condBox = document.getElementById('drawer-conditions-box');
+                const condText = document.getElementById('drawer-conditions-text');
+                if (data.conditions && data.conditions.trim() !== "") {
+                    condText.innerText = data.conditions;
+                    condBox.classList.remove('hidden');
+                } else {
+                    condBox.classList.add('hidden');
+                }
+
+                // Link to Application Page
+                document.getElementById('btn-apply-now').href = `/visas/apply/?destination_id=${destId}`;
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Failed to load details.");
+            });
+    }
+
+    function closeDetails() {
+        drawer.classList.add('translate-x-full');
+        setTimeout(() => { overlay.classList.add('hidden'); }, 300);
+    }
+
+    // --- 4. UTILITIES ---
+
+    function filterType(type) {
+        currentFilter = type;
+        // Update button styles
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            if (btn.innerText.includes(type || 'All')) {
+                btn.classList.remove('bg-white', 'text-slate-600', 'border');
+                btn.classList.add('bg-brand-600', 'text-white', 'shadow-md');
+            } else {
+                btn.classList.add('bg-white', 'text-slate-600', 'border');
+                btn.classList.remove('bg-brand-600', 'text-white', 'shadow-md');
+            }
+        });
+        currentPage = 1;
+        loadDestinations();
+    }
+
+    function changePage(dir) {
+        currentPage += dir;
+        loadDestinations();
+    }
+
+    function updatePagination(meta) {
+        const controls = document.getElementById('pagination-controls');
+        if (meta.total_pages > 1) {
+            controls.classList.remove('hidden');
+            document.getElementById('page-indicator').innerText = `Page ${meta.current_page} of ${meta.total_pages}`;
+            document.getElementById('btn-prev').disabled = !meta.has_previous;
+            document.getElementById('btn-next').disabled = !meta.has_next;
+        } else {
+            controls.classList.add('hidden');
+        }
+    }
+
+    function debounceLoad() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => { currentPage = 1; loadDestinations(); }, 500);
+    }
+</script>
+
+{% endblock %}

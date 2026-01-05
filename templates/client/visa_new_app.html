@@ -1,0 +1,336 @@
+{% extends 'client/base_client.html' %}
+{% load static %}
+
+{% block content %}
+
+<main class="max-w-4xl mx-auto px-6 pt-24 pb-12">
+
+    <div id="loading-state" class="text-center py-20">
+        <i class="ph-duotone ph-spinner animate-spin text-4xl text-brand-600 mb-4"></i>
+        <h2 class="text-xl font-bold text-slate-900">Loading Application Form...</h2>
+        <p class="text-slate-500">Fetching requirements for your destination.</p>
+    </div>
+
+    <div id="error-state" class="hidden text-center py-20">
+        <div class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i class="ph-bold ph-warning text-3xl"></i>
+        </div>
+        <h2 class="text-xl font-bold text-slate-900">Application Unavailable</h2>
+        <p class="text-slate-500 mb-6">We could not load the form for this destination.</p>
+        <a href="{% url 'visa_marketplace' %}" class="text-brand-600 font-bold hover:underline">Return to Visa
+            Center</a>
+    </div>
+
+    <div id="application-container" class="hidden fade-in">
+
+        <div class="mb-8 border-b border-slate-200 pb-6 flex items-end justify-between">
+            <div>
+                <a href="{% url 'visa_marketplace' %}"
+                    class="text-slate-400 hover:text-slate-600 text-sm flex items-center gap-1 mb-2 transition-colors">
+                    <i class="ph-bold ph-arrow-left"></i> Back to Visas
+                </a>
+                <h1 class="text-3xl font-bold text-slate-900 flex items-center gap-3">
+                    <span id="header-country">Country</span>
+                    <span class="text-xl font-normal text-slate-400">/</span>
+                    <span id="header-type" class="text-xl font-medium text-slate-500">Visa Type</span>
+                </h1>
+            </div>
+            <div class="hidden md:block">
+                <span id="header-version" class="text-xs text-slate-300 font-mono">v1.0</span>
+            </div>
+        </div>
+
+        <form id="visa-application-form" class="space-y-8" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" id="hidden-dest-id" name="destination_id">
+            <input type="hidden" id="real-agency-id" value="{{ request.user.agency.id }}">
+
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <h3 class="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
+                    <div
+                        class="w-8 h-8 rounded-full bg-blue-50 text-brand-600 flex items-center justify-center text-sm">
+                        1</div>
+                    Applicant Information
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-2">First Name <span
+                                class="text-red-500">*</span></label>
+                        <input type="text" name="first_name" required
+                            class="w-full border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all"
+                            placeholder="e.g. Mohamed">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-2">Last Name <span
+                                class="text-red-500">*</span></label>
+                        <input type="text" name="last_name" required
+                            class="w-full border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all"
+                            placeholder="e.g. Amine">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-bold text-slate-700 mb-2">Passport Number <span
+                                class="text-red-500">*</span></label>
+                        <input type="text" name="passport_number" required
+                            class="w-full border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all font-mono uppercase"
+                            placeholder="e.g. P12345678">
+                    </div>
+                </div>
+            </div>
+
+            <div id="dynamic-section" class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hidden">
+                <h3 class="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
+                    <div
+                        class="w-8 h-8 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center text-sm">
+                        2</div>
+                    Visa Questionnaire
+                </h3>
+                <div id="dynamic-fields-container" class="grid grid-cols-1 gap-6">
+                </div>
+            </div>
+
+            <div id="documents-section" class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hidden">
+                <h3 class="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
+                    <div
+                        class="w-8 h-8 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center text-sm">
+                        3</div>
+                    Required Documents
+                </h3>
+                <div id="dynamic-docs-container" class="space-y-4">
+                </div>
+            </div>
+
+            <div class="pt-4">
+                <button type="submit" id="btn-submit"
+                    class="w-full bg-green-600 text-white font-bold text-lg py-4 rounded-xl shadow-lg shadow-green-200 hover:bg-green-700 hover:shadow-xl transition-all flex items-center justify-center gap-3">
+                    Submit Application <i class="ph-bold ph-paper-plane-right"></i>
+                </button>
+                <p class="text-center text-sm text-slate-400 mt-4">
+                    <i class="ph-fill ph-lock-key"></i> Your data is processed securely via {{
+                    request.user.agency.company_name }}.
+                </p>
+            </div>
+
+        </form>
+    </div>
+
+</main>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        // 1. Get Destination ID from URL
+        const params = new URLSearchParams(window.location.search);
+        const destId = params.get('destination_id');
+
+        if (!destId) {
+            window.location.href = "{% url 'visa_marketplace' %}"; // Redirect if missing
+            return;
+        }
+
+        // Set hidden input
+        document.getElementById('hidden-dest-id').value = destId;
+
+        // 2. Load Schema
+        fetchSchema(destId);
+    });
+
+    function fetchSchema(id) {
+        // Use the API we created: /visas/api/schema/ID/
+        fetch(`/visas/api/schema/${id}/`)
+            .then(res => {
+                if (!res.ok) throw new Error("API Error");
+                return res.json();
+            })
+            .then(data => {
+                renderForm(data);
+            })
+            .catch(err => {
+                console.error(err);
+                document.getElementById('loading-state').classList.add('hidden');
+                document.getElementById('error-state').classList.remove('hidden');
+            });
+    }
+
+    function renderForm(data) {
+        // A. Header Info
+        document.getElementById('header-country').innerText = data.destination;
+        document.getElementById('header-type').innerText = data.visa_type;
+        document.getElementById('header-version').innerText = data.form_version || 'v1';
+
+        // B. Dynamic Fields
+        const fieldsContainer = document.getElementById('dynamic-fields-container');
+        const dynamicSection = document.getElementById('dynamic-section');
+
+        if (data.fields && data.fields.length > 0) {
+            dynamicSection.classList.remove('hidden');
+
+            data.fields.forEach(field => {
+                const requiredStar = field.required ? '<span class="text-red-500">*</span>' : '';
+                const requiredAttr = field.required ? 'required' : '';
+                let inputHtml = '';
+
+                if (field.type === 'select') {
+                    const optionsHtml = field.options.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+                    inputHtml = `
+                        <div class="relative">
+                            <select name="field_${field.id}" ${requiredAttr} class="w-full border border-slate-300 rounded-xl p-3 appearance-none bg-white focus:ring-2 focus:ring-brand-500 outline-none">
+                                <option value="">Select an option...</option>
+                                ${optionsHtml}
+                            </select>
+                            <i class="ph-bold ph-caret-down absolute right-4 top-4 text-slate-400 pointer-events-none"></i>
+                        </div>`;
+                }
+                else if (field.type === 'date') {
+                    inputHtml = `<input type="date" name="field_${field.id}" ${requiredAttr} class="w-full border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-brand-500 outline-none">`;
+                }
+                else if (field.type === 'checkbox') {
+                    inputHtml = `
+                        <label class="flex items-center gap-3 p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
+                            <input type="checkbox" name="field_${field.id}" value="Yes" class="w-5 h-5 text-brand-600 rounded focus:ring-brand-500 border-slate-300">
+                            <span class="text-sm font-medium text-slate-700">Yes, I confirm this statement.</span>
+                        </label>`;
+                }
+                else { // Default Text
+                    inputHtml = `<input type="text" name="field_${field.id}" ${requiredAttr} class="w-full border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-brand-500 outline-none" placeholder="Type answer here...">`;
+                }
+
+                const fieldWrapper = `
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-2">${field.label} ${requiredStar}</label>
+                        ${inputHtml}
+                    </div>`;
+
+                fieldsContainer.insertAdjacentHTML('beforeend', fieldWrapper);
+            });
+        }
+
+        // C. Documents
+        const docsContainer = document.getElementById('dynamic-docs-container');
+        const docsSection = document.getElementById('documents-section');
+
+        if (data.documents && data.documents.length > 0) {
+            docsSection.classList.remove('hidden');
+
+            data.documents.forEach(doc => {
+                const docHtml = `
+                    <div class="border border-slate-200 rounded-xl p-4 flex flex-col md:flex-row md:items-center gap-4 hover:border-brand-300 transition-colors bg-slate-50/50">
+                        <div class="flex-1">
+                            <h4 class="font-bold text-slate-800 text-sm">${doc.name} <span class="text-red-500">*</span></h4>
+                            <p class="text-xs text-slate-500 mt-1">${doc.description || 'Upload clear scan (PDF/JPG)'}</p>
+                        </div>
+                        <div class="shrink-0">
+                            <label class="cursor-pointer bg-white border border-slate-300 text-slate-600 text-xs font-bold px-4 py-2 rounded-lg hover:bg-slate-50 transition-colors inline-flex items-center gap-2">
+                                <i class="ph-bold ph-upload-simple"></i> Choose File
+                                <input type="file" name="doc_${doc.id}" required class="hidden" onchange="updateFileName(this)">
+                            </label>
+                            <span class="file-name text-xs text-brand-600 ml-2 font-medium hidden"></span>
+                        </div>
+                    </div>`;
+                docsContainer.insertAdjacentHTML('beforeend', docHtml);
+            });
+        }
+
+        // Show UI
+        document.getElementById('loading-state').classList.add('hidden');
+        document.getElementById('application-container').classList.remove('hidden');
+    }
+
+    // Helper: Show filename when selected
+    function updateFileName(input) {
+        const span = input.parentElement.nextElementSibling;
+        if (input.files.length > 0) {
+            span.innerText = input.files[0].name;
+            span.classList.remove('hidden');
+            input.parentElement.classList.replace('text-slate-600', 'text-brand-600');
+            input.parentElement.classList.replace('border-slate-300', 'border-brand-200');
+        }
+    }
+
+    // --- SUBMISSION LOGIC ---
+    document.getElementById('visa-application-form').addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        const form = e.target;
+        const btn = document.getElementById('btn-submit');
+        const originalText = btn.innerHTML;
+
+        // 1. Loading State
+        btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Processing...';
+        btn.disabled = true;
+
+        // 2. Prepare JSON Payload
+        const payload = {
+            main_info: {
+                first_name: form.querySelector('[name="first_name"]').value,
+                last_name: form.querySelector('[name="last_name"]').value,
+                passport_number: form.querySelector('[name="passport_number"]').value,
+                destination: document.getElementById('hidden-dest-id').value,
+                agency_id: parseInt(document.getElementById('real-agency-id').value)
+            },
+            answers: []
+        };
+
+        // Collect Dynamic Fields
+        const dynamicInputs = form.querySelectorAll('[name^="field_"]');
+        dynamicInputs.forEach(input => {
+            const fieldId = input.name.split('_')[1];
+            let val = input.value;
+            if (input.type === 'checkbox') val = input.checked ? 'Yes' : 'No';
+
+            payload.answers.push({
+                field_id: fieldId,
+                value: val
+            });
+        });
+
+        // 3. Prepare FormData (JSON + Files)
+        const formData = new FormData();
+        formData.append('json_data', JSON.stringify(payload)); // The Main Data
+
+        // Append Files
+        const fileInputs = form.querySelectorAll('input[type="file"]');
+        fileInputs.forEach(input => {
+            if (input.files.length > 0) {
+                formData.append(input.name, input.files[0]);
+            }
+        });
+
+        // 4. Send API Request
+        // IMPORTANT: Use the URL name 'api_visa_create'
+        fetch("{% url 'api_visa_create' %}", {
+            method: 'POST',
+            body: formData,
+            headers: {
+                "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Success: Redirect to dashboard or success page
+                    // Ideally replace this with a nice Success Modal or Page
+                    document.body.innerHTML = `
+                    <div class="h-screen flex flex-col items-center justify-center bg-green-50">
+                        <div class="bg-white p-8 rounded-2xl shadow-xl text-center max-w-md">
+                            <div class="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl"><i class="ph-fill ph-check-circle"></i></div>
+                            <h2 class="text-2xl font-bold text-slate-900 mb-2">Application Received!</h2>
+                            <p class="text-slate-500 mb-6">Your visa request has been submitted successfully.</p>
+                            <a href="{% url 'visa_marketplace' %}" class="bg-green-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-green-700">Back to Marketplace</a>
+                        </div>
+                    </div>
+                `;
+                } else {
+                    alert("Error: " + data.message);
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert("System Error. Check console.");
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            });
+    });
+</script>
+
+{% endblock %}

@@ -17,6 +17,7 @@ from .models import VisaApplication, VisaDestination
 from django.shortcuts import render
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib.auth.decorators import login_required, permission_required
+from django.db.models import Q
 
 from django.contrib import messages
 
@@ -161,7 +162,6 @@ def get_visa_details(request, app_id):
 
 
 @login_required
-# @permission_required('visas.change_visaapplication', raise_exception=True)
 @require_POST
 def update_visa_application(request):
     """
@@ -285,7 +285,6 @@ def get_visa_destinations_api(request):
     return JsonResponse({'destinations': data})
 
 
-@permission_required('visas.add_visaapplication', raise_exception=True)
 @login_required
 @require_POST
 def visa_create_view(request):
@@ -582,3 +581,99 @@ def visa_destination_detail_api(request, pk):
         'questions': questions
     }
     return JsonResponse(data)
+
+# ========================================================
+# CLIENT SIDE - PAGES
+# ========================================================
+
+
+@login_required
+def get_client_visa_destinations_api(request):
+    """
+    AJAX API: Returns paginated list of destinations for the Grid.
+    Filters by search query.
+    """
+    queryset = VisaDestination.objects.filter(
+        is_active=True).order_by('country')
+
+    # Search Filter
+    search = request.GET.get('search', '').strip()
+    if search:
+        queryset = queryset.filter(
+            Q(country__icontains=search) |
+            Q(visa_name__icontains=search) |
+            Q(visa_type__icontains=search)
+        )
+
+    # Pagination (8 cards per page)
+    paginator = Paginator(queryset, 8)
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+
+    data = []
+    for dest in page_obj:
+        data.append({
+            'id': dest.id,
+            'country': dest.country,
+            'visa_name': dest.visa_name,
+            'visa_type': dest.visa_type,
+            'processing_time': dest.processing_time,
+            'price': float(dest.selling_price),
+            'cover_image': dest.cover_image.url if dest.cover_image else None,
+        })
+
+    return JsonResponse({
+        'status': 'success',
+        'data': data,
+        'pagination': {
+            'current_page': page_obj.number,
+            'total_pages': paginator.num_pages,
+            'has_next': page_obj.has_next(),
+            'has_previous': page_obj.has_previous(),
+        }
+    })
+
+
+@login_required
+def get_client_visa_detail_api(request, pk):
+    """
+    AJAX API: Returns FULL details for the Drawer (Conditions, Price, Docs).
+    """
+    dest = get_object_or_404(VisaDestination, pk=pk, is_active=True)
+
+    # Get Required Documents Names for the list
+    docs = list(dest.required_documents.all().values('name', 'description'))
+
+    data = {
+        'status': 'success',
+        'id': dest.id,
+        'country': dest.country,
+        'visa_type': dest.visa_type,
+        'visa_name': dest.visa_name,
+        'processing_time': dest.processing_time,
+        'price': float(dest.selling_price),
+        'conditions': dest.conditions,  # <--- The text field you wanted
+        'cover_image': dest.cover_image.url if dest.cover_image else None,
+        'documents': docs
+    }
+    return JsonResponse(data)
+
+
+@login_required
+def visa_view(request):
+    """Render the empty HTML shell. JS will load the data."""
+    return render(request, 'client/visa_marketplace.html')
+
+
+@login_required
+def new_visa_view(request):
+    """
+    Client Application Page.
+    The HTML/JS will read the '?destination_id=X' from the URL 
+    and fetch the schema via API to build the form.
+    """
+    return render(request, 'client/visa_new_app.html')
+
+
+def requests(request):
+    return render(request, 'client/visa.html')

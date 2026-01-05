@@ -56,14 +56,9 @@ def setting_view(request):
     return render(request, 'client/setting.html')
 
 
-def visa_view(request):
-    return render(request, 'client/visa.html')
-
-
 # ======================
 # URL Patterns
 # ======================
-
 
 urlpatterns = [
     # Django admin
@@ -92,7 +87,7 @@ admin_urls = [
     path('admin_panel/', include('ferries.urls.urls')),
 
     #   VISA URLS
-    path('admin_panel/', include('visas.urls'))
+    path('admin_panel/', include('visas.urls.urls'))
 
 ]
 urlpatterns += admin_urls
@@ -101,11 +96,10 @@ client_urls = [
     path('', client_home, name='dashboard'),
     path('ferries/', include('ferries.urls.client_urls')),
     path('users/', include('users.urls.client_urls')),
+    path('visas/', include('visas.urls.client_urls')),
     path('dashboard/', dashboard_view, name='dashboard'),
     path('accounting/', accounting_view, name='accounting'),
-    path('new_visa/', new_visa_view, name='new_visa'),
     path('setting/', setting_view, name='setting'),
-    path('visa/', visa_view, name='visa'),
 ]
 urlpatterns += client_urls
 
