@@ -675,5 +675,89 @@ def new_visa_view(request):
     return render(request, 'client/visa_new_app.html')
 
 
+# Requets client side
+
+# visas/views.py
+
+@login_required
+@require_GET
+def get_client_applications_api(request):
+    """
+    AJAX API: Returns filtered list of Visa Applications for the current Agency/User.
+    """
+    # 1. Base Query: Filter by User's Agency
+    user_agency = getattr(request.user, 'agency', None)
+    if not user_agency:
+        return JsonResponse({'status': 'error', 'message': 'No agency assigned.'}, status=403)
+
+    qs = VisaApplication.objects.filter(agency=user_agency).select_related(
+        'destination').order_by('-created_at')
+
+    # 2. Search (Applicant Name, Ref, Destination, Passport)
+    search = request.GET.get('search', '').strip()
+    if search:
+        qs = qs.filter(
+            Q(reference__icontains=search) |
+            Q(first_name__icontains=search) |
+            Q(last_name__icontains=search) |
+            Q(passport_number__icontains=search) |
+            Q(destination__country__icontains=search)
+        )
+
+    # 3. Filters
+    status = request.GET.get('status')
+    if status and status != 'all':
+        qs = qs.filter(status=status)
+
+    date = request.GET.get('date')  # Submitted Date
+    if date:
+        qs = qs.filter(created_at__date=date)
+
+    # 4. Stats Calculation (Live for this filtered set or overall?)
+    # Usually stats are for "Overall" state, so we run a separate quick aggregate on the base set
+    base_qs = VisaApplication.objects.filter(agency=user_agency)
+    stats = {
+        'processing': base_qs.filter(status__in=['new', 'review', 'embassy']).count(),
+        'appointment': base_qs.filter(status='appointment').count(),
+        'ready': base_qs.filter(status='ready').count(),
+        'action': base_qs.filter(status__in=['rejected', 'missing_docs']).count()
+    }
+
+    # 5. Pagination
+    paginator = Paginator(qs, 10)
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+
+    # 6. Serialize Data
+    data = []
+    for app in page_obj:
+        data.append({
+            'id': app.id,
+            'reference': app.reference,
+            'applicant': f"{app.first_name} {app.last_name}",
+            'passport': app.passport_number,
+            'destination': app.destination.country,
+            'destination_flag': "🏳️",  # You could add a flag field to your model later
+            'submitted_on': app.created_at.strftime('%b %d, %Y'),
+            'status': app.status,
+            'status_label': app.get_status_display(),  # Uses choices display
+        })
+
+    return JsonResponse({
+        'status': 'success',
+        'stats': stats,
+        'data': data,
+        'pagination': {
+            'current_page': page_obj.number,
+            'total_pages': paginator.num_pages,
+            'has_next': page_obj.has_next(),
+            'has_previous': page_obj.has_previous(),
+        }
+    })
+
+# Client Page View (Render Empty HTML)
+
+
+@login_required
 def requests(request):
     return render(request, 'client/visa.html')

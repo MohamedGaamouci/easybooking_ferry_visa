@@ -1,10 +1,11 @@
 {% extends 'client/base_client.html' %}
+{% load static %}
 
 {% block content %}
 
 <main class="max-w-7xl mx-auto px-6 pt-24 pb-12">
 
-    <div class="flex items-center justify-between mb-8">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
             <h1 class="text-2xl font-bold text-slate-900">Visa Applications</h1>
             <p class="text-slate-500 text-sm">Track passport status and appointments.</p>
@@ -19,7 +20,7 @@
         <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
             <div>
                 <p class="text-xs text-slate-500 font-bold uppercase">Processing</p>
-                <p class="text-2xl font-bold text-slate-900">8</p>
+                <p class="text-2xl font-bold text-slate-900" id="stat-processing">-</p>
             </div>
             <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center"><i
                     class="ph-fill ph-spinner-gap text-xl"></i></div>
@@ -27,7 +28,7 @@
         <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
             <div>
                 <p class="text-xs text-slate-500 font-bold uppercase">Appointment Set</p>
-                <p class="text-2xl font-bold text-slate-900">3</p>
+                <p class="text-2xl font-bold text-slate-900" id="stat-appointment">-</p>
             </div>
             <div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-full flex items-center justify-center"><i
                     class="ph-fill ph-calendar-check text-xl"></i></div>
@@ -35,7 +36,7 @@
         <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
             <div>
                 <p class="text-xs text-slate-500 font-bold uppercase">Ready for Pickup</p>
-                <p class="text-2xl font-bold text-slate-900">2</p>
+                <p class="text-2xl font-bold text-slate-900" id="stat-ready">-</p>
             </div>
             <div class="w-10 h-10 bg-green-50 text-green-600 rounded-full flex items-center justify-center"><i
                     class="ph-fill ph-check-circle text-xl"></i></div>
@@ -43,7 +44,7 @@
         <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
             <div>
                 <p class="text-xs text-slate-500 font-bold uppercase">Action Required</p>
-                <p class="text-2xl font-bold text-red-600">1</p>
+                <p class="text-2xl font-bold text-red-600" id="stat-action">-</p>
             </div>
             <div class="w-10 h-10 bg-red-50 text-red-600 rounded-full flex items-center justify-center"><i
                     class="ph-fill ph-warning-circle text-xl"></i></div>
@@ -51,211 +52,383 @@
     </div>
 
     <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-        <div class="p-4 border-b border-slate-200 bg-slate-50/50 flex gap-4">
-            <button
-                class="px-3 py-1.5 text-xs font-bold bg-white border border-slate-200 rounded shadow-sm text-slate-700">All</button>
-            <button class="px-3 py-1.5 text-xs font-medium text-slate-500 hover:text-slate-700">Pending</button>
-            <button class="px-3 py-1.5 text-xs font-medium text-slate-500 hover:text-slate-700">Completed</button>
+
+        <div class="p-4 border-b border-slate-200 bg-slate-50/50 flex flex-col md:flex-row gap-4 justify-between">
+
+            <div class="flex bg-white border border-slate-200 rounded-lg p-1 self-start">
+                <button onclick="setStatusFilter('all')"
+                    class="status-tab active px-3 py-1.5 text-xs font-bold rounded hover:bg-slate-50 transition-colors text-slate-700 bg-slate-100">All</button>
+                <button onclick="setStatusFilter('new')"
+                    class="status-tab px-3 py-1.5 text-xs font-medium text-slate-500 hover:text-slate-700 rounded transition-colors">Pending</button>
+                <button onclick="setStatusFilter('completed')"
+                    class="status-tab px-3 py-1.5 text-xs font-medium text-slate-500 hover:text-slate-700 rounded transition-colors">Completed</button>
+            </div>
+
+            <div class="flex gap-2 w-full md:w-auto">
+                <div class="relative w-full md:w-64">
+                    <i class="ph-bold ph-magnifying-glass absolute left-3 top-2.5 text-slate-400"></i>
+                    <input type="text" id="filter-search" oninput="debounceLoad()"
+                        placeholder="Search Ref, Name, Passport..."
+                        class="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:border-brand-500 transition-all bg-white">
+                </div>
+                <input type="date" id="filter-date" onchange="loadData()"
+                    class="px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white outline-none focus:border-brand-500">
+            </div>
         </div>
 
-        <table class="w-full text-left border-collapse">
-            <thead class="bg-slate-50 text-xs uppercase text-slate-500 font-semibold border-b border-slate-200">
-                <tr>
-                    <th class="px-6 py-4">Reference</th>
-                    <th class="px-6 py-4">Applicant</th>
-                    <th class="px-6 py-4">Destination</th>
-                    <th class="px-6 py-4">Submitted On</th>
-                    <th class="px-6 py-4">Status</th>
-                    <th class="px-6 py-4 text-right">Action</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100 text-sm">
+        <div class="relative min-h-[300px]">
+            <div id="table-loader" class="absolute inset-0 bg-white/80 z-10 flex items-center justify-center hidden">
+                <div class="flex flex-col items-center gap-2">
+                    <i class="ph-bold ph-spinner animate-spin text-3xl text-brand-600"></i>
+                    <span class="text-xs font-bold text-brand-600">Loading...</span>
+                </div>
+            </div>
 
-                <tr class="hover:bg-slate-50 transition-colors">
-                    <td class="px-6 py-4 font-mono font-bold text-brand-600">#VS-9921</td>
-                    <td class="px-6 py-4">
-                        <div class="font-medium text-slate-900">Amine Khelil</div>
-                        <div class="text-xs text-slate-500 font-mono">P12345678</div>
-                    </td>
-                    <td class="px-6 py-4">
-                        <div class="flex items-center gap-2">
-                            <div class="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[10px]">
-                                🇫🇷</div>
-                            <span class="font-medium">France</span>
-                        </div>
-                    </td>
-                    <td class="px-6 py-4 text-slate-500">Oct 20, 2025</td>
-                    <td class="px-6 py-4">
-                        <span
-                            class="inline-flex items-center gap-1.5 bg-purple-50 text-purple-700 px-2.5 py-1 rounded-full text-xs font-bold border border-purple-100">
-                            <i class="ph-bold ph-calendar"></i> Appointment Set
-                        </span>
-                    </td>
-                    <td class="px-6 py-4 text-right">
-                        <button onclick="openTrackModal('france')"
-                            class="text-slate-500 hover:text-brand-600 font-medium text-xs border border-slate-200 rounded px-3 py-1.5 hover:bg-white hover:shadow-sm transition-all">Track</button>
-                    </td>
-                </tr>
+            <table class="w-full text-left border-collapse">
+                <thead class="bg-slate-50 text-xs uppercase text-slate-500 font-semibold border-b border-slate-200">
+                    <tr>
+                        <th class="px-6 py-4">Reference</th>
+                        <th class="px-6 py-4">Applicant</th>
+                        <th class="px-6 py-4">Destination</th>
+                        <th class="px-6 py-4">Submitted On</th>
+                        <th class="px-6 py-4">Status</th>
+                        <th class="px-6 py-4 text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="app-table-body" class="divide-y divide-slate-100 text-sm">
+                </tbody>
+            </table>
 
-                <tr class="hover:bg-slate-50 transition-colors">
-                    <td class="px-6 py-4 font-mono font-bold text-brand-600">#VS-9922</td>
-                    <td class="px-6 py-4">
-                        <div class="font-medium text-slate-900">Sarah Connor</div>
-                        <div class="text-xs text-slate-500 font-mono">A9876543</div>
-                    </td>
-                    <td class="px-6 py-4">
-                        <div class="flex items-center gap-2">
-                            <div class="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[10px]">
-                                🇺🇸</div>
-                            <span class="font-medium">United States</span>
-                        </div>
-                    </td>
-                    <td class="px-6 py-4 text-slate-500">Oct 18, 2025</td>
-                    <td class="px-6 py-4">
-                        <span
-                            class="inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full text-xs font-bold border border-blue-100">
-                            <i class="ph-bold ph-spinner animate-spin"></i> Processing
-                        </span>
-                    </td>
-                    <td class="px-6 py-4 text-right">
-                        <button onclick="openTrackModal('usa')"
-                            class="text-slate-500 hover:text-brand-600 font-medium text-xs border border-slate-200 rounded px-3 py-1.5 hover:bg-white hover:shadow-sm transition-all">Track</button>
-                    </td>
-                </tr>
+            <div id="empty-state" class="hidden flex flex-col items-center justify-center py-12 text-center">
+                <div class="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-3">
+                    <i class="ph-duotone ph-magnifying-glass text-2xl text-slate-400"></i>
+                </div>
+                <p class="text-slate-500 text-sm">No applications found.</p>
+            </div>
+        </div>
 
-                <tr class="hover:bg-slate-50 transition-colors">
-                    <td class="px-6 py-4 font-mono font-bold text-brand-600">#VS-9910</td>
-                    <td class="px-6 py-4">
-                        <div class="font-medium text-slate-900">John Doe</div>
-                        <div class="text-xs text-slate-500 font-mono">B5544332</div>
-                    </td>
-                    <td class="px-6 py-4">
-                        <div class="flex items-center gap-2">
-                            <div class="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[10px]">
-                                🇹🇷</div>
-                            <span class="font-medium">Turkey</span>
-                        </div>
-                    </td>
-                    <td class="px-6 py-4 text-slate-500">Oct 15, 2025</td>
-                    <td class="px-6 py-4">
-                        <span
-                            class="inline-flex items-center gap-1.5 bg-green-50 text-green-700 px-2.5 py-1 rounded-full text-xs font-bold border border-green-100">
-                            <i class="ph-bold ph-check"></i> Ready
-                        </span>
-                    </td>
-                    <td class="px-6 py-4 text-right">
-                        <button onclick="openTrackModal('turkey')"
-                            class="text-green-600 bg-green-50 hover:bg-green-100 border border-green-200 font-bold text-xs rounded px-3 py-1.5 transition-all">Download
-                            Visa</button>
-                    </td>
-                </tr>
-
-            </tbody>
-        </table>
+        <div id="pagination-container"
+            class="border-t border-slate-200 p-4 flex items-center justify-between bg-slate-50 hidden">
+            <span class="text-xs text-slate-500" id="page-info">Page 1</span>
+            <div class="flex gap-2">
+                <button id="btn-prev" onclick="changePage(-1)"
+                    class="px-3 py-1 border border-slate-200 rounded bg-white text-slate-600 text-xs hover:bg-slate-50 disabled:opacity-50">Prev</button>
+                <button id="btn-next" onclick="changePage(1)"
+                    class="px-3 py-1 border border-slate-200 rounded bg-white text-slate-600 text-xs hover:bg-slate-50 disabled:opacity-50">Next</button>
+            </div>
+        </div>
     </div>
+
 </main>
 
 <div id="track-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
-    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeTrackModal()">
-    </div>
-    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden modal-enter">
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeTrackModal()"></div>
 
-        <div class="bg-slate-50 p-6 border-b border-slate-200 flex justify-between items-start">
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
+
+        <div class="bg-slate-50 p-6 border-b border-slate-200 flex justify-between items-start shrink-0">
             <div>
                 <div class="flex items-center gap-3">
-                    <h2 class="text-xl font-bold text-slate-900">France Schengen Visa</h2>
-                    <span class="bg-brand-100 text-brand-700 text-xs font-bold px-2 py-0.5 rounded">#VS-9921</span>
+                    <h2 class="text-xl font-bold text-slate-900" id="tm-destination">Loading...</h2>
+                    <span id="tm-ref"
+                        class="bg-brand-100 text-brand-700 text-xs font-bold px-2 py-0.5 rounded font-mono">#</span>
                 </div>
-                <p class="text-sm text-slate-500 mt-1">Applicant: <span class="font-semibold text-slate-800">Amine
-                        Khelil</span></p>
+                <p class="text-sm text-slate-500 mt-1">Applicant: <span class="font-semibold text-slate-800"
+                        id="tm-applicant">-</span></p>
             </div>
             <button onclick="closeTrackModal()"
-                class="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-100"><i
-                    class="ph-bold ph-x"></i></button>
+                class="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors">
+                <i class="ph-bold ph-x"></i>
+            </button>
         </div>
 
-        <div class="grid grid-cols-3 h-96">
-            <div class="col-span-2 p-6 overflow-y-auto border-r border-slate-100">
-                <h3 class="text-xs font-bold text-slate-400 uppercase mb-4">Application Timeline</h3>
+        <div class="flex-1 overflow-y-auto p-0">
+            <div class="grid grid-cols-1 md:grid-cols-3 min-h-full">
 
-                <div class="relative pl-6 border-l-2 border-slate-200 space-y-8">
+                <div class="col-span-1 md:col-span-2 p-6 border-r border-slate-100">
 
-                    <div class="relative">
-                        <span
-                            class="absolute -left-[31px] w-4 h-4 rounded-full bg-slate-200 border-2 border-white ring-1 ring-slate-100"></span>
-                        <p class="text-sm font-bold text-slate-400">Embassy Decision</p>
-                        <p class="text-xs text-slate-400">Pending...</p>
-                    </div>
-
-                    <div class="relative">
-                        <span
-                            class="absolute -left-[31px] w-4 h-4 rounded-full bg-purple-600 border-2 border-white ring-4 ring-purple-50"></span>
-                        <p class="text-sm font-bold text-purple-700">Appointment Scheduled</p>
-                        <p class="text-xs text-slate-500 mt-1">Date: <span class="font-semibold">Oct 28, 2025 at
-                                09:00 AM</span></p>
-                        <p class="text-xs text-slate-500">Location: VFS Global Algiers</p>
-
-                        <div class="mt-2 bg-purple-50 border border-purple-100 rounded p-2 flex items-center gap-2">
-                            <i class="ph-fill ph-info text-purple-600"></i>
-                            <span class="text-[10px] text-purple-800">Please bring original documents.</span>
+                    <div id="tm-alert-box" class="hidden mb-8 rounded-xl p-4 border flex gap-3">
+                        <div id="tm-alert-icon" class="mt-0.5"></div>
+                        <div>
+                            <h4 class="text-sm font-bold" id="tm-alert-title"></h4>
+                            <p class="text-xs mt-1" id="tm-alert-msg"></p>
                         </div>
                     </div>
 
-                    <div class="relative">
-                        <span
-                            class="absolute -left-[31px] w-4 h-4 rounded-full bg-green-500 border-2 border-white"></span>
-                        <p class="text-sm font-bold text-slate-800">Application Submitted</p>
-                        <p class="text-xs text-slate-500">Oct 20, 2025 • 14:30</p>
+                    <h3 class="text-xs font-bold text-slate-400 uppercase mb-6 tracking-wider">Status Timeline</h3>
+
+                    <div class="relative pl-4 border-l-2 border-slate-100 space-y-8 ml-2" id="tm-timeline">
                     </div>
                 </div>
-            </div>
 
-            <div class="col-span-1 p-6 bg-slate-50">
-                <h3 class="text-xs font-bold text-slate-400 uppercase mb-4">Documents</h3>
-                <div class="space-y-3">
-
-                    <div
-                        class="bg-white border border-slate-200 p-3 rounded-lg flex items-center justify-between shadow-sm">
-                        <div class="flex items-center gap-2 overflow-hidden">
-                            <i class="ph-fill ph-file-pdf text-red-500 text-lg"></i>
-                            <div class="truncate">
-                                <p class="text-xs font-bold text-slate-700 truncate">App_Receipt.pdf</p>
-                                <p class="text-[10px] text-slate-400">240 KB</p>
-                            </div>
-                        </div>
-                        <button class="text-slate-400 hover:text-brand-600"><i
-                                class="ph-bold ph-download-simple"></i></button>
+                <div class="col-span-1 bg-slate-50 p-6">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase mb-4 tracking-wider">Uploaded Documents</h3>
+                    <div class="space-y-3" id="tm-docs-list">
                     </div>
 
-                    <div
-                        class="bg-white border border-slate-200 p-3 rounded-lg flex items-center justify-between shadow-sm">
-                        <div class="flex items-center gap-2 overflow-hidden">
-                            <i class="ph-fill ph-file-pdf text-red-500 text-lg"></i>
-                            <div class="truncate">
-                                <p class="text-xs font-bold text-slate-700 truncate">Appointment.pdf</p>
-                                <p class="text-[10px] text-slate-400">110 KB</p>
-                            </div>
+                    <div class="mt-8 pt-6 border-t border-slate-200">
+                        <h3 class="text-xs font-bold text-slate-400 uppercase mb-3 tracking-wider">Application Data</h3>
+                        <div class="space-y-2 text-xs" id="tm-answers-list">
                         </div>
-                        <button class="text-slate-400 hover:text-brand-600"><i
-                                class="ph-bold ph-download-simple"></i></button>
                     </div>
-
-                    <button
-                        class="w-full mt-4 border border-dashed border-slate-300 text-slate-500 text-xs font-medium py-2 rounded hover:bg-white hover:text-brand-600 transition-colors">
-                        + Upload Missing Doc
-                    </button>
-
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+
 <script>
-    function openTrackModal(type) {
-        document.getElementById('track-modal').classList.remove('hidden');
-        // In a real app, you would fetch data based on 'type' (france, usa, turkey) 
-        // and update the timeline HTML dynamically.
+    let currentPage = 1;
+    let currentStatus = 'all';
+    let debounceTimer;
+
+    // --- INITIAL LOAD ---
+    document.addEventListener("DOMContentLoaded", () => {
+        loadData();
+    });
+
+    // --- 1. LOAD DATA (Table & Stats) ---
+    function loadData() {
+        const loader = document.getElementById('table-loader');
+        const tbody = document.getElementById('app-table-body');
+        const emptyState = document.getElementById('empty-state');
+        const pagination = document.getElementById('pagination-container');
+
+        loader.classList.remove('hidden');
+
+        // Filters
+        const search = document.getElementById('filter-search').value;
+        const date = document.getElementById('filter-date').value;
+
+        // Build URL for the list API
+        const url = `/visas/api/my-applications/?page=${currentPage}&search=${search}&status=${currentStatus}&date=${date}`;
+
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                // A. Update Stats
+                if (data.stats) {
+                    document.getElementById('stat-processing').innerText = data.stats.processing;
+                    document.getElementById('stat-appointment').innerText = data.stats.appointment;
+                    document.getElementById('stat-ready').innerText = data.stats.ready;
+                    document.getElementById('stat-action').innerText = data.stats.action;
+                }
+
+                // B. Update Table
+                loader.classList.add('hidden');
+                tbody.innerHTML = '';
+
+                if (data.data.length === 0) {
+                    emptyState.classList.remove('hidden');
+                    pagination.classList.add('hidden');
+                    return;
+                }
+
+                emptyState.classList.add('hidden');
+                pagination.classList.remove('hidden');
+
+                data.data.forEach(app => {
+                    const row = `
+                        <tr class="hover:bg-slate-50 transition-colors">
+                            <td class="px-6 py-4 font-mono font-bold text-brand-600">${app.reference}</td>
+                            <td class="px-6 py-4">
+                                <div class="font-medium text-slate-900">${app.applicant}</div>
+                                <div class="text-xs text-slate-500 font-mono">${app.passport}</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-medium">${app.destination}</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 text-slate-500">${app.submitted_on}</td>
+                            <td class="px-6 py-4">${getStatusBadge(app.status, app.status_label)}</td>
+                            <td class="px-6 py-4 text-right">
+                                <button onclick="openTrackModal('${app.id}')" 
+                                    class="text-slate-500 hover:text-brand-600 font-medium text-xs border border-slate-200 rounded px-3 py-1.5 hover:bg-white hover:shadow-sm transition-all">
+                                    Track
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.insertAdjacentHTML('beforeend', row);
+                });
+
+                // C. Pagination
+                document.getElementById('page-info').innerText = `Page ${data.pagination.current_page} of ${data.pagination.total_pages}`;
+                document.getElementById('btn-prev').disabled = !data.pagination.has_previous;
+                document.getElementById('btn-next').disabled = !data.pagination.has_next;
+            })
+            .catch(err => {
+                console.error(err);
+                loader.classList.add('hidden');
+            });
+    }
+
+    // --- 2. FILTERS ---
+    function setStatusFilter(status) {
+        currentStatus = status;
+        document.querySelectorAll('.status-tab').forEach(btn => {
+            btn.classList.remove('active', 'bg-slate-100', 'text-slate-700', 'font-bold');
+            btn.classList.add('text-slate-500', 'font-medium');
+        });
+        currentPage = 1;
+        loadData();
+    }
+
+    function changePage(d) { currentPage += d; loadData(); }
+    function debounceLoad() { clearTimeout(debounceTimer); debounceTimer = setTimeout(() => { currentPage = 1; loadData(); }, 500); }
+
+    // --- 3. HELPERS ---
+    function getStatusBadge(status, label) {
+        const styles = {
+            'new': 'bg-blue-50 text-blue-700 border-blue-100',
+            'review': 'bg-blue-50 text-blue-700 border-blue-100',
+            'appointment': 'bg-purple-50 text-purple-700 border-purple-100',
+            'ready': 'bg-green-50 text-green-700 border-green-100',
+            'completed': 'bg-slate-100 text-slate-600 border-slate-200',
+            'rejected': 'bg-red-50 text-red-600 border-red-100'
+        };
+        const css = styles[status] || styles['new'];
+        let icon = '';
+        if (status === 'appointment') icon = '<i class="ph-bold ph-calendar mr-1"></i>';
+        if (status === 'ready') icon = '<i class="ph-bold ph-check mr-1"></i>';
+        return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border ${css}">${icon} ${label}</span>`;
+    }
+
+    // --- 4. TRACK MODAL LOGIC (UPDATED URL) ---
+    function openTrackModal(appId) {
+        const modal = document.getElementById('track-modal');
+        modal.classList.remove('hidden');
+
+        // Reset UI
+        document.getElementById('tm-destination').innerText = "Loading...";
+        document.getElementById('tm-timeline').innerHTML = '<div class="text-sm text-slate-400">Fetching updates...</div>';
+        document.getElementById('tm-docs-list').innerHTML = '';
+        document.getElementById('tm-alert-box').classList.add('hidden');
+
+        // === CORRECTED FETCH URL ===
+        fetch(`/admin_panel/api/visa/${appId}/`)
+            .then(res => res.json())
+            .then(data => {
+                populateModal(data);
+            })
+            .catch(err => {
+                console.error(err);
+                document.getElementById('tm-destination').innerText = "Error loading details";
+            });
+    }
+
+    function populateModal(data) {
+        // 1. Header
+        document.getElementById('tm-destination').innerText = data.destination;
+        document.getElementById('tm-ref').innerText = data.reference;
+        document.getElementById('tm-applicant').innerText = data.applicant;
+
+        // 2. Alert Box Logic
+        const alertBox = document.getElementById('tm-alert-box');
+        const alertTitle = document.getElementById('tm-alert-title');
+        const alertMsg = document.getElementById('tm-alert-msg');
+        const alertIcon = document.getElementById('tm-alert-icon');
+
+        // Note: The API returns date string "YYYY-MM-DDTHH:MM" or similar
+        if (data.status === 'appointment' && data.appointment_date) {
+            alertBox.className = "mb-8 rounded-xl p-4 border flex gap-3 bg-purple-50 border-purple-100 text-purple-900";
+            alertIcon.innerHTML = '<i class="ph-fill ph-calendar-check text-xl text-purple-600"></i>';
+            alertTitle.innerText = "Appointment Scheduled";
+
+            // Basic date formatting
+            const dateObj = new Date(data.appointment_date);
+            const dateStr = dateObj.toLocaleDateString();
+            const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            alertMsg.innerHTML = `Please arrive at the embassy by <strong>${timeStr}</strong> on <strong>${dateStr}</strong>.<br>Bring all original documents.`;
+            alertBox.classList.remove('hidden');
+
+        } else if (data.admin_notes) {
+            alertBox.className = "mb-8 rounded-xl p-4 border flex gap-3 bg-yellow-50 border-yellow-200 text-yellow-900";
+            alertIcon.innerHTML = '<i class="ph-fill ph-info text-xl text-yellow-600"></i>';
+            alertTitle.innerText = "Message from Agent";
+            alertMsg.innerText = data.admin_notes;
+            alertBox.classList.remove('hidden');
+        } else {
+            alertBox.classList.add('hidden');
+        }
+
+        // 3. Timeline
+        const steps = [
+            { id: 'new', label: 'Application Submitted' },
+            { id: 'review', label: 'Under Review' },
+            { id: 'appointment', label: 'Appointment Set' },
+            { id: 'embassy', label: 'At Embassy' },
+            { id: 'ready', label: 'Ready for Pickup' },
+        ];
+
+        let currentIndex = steps.findIndex(s => s.id === data.status);
+        if (data.status === 'completed') currentIndex = 4;
+        if (currentIndex === -1) currentIndex = 0;
+
+        let timelineHtml = '';
+        steps.forEach((step, index) => {
+            let colorClass = 'bg-slate-200 border-white';
+            let textClass = 'text-slate-400';
+
+            if (index < currentIndex) {
+                colorClass = 'bg-green-500 border-white ring-4 ring-green-50';
+                textClass = 'text-slate-700';
+            } else if (index === currentIndex) {
+                colorClass = 'bg-brand-600 border-white ring-4 ring-brand-50 animate-pulse';
+                textClass = 'text-brand-700 font-bold';
+            }
+
+            timelineHtml += `
+                <div class="relative">
+                    <span class="absolute -left-[23px] w-3.5 h-3.5 rounded-full border-2 ${colorClass}"></span>
+                    <p class="text-sm ${textClass}">${step.label}</p>
+                </div>`;
+        });
+        document.getElementById('tm-timeline').innerHTML = timelineHtml;
+
+        // 4. Documents
+        const docContainer = document.getElementById('tm-docs-list');
+        docContainer.innerHTML = '';
+        if (data.documents && data.documents.length > 0) {
+            data.documents.forEach(doc => {
+                let statusIcon = '<i class="ph-bold ph-check text-green-500"></i>';
+                if (doc.status === 'missing') statusIcon = '<i class="ph-bold ph-warning text-red-500"></i>';
+
+                const actionBtn = doc.url
+                    ? `<a href="${doc.url}" target="_blank" class="text-slate-400 hover:text-brand-600"><i class="ph-bold ph-download-simple"></i></a>`
+                    : `<span class="text-xs text-slate-300">No file</span>`;
+
+                docContainer.innerHTML += `
+                    <div class="bg-white border border-slate-200 p-3 rounded-lg flex items-center justify-between shadow-sm">
+                        <div class="flex items-center gap-2 overflow-hidden">
+                            ${statusIcon}
+                            <div class="truncate">
+                                <p class="text-xs font-bold text-slate-700 truncate">${doc.name}</p>
+                                <p class="text-[10px] text-slate-400 uppercase">${doc.status}</p>
+                            </div>
+                        </div>
+                        ${actionBtn}
+                    </div>`;
+            });
+        } else {
+            docContainer.innerHTML = '<p class="text-xs text-slate-400 italic">No documents uploaded.</p>';
+        }
+
+        // 5. Answers
+        const ansContainer = document.getElementById('tm-answers-list');
+        ansContainer.innerHTML = '';
+        if (data.answers && data.answers.length > 0) {
+            data.answers.slice(0, 5).forEach(ans => {
+                ansContainer.innerHTML += `
+                    <div class="flex justify-between border-b border-slate-100 pb-1 mb-1">
+                        <span class="text-slate-500">${ans.label}</span>
+                        <span class="font-medium text-slate-800">${ans.value}</span>
+                    </div>`;
+            });
+        }
     }
 
     function closeTrackModal() {
