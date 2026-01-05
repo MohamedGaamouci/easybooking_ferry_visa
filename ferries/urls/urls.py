@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import *
+from ..views import *
 
 urlpatterns = [
     path("ferries/", admin_ferry_requests_view,

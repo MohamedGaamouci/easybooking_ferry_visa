@@ -3,9 +3,13 @@ from django.db.models import Q
 from django.shortcuts import render
 from visas.models import VisaDestination
 from ferries.models import Port, Provider
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_GET
 # Include your Ferry Provider model import here if needed
 
 
+@login_required
+@require_GET
 def cms_dashboard_view(request):
     # --- 1. VISA DESTINATIONS QUERY ---
     # We only need the destination fields, not the child objects yet.

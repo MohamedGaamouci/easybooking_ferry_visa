@@ -1,5 +1,7 @@
 from django.urls import path
-from .views import *
+from ..views import *
+from django.contrib.auth import views as auth_views
+from .. import views
 
 
 urlpatterns = [
@@ -16,5 +18,6 @@ urlpatterns = [
     path('api/role/update/<int:pk>/', role_save_view,
          name='role_update'),  # <--- Renamed this
     path('api/role/<int:pk>/', role_detail_api, name='role_detail'),
+
 
 ]

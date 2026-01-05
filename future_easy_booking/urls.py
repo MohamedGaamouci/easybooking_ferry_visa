@@ -12,6 +12,10 @@ from django.shortcuts import render
 # ======================
 
 
+def home(request):
+    return render(request, 'admin/dashboard.html')
+
+
 def admin_dashboard_view(request):
     return render(request, 'admin/dashboard.html')
 
@@ -28,8 +32,8 @@ def admin_accounting_view(request):
 # client Views
 # ======================
 
-def ferries_view(request):
-    return render(request, 'client/ferry_requests.html')
+def client_home(request):
+    return render(request, 'client/dashboard.html')
 
 
 def dashboard_view(request):
@@ -60,13 +64,16 @@ def visa_view(request):
 # URL Patterns
 # ======================
 
+
 urlpatterns = [
     # Django admin
     path("admin/", admin.site.urls),
+
 ]
 
 admin_urls = [
     # Custom Admin Panel
+    path("admin_panel/", home, name="admin_dashboard"),
     path("admin_panel/dashboard/", admin_dashboard_view, name="admin_dashboard"),
     path("admin_panel/settings/", admin_setting_view, name="admin_setting"),
     path("admin_panel/accounting/", admin_accounting_view, name="admin_accounting"),
@@ -76,13 +83,13 @@ admin_urls = [
     path("admin_panel/", include('agencies.urls')),
 
     #   USERS
-    path('admin_panel/', include('users.urls')),
+    path('admin_panel/', include('users.urls.urls')),
 
     #   CMS
     path('admin_panel/', include('core.urls')),
 
     #   FERRY URLS
-    path('admin_panel/', include('ferries.urls')),
+    path('admin_panel/', include('ferries.urls.urls')),
 
     #   VISA URLS
     path('admin_panel/', include('visas.urls'))
@@ -91,10 +98,11 @@ admin_urls = [
 urlpatterns += admin_urls
 
 client_urls = [
-    path('ferries/', ferries_view, name='ferries'),
+    path('', client_home, name='dashboard'),
+    path('ferries/', include('ferries.urls.client_urls')),
+    path('users/', include('users.urls.client_urls')),
     path('dashboard/', dashboard_view, name='dashboard'),
     path('accounting/', accounting_view, name='accounting'),
-    path('new_ferry/', new_ferry_view, name='new_ferry'),
     path('new_visa/', new_visa_view, name='new_visa'),
     path('setting/', setting_view, name='setting'),
     path('visa/', visa_view, name='visa'),

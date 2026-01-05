@@ -1,3 +1,4 @@
+from django.shortcuts import redirect
 from django.shortcuts import render
 from django.contrib.auth import get_user_model
 from agencies.models import Agency
@@ -211,3 +212,22 @@ def role_save_view(request, pk=None):
         return JsonResponse({'status': 'success', 'message': 'Role saved successfully!'})
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
+@login_required
+def login_success_router(request):
+    """
+    Redirects users based on their assigned Role name.
+    """
+    user = request.user
+
+    # 1. Check if the user has a Role assigned
+    if hasattr(user, 'role') and user.role is not None:
+
+        # 2. If Role is 'Agency' -> Client Dashboard
+        # Make sure the string matches exactly what you stored in the DB ('Agency')
+        if user.role.name == 'Agency':
+            return redirect('dashboard')
+
+    # 3. Fallback: Everyone else (Platform Manager, Finance, Superuser) -> Admin Panel
+    return redirect('admin_dashboard')

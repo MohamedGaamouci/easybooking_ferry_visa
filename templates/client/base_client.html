@@ -154,8 +154,13 @@
                             class="w-9 h-9 bg-brand-50 text-brand-700 rounded-full flex items-center justify-center font-bold text-xs border border-brand-200 group-hover:bg-brand-600 group-hover:text-white transition-all shadow-sm">
                             GT</div>
                     </a>
-                    <a href="/login.html" class="text-slate-400 hover:text-red-500 transition-colors" title="Logout"><i
-                            class="ph-bold ph-sign-out text-xl"></i></a>
+                    <form action="{% url 'logout' %}" method="post" class="inline">
+                        {% csrf_token %}
+                        <button type="submit" class="text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
+                            title="Logout">
+                            <i class="ph-bold ph-sign-out text-xl"></i>
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
