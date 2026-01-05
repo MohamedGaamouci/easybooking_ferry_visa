@@ -1112,7 +1112,7 @@
     function fetchAgencies() {
         agencyLoading.classList.remove('hidden');
 
-        fetch("{% url 'api_agencies' %}")
+        fetch("{% url 'agency_management' %}")
             .then(res => res.json())
             .then(data => {
                 renderAgencies(data.agencies);

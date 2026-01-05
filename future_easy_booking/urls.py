@@ -7,8 +7,6 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.shortcuts import render
-from agencies.views import admin_agencies_view, get_agencies_api
-
 # ======================
 # Admin Views
 # ======================
@@ -74,23 +72,19 @@ admin_urls = [
     path("admin_panel/accounting/", admin_accounting_view, name="admin_accounting"),
 
 
+    #   AGENCIES
+    path("admin_panel/", include('agencies.urls')),
 
-    path("admin_panel/agencies/", admin_agencies_view, name="admin_agencies"),
-    path("admin_panel/api/agencies/", get_agencies_api,
-         name="api_agencies"),  # <--- Add this
-
-
-
-    #  USERS
+    #   USERS
     path('admin_panel/', include('users.urls')),
 
     #   CMS
     path('admin_panel/', include('core.urls')),
 
-    #     ferry urls
+    #   FERRY URLS
     path('admin_panel/', include('ferries.urls')),
 
-    #       visa urls
+    #   VISA URLS
     path('admin_panel/', include('visas.urls'))
 
 ]
