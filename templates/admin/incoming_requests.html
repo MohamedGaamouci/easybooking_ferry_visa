@@ -24,61 +24,106 @@
         <div class="max-w-7xl mx-auto space-y-8">
 
             <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div
-                    class="bg-white p-5 rounded-xl border border-slate-200 shadow-soft flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">New Requests</p>
-                        <p class="text-2xl font-bold text-slate-900 mt-1" id="stat-new">-</p>
-                    </div>
-                    <div
-                        class="w-10 h-10 rounded-full bg-blue-50 text-brand-600 flex items-center justify-center text-xl">
-                        <i class="ph-fill ph-tray"></i>
-                    </div>
-                </div>
-                <div
-                    class="bg-white p-5 rounded-xl border border-slate-200 shadow-soft flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Pending Offer</p>
-                        <p class="text-2xl font-bold text-slate-900 mt-1" id="stat-pending">-</p>
-                    </div>
-                    <div
-                        class="w-10 h-10 rounded-full bg-yellow-50 text-yellow-600 flex items-center justify-center text-xl">
-                        <i class="ph-fill ph-hourglass"></i>
+
+                <div onclick="setFilter('pending')" id="card-pending"
+                    class="stat-card bg-white p-5 rounded-xl border border-slate-200 shadow hover:shadow-lg transition-all cursor-pointer group">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p
+                                class="text-xs font-bold text-slate-500 uppercase tracking-wider group-hover:text-blue-600">
+                                New Requests</p>
+                            <p class="text-2xl font-bold text-slate-900 mt-1" id="stat-new">-</p>
+                        </div>
+                        <div
+                            class="w-10 h-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+                            <i class="ph-fill ph-tray"></i>
+                        </div>
                     </div>
                 </div>
-                <div
-                    class="bg-white p-5 rounded-xl border border-slate-200 shadow-soft flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Confirmed</p>
-                        <p class="text-2xl font-bold text-slate-900 mt-1" id="stat-confirmed">-</p>
-                    </div>
-                    <div
-                        class="w-10 h-10 rounded-full bg-green-50 text-green-600 flex items-center justify-center text-xl">
-                        <i class="ph-fill ph-check-circle"></i>
-                    </div>
-                </div>
-                <div
-                    class="bg-white p-5 rounded-xl border border-slate-200 shadow-soft flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Revenue</p>
-                        <p class="text-2xl font-bold text-slate-900 mt-1" id="stat-revenue">-</p>
-                    </div>
-                    <div
-                        class="w-10 h-10 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center text-xl">
-                        <i class="ph-fill ph-currency-eur"></i>
+
+                <div onclick="setFilter('offer_sent')" id="card-offer_sent"
+                    class="stat-card bg-white p-5 rounded-xl border border-slate-200 shadow hover:shadow-lg transition-all cursor-pointer group">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p
+                                class="text-xs font-bold text-slate-500 uppercase tracking-wider group-hover:text-yellow-600">
+                                Pending Offer</p>
+                            <p class="text-2xl font-bold text-slate-900 mt-1" id="stat-pending">-</p>
+                        </div>
+                        <div
+                            class="w-10 h-10 rounded-full bg-yellow-100 text-yellow-800 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+                            <i class="ph-fill ph-hourglass"></i>
+                        </div>
                     </div>
                 </div>
+
+                <div onclick="setFilter('confirmed')" id="card-confirmed"
+                    class="stat-card bg-white p-5 rounded-xl border border-slate-200 shadow hover:shadow-lg transition-all cursor-pointer group">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p
+                                class="text-xs font-bold text-slate-500 uppercase tracking-wider group-hover:text-green-600">
+                                Confirmed</p>
+                            <p class="text-2xl font-bold text-slate-900 mt-1" id="stat-confirmed">-</p>
+                        </div>
+                        <div
+                            class="w-10 h-10 rounded-full bg-green-100 text-green-700 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+                            <i class="ph-fill ph-check-circle"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div onclick="setFilter('')" id="card-all"
+                    class="stat-card bg-white p-5 rounded-xl border border-slate-200 shadow hover:shadow-lg transition-all cursor-pointer group">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p
+                                class="text-xs font-bold text-slate-500 uppercase tracking-wider group-hover:text-purple-600">
+                                Total Revenue</p>
+                            <p class="text-2xl font-bold text-slate-900 mt-1" id="stat-revenue">-</p>
+                        </div>
+                        <div
+                            class="w-10 h-10 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+                            <i class="ph-fill ph-currency-eur"></i>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
             <div class="bg-white border border-slate-200 rounded-xl shadow-soft overflow-hidden">
 
-                <div class="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
+                <div
+                    class="p-4 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between bg-slate-50/50 gap-4">
+
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="setFilter('')"
+                            class="filter-btn active px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 transition-all bg-white text-slate-700 shadow-sm"
+                            data-status="">
+                            All
+                        </button>
+                        <button onclick="setFilter('processing')"
+                            class="filter-btn px-3 py-1.5 text-xs font-medium rounded-lg border border-transparent hover:bg-white hover:shadow-sm text-slate-500 transition-all"
+                            data-status="processing">
+                            Processing
+                        </button>
+                        <button onclick="setFilter('cancelled')"
+                            class="filter-btn px-3 py-1.5 text-xs font-medium rounded-lg border border-transparent hover:bg-white hover:shadow-sm text-slate-500 transition-all"
+                            data-status="cancelled">
+                            Cancelled
+                        </button>
+                        <button onclick="setFilter('rejected')"
+                            class="filter-btn px-3 py-1.5 text-xs font-medium rounded-lg border border-transparent hover:bg-white hover:shadow-sm text-slate-500 transition-all"
+                            data-status="rejected">
+                            Rejected
+                        </button>
+                    </div>
+
                     <div class="flex items-center gap-2">
                         <button onclick="loadAdminData()" class="p-2 hover:bg-slate-200 rounded-lg transition-colors"
                             title="Refresh">
                             <i class="ph-bold ph-arrow-clockwise"></i>
                         </button>
-                        <span class="text-sm font-bold text-slate-700">All Incoming Requests</span>
                     </div>
                 </div>
 
@@ -118,48 +163,80 @@
 
 <script>
     let currentPage = 1;
+    let currentStatus = ''; // Default: All
     let debounceTimer;
 
-    // --- 1. SETUP DYNAMIC URLS ---
-    // This ensures the link is always correct, even if you change urls.py later
+    // Django URLs
     const API_LIST_URL = "{% url 'api_admin_list' %}";
-
-    // We create a base URL pattern for the detail page
-    // We put a placeholder '000' that we will replace with the actual Ref in JS
     const PROCESS_PAGE_URL = "{% url 'admin_process' '000' %}";
 
-    // --- INITIAL LOAD ---
     document.addEventListener("DOMContentLoaded", () => {
         loadAdminData();
     });
+
+    // --- 1. FILTER LOGIC ---
+    function setFilter(status) {
+        currentStatus = status;
+        currentPage = 1; // Reset to page 1
+
+        // Update UI Highlights
+        updateActiveUI(status);
+
+        // Fetch Data
+        loadAdminData();
+    }
+
+    function updateActiveUI(status) {
+        // 1. Highlight Cards
+        // Remove active ring from all cards
+        document.querySelectorAll('.stat-card').forEach(c => {
+            c.classList.remove('ring-2', 'ring-brand-500', 'bg-slate-50');
+            c.classList.add('bg-white');
+        });
+
+        // Add ring to selected card (if applicable)
+        if (status === 'pending') {
+            document.getElementById('card-pending').classList.add('ring-2', 'ring-blue-500', 'bg-blue-50');
+        } else if (status === 'offer_sent') {
+            document.getElementById('card-offer_sent').classList.add('ring-2', 'ring-yellow-500', 'bg-yellow-50');
+        } else if (status === 'confirmed') {
+            document.getElementById('card-confirmed').classList.add('ring-2', 'ring-green-500', 'bg-green-50');
+        } else if (status === '') {
+            // "All" typically highlights the last card or none
+            // Optional: highlight 'card-all' if you want
+        }
+
+        // 2. Highlight Table Buttons
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            if (btn.dataset.status === status) {
+                btn.classList.add('active', 'bg-white', 'text-slate-700', 'shadow-sm', 'border-slate-200');
+                btn.classList.remove('border-transparent', 'text-slate-500');
+            } else {
+                btn.classList.remove('active', 'bg-white', 'text-slate-700', 'shadow-sm', 'border-slate-200');
+                btn.classList.add('border-transparent', 'text-slate-500');
+            }
+        });
+    }
 
     // --- 2. LOAD DATA ---
     function loadAdminData() {
         const search = document.getElementById('admin-search').value;
         const tbody = document.getElementById('admin-table-body');
 
-        // Show loading state
-        tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-slate-400"><i class="ph-bold ph-spinner animate-spin text-2xl"></i></td></tr>';
-
-        // Use the dynamic Django URL
-        const url = `${API_LIST_URL}?page=${currentPage}&search=${search}`;
+        // Append 'status' to URL
+        const url = `${API_LIST_URL}?page=${currentPage}&search=${search}&status=${currentStatus}`;
 
         fetch(url)
-            .then(res => {
-                if (!res.ok) throw new Error("Network response was not ok");
-                return res.json();
-            })
+            .then(res => res.json())
             .then(data => {
-                // A. Update Stats
+                // Update Stats
                 document.getElementById('stat-new').innerText = data.stats.new || 0;
                 document.getElementById('stat-pending').innerText = data.stats.pending_offer || 0;
                 document.getElementById('stat-confirmed').innerText = data.stats.confirmed || 0;
-
-                // Format Revenue
                 const rev = parseFloat(data.stats.revenue || 0).toLocaleString(undefined, { minimumFractionDigits: 2 });
-                document.getElementById('stat-revenue').innerText = "DA " + rev;
+                document.getElementById('stat-revenue').innerText = rev + " DA";
 
-                // B. Update Table
+                // Render Table
                 tbody.innerHTML = '';
                 if (data.data.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-12 text-center text-slate-400 italic">No requests found.</td></tr>';
@@ -169,20 +246,18 @@
                 data.data.forEach(row => {
                     const tr = document.createElement('tr');
                     tr.className = "hover:bg-slate-50 transition-colors group border-b border-slate-100 cursor-pointer";
-
-                    // Generate the specific detail link
-                    // Replace the placeholder '000' with the actual reference
                     const detailLink = PROCESS_PAGE_URL.replace('000', row.reference);
                     tr.onclick = () => window.location.href = detailLink;
 
                     tr.innerHTML = `
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-2">
-                                ${getStatusDot(row.status)}
-                                <span class="font-bold text-slate-700 text-xs uppercase bg-slate-100 px-2 py-0.5 rounded border border-slate-200">${row.status_label}</span>
+                                ${getStatusDot(row.status)} <!-- optional small dot -->
+                                ${getStatusBadge(row.status)} <!-- directly use the badge -->
                             </div>
                             <div class="text-[10px] text-slate-400 mt-1 pl-4">${row.created_ago}</div>
                         </td>
+
                         <td class="px-6 py-4"><span class="font-mono font-bold text-slate-900 text-xs">${row.reference}</span></td>
                         <td class="px-6 py-4">
                             <div class="font-semibold text-slate-900">${row.agency_name}</div>
@@ -199,47 +274,62 @@
                             <div class="text-xs text-slate-400">${row.trip_type}</div>
                         </td>
                         <td class="px-6 py-4 text-right">
-                            <button class="bg-white border border-slate-200 text-slate-600 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-brand-50 hover:text-brand-600 hover:border-brand-200 transition-all shadow-sm">
-                                Process
+                            <button class="bg-brand-600 text-white border border-brand-600 px-3 py-1.5 rounded-lg text-xs font-bold 
+                            hover:bg-brand-700 hover:border-brand-700 transition-colors shadow-md">
+                            Process
                             </button>
                         </td>
                     `;
                     tbody.appendChild(tr);
                 });
 
-                // C. Update Pagination
                 document.getElementById('page-info').innerText = `Page ${data.pagination.current_page} of ${data.pagination.total_pages}`;
                 document.getElementById('btn-prev').disabled = !data.pagination.has_previous;
                 document.getElementById('btn-next').disabled = !data.pagination.has_next;
             })
             .catch(err => {
-                console.error("Error loading admin data:", err);
-                tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-red-500">Error loading data. Check console.</td></tr>`;
+                console.error(err);
+                tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-red-500">Error loading data.</td></tr>`;
             });
     }
+    function getStatusBadge(status) {
+        switch (status) {
+            case 'pending':
+                return `<span class="font-bold text-blue-800 bg-blue-100 px-2 py-0.5 rounded-full text-xs uppercase">New</span>`;
+            case 'offer_sent':
+                return `<span class="font-bold text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded-full text-xs uppercase">Offer Sent</span>`;
+            case 'confirmed':
+                return `<span class="font-bold text-green-800 bg-green-100 px-2 py-0.5 rounded-full text-xs uppercase">Confirmed</span>`;
+            case 'cancelled':
+            case 'rejected':
+                return `<span class="font-bold text-red-800 bg-red-100 px-2 py-0.5 rounded-full text-xs uppercase">${status}</span>`;
+            case "processing":
+                return `<span class="ml-2 inline-flex items-center gap-1 font-bold text-white bg-blue-600 px-2 py-0.5 rounded-full text-xs uppercase">
+                        <i class="ph-bold ph-spinner animate-spin"></i>
+                    Processing
+                </span>
+                `;
+            default:
+                return `<span class="font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-full text-xs uppercase">${status}</span>`;
+        }
+    }
+
 
     // --- HELPER: STATUS DOTS ---
     function getStatusDot(status) {
-        if (status === 'pending') return '<span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse ring-2 ring-blue-100"></span>';
-        if (status === 'offer_sent') return '<span class="w-2 h-2 rounded-full bg-yellow-500 ring-2 ring-yellow-100"></span>';
-        if (status === 'confirmed') return '<span class="w-2 h-2 rounded-full bg-green-500 ring-2 ring-green-100"></span>';
-        if (status === 'cancelled' || status === 'rejected') return '<span class="w-2 h-2 rounded-full bg-red-500 ring-2 ring-red-100"></span>';
-        return '<span class="w-2 h-2 rounded-full bg-slate-300"></span>';
+        switch (status) {
+            case 'pending': return '<span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse ring-2 ring-blue-100"></span>';
+            case 'processing': return '<span class="w-2 h-2 rounded-full bg-blue-600 ring-2 ring-blue-100"></span>';
+            case 'offer_sent': return '<span class="w-2 h-2 rounded-full bg-yellow-500 ring-2 ring-yellow-100"></span>';
+            case 'confirmed': return '<span class="w-2 h-2 rounded-full bg-green-500 ring-2 ring-green-100"></span>';
+            case 'cancelled':
+            case 'rejected': return '<span class="w-2 h-2 rounded-full bg-red-500 ring-2 ring-red-100"></span>';
+            default: return '<span class="w-2 h-2 rounded-full bg-slate-300"></span>';
+        }
     }
 
-    // --- UTILITIES ---
-    function changePage(d) {
-        currentPage += d;
-        loadAdminData();
-    }
-
-    function debounceLoad() {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => {
-            currentPage = 1;
-            loadAdminData();
-        }, 500);
-    }
+    function changePage(d) { currentPage += d; loadAdminData(); }
+    function debounceLoad() { clearTimeout(debounceTimer); debounceTimer = setTimeout(() => { currentPage = 1; loadAdminData(); }, 500); }
 </script>
 
 {% endblock %}

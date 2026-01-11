@@ -228,14 +228,12 @@ def validate_passenger_structure(data):
 
 @login_required
 def new_demand_view(request):
-    print('enter '*10)
     """
     Renders the client booking page.
     Passes the list of active Ferry Providers to the template.
     """
     # providers = Provider.objects.filter(is_active=True)
-    providers = Provider.objects.all().order_by('name')
-    print(providers)
+    providers = Provider.objects.filter(is_active=True).order_by('name')
     return render(request, 'client/new_ferry.html', {'providers': providers})
 
 
@@ -308,7 +306,8 @@ def create_ferry_request_api(request):
                 accommodation=cleaned['accommodation'],
                 passengers_data=passengers,
                 vehicle_data=data.get('vehicle', None),  # Can be None
-                status='pending'
+                status='pending',
+                requested_by=request.user
             )
 
         return JsonResponse({
@@ -454,7 +453,7 @@ def get_client_requests_api(request):
             'route_str': f"{req.route.origin.code} ↔ {req.route.destination.code}",
             'departure': req.departure_date.strftime('%d %b %Y'),
             'passenger_summary': first_p,
-            'price': f"DA {req.selling_price}" if req.selling_price > 0 else "--",
+            'price': f"{req.selling_price} DA" if req.selling_price > 0 else "--",
             'created_at': req.created_at.strftime('%Y-%m-%d')
         })
 
@@ -499,7 +498,8 @@ def get_ferry_request_detail_api(request, reference):
             'route_str': f"{req.route.origin.code} ↔ {req.route.destination.code}",
 
             'passengers': req.passengers_data,
-            'vehicle': req.vehicle_data
+            'vehicle': req.vehicle_data,
+            'admin_note': req.admin_note,
         }
         return JsonResponse({'status': 'success', 'data': data})
     except Exception as e:
@@ -570,7 +570,8 @@ def get_admin_requests_api(request):
             Q(route__provider__name__icontains=search)
         )
 
-    # 3. Calculate Stats (Live Data)
+    # 3. Calculate Stats (Live Data based on current Search)
+    # We calculate stats BEFORE filtering by status so the cards always show totals
     stats = {
         'new': qs.filter(status='pending').count(),
         'pending_offer': qs.filter(status='offer_sent').count(),
@@ -579,19 +580,29 @@ def get_admin_requests_api(request):
         'revenue': qs.filter(status='confirmed').aggregate(total=Sum('selling_price'))['total'] or 0
     }
 
-    # 4. Pagination
+    # 4. Status Filter (For the Table Only)
+    # This comes from the JS: setFilter('pending'), setFilter('confirmed'), etc.
+    status_filter = request.GET.get('status', '').strip()
+    if status_filter:
+        qs = qs.filter(status=status_filter)
+
+    # 5. Pagination
     page_number = request.GET.get('page', 1)
     paginator = Paginator(qs, 10)
     page_obj = paginator.get_page(page_number)
 
-    # 5. Serialize List
+    # 6. Serialize List
     data = []
     for req in page_obj:
+        # User handling safety check
+        requested_by = req.requested_by.get_full_name() if req.requested_by else "Unknown"
+        user_admin = req.user_admin.get_full_name() if req.user_admin else "Unknown"
+
         data.append({
             'id': req.id,
             'reference': req.reference,
             'agency_name': req.agency.company_name,
-            'agency_user': req.agency.users.first().get_full_name() if req.agency.users.exists() else "Unknown",
+            'agency_user': requested_by,
             'provider_name': req.route.provider.name,
             'route_str': f"{req.route.origin.code} ↔ {req.route.destination.code}",
             'trip_type': req.get_trip_type_display(),
@@ -599,8 +610,9 @@ def get_admin_requests_api(request):
             'pax_count': len(req.passengers_data),
             'status': req.status,
             'status_label': req.admin_status_label,  # Use the property from model
-            # Simplified for now
             'created_ago': req.created_at.strftime('%H:%M %d/%m'),
+            'user_admin': user_admin,
+            'admin_note': req.admin_note
         })
 
     return JsonResponse({
@@ -615,7 +627,6 @@ def get_admin_requests_api(request):
             'total_items': paginator.count
         }
     })
-
 # ==========================================
 # 2. ADMIN: PAGE VIEWS
 # ==========================================
@@ -639,9 +650,7 @@ def admin_process_view(request, reference):
     # print('is agency user:: ', is_agency_user)
     # print(user)
 
-    if (
-        user.is_authenticated and req.status == 'pending'
-    ):
+    if (user.is_authenticated and req.status == 'pending'):
         req.status = 'processing'
         req.save(update_fields=['status'])
 
@@ -670,16 +679,43 @@ def admin_send_offer_api(request, reference):
 
         net_price = data.get('net_price')
         sell_price = data.get('sell_price')
-        notes = data.get('notes')  # Optional admin notes
+        notes = data.get('note')  # Optional admin notes
 
-        if not sell_price:
-            return JsonResponse({'status': 'error', 'message': 'Selling price is required.'}, status=400)
+        try:
+            sell_price = float(sell_price)
+            net_price = float(net_price)
+        except (TypeError, ValueError):
+            return JsonResponse(
+                {'status': 'error', 'message': 'Invalid price format.'},
+                status=400
+            )
+
+        if sell_price <= 0:
+            return JsonResponse(
+                {'status': 'error', 'message': 'Selling price must be greater than 0.'},
+                status=400
+            )
+
+        if net_price <= 0:
+            return JsonResponse(
+                {'status': 'error', 'message': 'Net price must be greater than 0.'},
+                status=400
+            )
+
+        if sell_price <= net_price:
+            return JsonResponse({'status': 'error', 'message': "Selling price can't be less than or equal net price."}, status=400)
 
         # Update Logic
         req.net_price = net_price
         req.selling_price = sell_price
         req.status = 'offer_sent'
         # You could save 'notes' to a new field in model if needed
+        admin_user = request.user
+        if getattr(admin_user, 'agency', None):
+            return JsonResponse({'status': "error", 'message': 'You Are not Authorized to send offer (you must be admin stuff)'})
+
+        req.admin_note = notes
+        req.user_admin = admin_user
 
         req.save()
 
@@ -692,13 +728,16 @@ def admin_send_offer_api(request, reference):
 @login_required
 @require_POST
 def admin_reject_request(request, pk):
-    print('enter .............')
     """
     Updates pricing and moves status to 'offer_sent'
     """
     try:
         req = get_object_or_404(FerryRequest, pk=pk)
+        data = json.loads(request.body)
+        if data.status in ['confirmed', 'rejected', 'cancelled']:
+            return JsonResponse({"status": 'error', 'message': f'The status is already in {data.status}'})
         req.status = 'rejected'
+        req.admin_note = data.get('note')
         # You could save 'notes' to a new field in model if needed
 
         req.save()

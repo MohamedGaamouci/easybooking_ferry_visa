@@ -11,31 +11,51 @@
                 class="hover:text-slate-900 cursor-pointer transition-colors">Requests</a>
             <i class="ph-bold ph-caret-right text-xs"></i>
             <span class="font-medium text-slate-900">{{ req.reference }}</span>
-
             {% if req.status == 'pending' %}
+            <span class="ml-2 font-bold text-blue-800 bg-blue-100 px-2 py-0.5 rounded-full text-xs uppercase">
+                New
+            </span>
+            {% elif req.status == 'processing' %}
             <span
-                class="ml-2 bg-blue-100 text-blue-700 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide">New
-                Request</span>
+                class="ml-2 inline-flex items-center gap-1 font-bold text-white bg-blue-600 px-2 py-0.5 rounded-full text-xs uppercase">
+                <i class="ph-bold ph-spinner animate-spin"></i>
+                Processing
+            </span>
+
             {% elif req.status == 'offer_sent' %}
-            <span
-                class="ml-2 bg-yellow-100 text-yellow-700 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide">Offer
-                Sent</span>
+            <span class="ml-2 font-bold text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded-full text-xs uppercase">
+                Offer Sent
+            </span>
             {% elif req.status == 'confirmed' %}
-            <span
-                class="ml-2 bg-green-100 text-green-700 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide">Confirmed</span>
+            <span class="ml-2 font-bold text-green-800 bg-green-100 px-2 py-0.5 rounded-full text-xs uppercase">
+                Confirmed
+            </span>
+            {% elif req.status == 'cancelled' or req.status == 'rejected' %}
+            <span class="ml-2 font-bold text-red-800 bg-red-100 px-2 py-0.5 rounded-full text-xs uppercase">
+                {{ req.status|capfirst }}
+            </span>
             {% else %}
-            <span
-                class="ml-2 bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide">
-                {{req.status }}</span>
+            <span class="ml-2 font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-full text-xs uppercase">
+                {{ req.status|capfirst }}
+            </span>
             {% endif %}
+
+
+            <span
+                class="ml-2 bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide">
+                User Agent: {{ req.user_admin.get_full_name|default:"Unknown" }}
+            </span>
         </div>
 
+        {% if req.status == "pending" or req.status == 'new' %}
         <div class="flex gap-3">
             <button onclick="reject_offer('{{ req.id }}', this)"
                 class="text-red-600 hover:bg-red-50 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-transparent hover:border-red-200">
                 Reject Request
             </button>
         </div>
+        {% endif %}
+
 
     </header>
 
@@ -52,7 +72,7 @@
                     <div>
                         <h3 class="text-sm font-bold text-slate-900">{{ req.agency.company_name }}</h3>
                         <p class="text-xs text-slate-500">
-                            Agent: {{ req.agency.users.first.get_full_name|default:"Unknown" }} •
+                            Agent: {{ req.requested_by.get_full_name|default:"Unknown" }} •
                             <span class="text-green-600 font-medium">Verified Partner</span>
                         </p>
                     </div>
@@ -186,8 +206,8 @@
                                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                         <span class="text-slate-400">DA</span>
                                     </div>
-                                    <input type="number" id="net-price" oninput="calculateMargin()"
-                                        value="{{ req.net_price|default_if_none:'' }}" placeholder="0.00"
+                                    <input type="number" id="net-price" oninput="calculateMargin()" required
+                                        value="{{ req.net_price|default_if_none:'' }}" placeholder=""
                                         class="w-full border-2 border-slate-200 rounded-xl py-3 pl-10 pr-4 text-slate-900 font-bold focus:border-slate-400 focus:outline-none transition-colors bg-slate-50">
                                 </div>
                                 <p class="text-[10px] text-slate-400 mt-1">Visible only to you</p>
@@ -200,8 +220,8 @@
                                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                         <span class="text-brand-600 font-bold">DA</span>
                                     </div>
-                                    <input type="number" id="sell-price" oninput="calculateMargin()"
-                                        value="{{ req.selling_price|default_if_none:'' }}" placeholder="0.00"
+                                    <input type="number" id="sell-price" oninput="calculateMargin()" required
+                                        value="{{ req.selling_price|default_if_none:'' }}" placeholder=""
                                         class="w-full border-2 border-brand-100 rounded-xl py-3 pl-10 pr-4 text-brand-700 font-bold focus:border-brand-500 focus:outline-none transition-colors bg-white shadow-sm">
                                 </div>
                                 <p class="text-[10px] text-brand-500 mt-1">Client sees this price</p>
@@ -228,14 +248,21 @@
                                 (Optional)</label>
                             <textarea id="notes"
                                 class="w-full border border-slate-200 rounded-lg p-3 text-sm focus:border-brand-500 outline-none h-20 resize-none bg-white"
-                                placeholder="e.g. Exact dates not available, proposed +1 day."></textarea>
+                                placeholder="e.g. Exact dates not available, proposed +1 day.">{{req.admin_note}}</textarea>
                         </div>
 
                         <div class="flex justify-end gap-3 pt-2">
+                            {% if req.status == 'pending' or req.status == 'offer_sent' %}
                             <button onclick="sendOffer()"
                                 class="w-full px-6 py-3 bg-brand-600 text-white font-bold rounded-xl shadow-lg shadow-brand-200 hover:bg-brand-700 hover:shadow-xl transition-all flex items-center justify-center gap-2">
                                 <i class="ph-bold ph-paper-plane-right"></i> Send Offer to Client
                             </button>
+                            {% elif req.status == 'rejected' or req.status == 'processing' %}
+                            <button onclick="sendOffer()"
+                                class="w-full px-6 py-3 bg-brand-600 text-white font-bold rounded-xl shadow-lg shadow-brand-200 hover:bg-brand-700 hover:shadow-xl transition-all flex items-center justify-center gap-2">
+                                <i class="ph-bold ph-paper-plane-right"></i> Send Offer to Client
+                            </button>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -294,7 +321,7 @@
         const payload = {
             net_price: netPrice,
             sell_price: sellPrice,
-            notes: notes
+            note: notes
         };
 
         // Note: Using 'api_admin_offer' per your updated urls.py
@@ -332,8 +359,15 @@
         btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Rejecting...';
         btn.disabled = true;
 
+        const notes = document.getElementById('notes').value;
+
+        payload = {
+            note: notes
+        }
+
         fetch(`/admin_panel/api/request/reject/${ref}/`, {
             method: "POST",
+            body: JSON.stringify(payload),
             headers: {
                 "Content-Type": "application/json",
                 "X-CSRFToken": "{{ csrf_token }}"
@@ -357,6 +391,24 @@
 
     // Run calc on load (if values exist)
     document.addEventListener("DOMContentLoaded", calculateMargin);
+
+    function getStatusBadge(status) {
+        switch (status) {
+            case 'pending':
+                return `<span class="font-bold text-blue-800 bg-blue-100 px-2 py-0.5 rounded-full text-xs uppercase">${status}</span>`;
+            case 'offer_sent':
+                return `<span class="font-bold text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded-full text-xs uppercase">Offer Sent</span>`;
+            case 'confirmed':
+                return `<span class="font-bold text-green-800 bg-green-100 px-2 py-0.5 rounded-full text-xs uppercase">Confirmed</span>`;
+            case 'cancelled':
+            case 'rejected':
+                return `<span class="font-bold text-red-800 bg-red-100 px-2 py-0.5 rounded-full text-xs uppercase">${status}</span>`;
+            default:
+                return `<span class="font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-full text-xs uppercase">${status}</span>`;
+        }
+    }
+
+
 </script>
 
 {% endblock %}
