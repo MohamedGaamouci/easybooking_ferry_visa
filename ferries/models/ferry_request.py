@@ -86,6 +86,27 @@ class FerryRequest(models.Model):
     # 6. Documents
     voucher = models.FileField(upload_to='vouchers/', null=True, blank=True)
 
+    user_admin = models.ForeignKey(
+        'users.CustomUser',
+        on_delete=models.PROTECT,
+        related_name="admin_user",
+        help_text="The administrator user responsible for managing this record.",
+        blank=True,
+        null=True
+    )
+
+    requested_by = models.ForeignKey(
+        'users.CustomUser',
+        on_delete=models.PROTECT,
+        related_name="requested_by",
+        help_text="User who submitted the request for this record.",
+        blank=True,
+        null=True
+    )
+
+    admin_note = models.TextField(
+        null=True, blank=True, help_text="notes from the admin to the agency")
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
