@@ -27,5 +27,6 @@ urlpatterns = [
     path('api/visa/update_destination/<int:pk>/',
          visa_destination_update_view, name='visa_destination_update'),
 
-
+    # pagination of the visas and filtering
+    path('api/list/', get_admin_visa_list_api, name='api_admin_visa_list'),
 ]

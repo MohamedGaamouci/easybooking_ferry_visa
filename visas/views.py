@@ -582,6 +582,100 @@ def visa_destination_detail_api(request, pk):
     }
     return JsonResponse(data)
 
+
+# ========================================================
+# End Point for AJAX (Feltering)
+# ========================================================
+
+@login_required
+def get_admin_visa_list_api(request):
+    """
+    AJAX API for Admin Visa Dashboard.
+    Handles: Stats counting, Search, Filtering, Pagination.
+    """
+    # 1. Base Query
+    qs = VisaApplication.objects.select_related(
+        'agency', 'destination').order_by('-created_at')
+
+    # 2. Search (Ref, Name, Passport, Agency, Destination)
+    search = request.GET.get('search', '').strip()
+    if search:
+        qs = qs.filter(
+            Q(reference__icontains=search) |
+            Q(first_name__icontains=search) |
+            Q(last_name__icontains=search) |
+            Q(passport_number__icontains=search) |
+            Q(agency__company_name__icontains=search) |
+            Q(destination__country__icontains=search)
+        )
+
+    # 3. Calculate Stats (Live counts based on current search)
+    # We calculate this BEFORE applying the status filter so the cards show accurate potential totals
+    stats = {
+        'new': qs.filter(status='new').count(),
+        'review': qs.filter(status='review').count(),
+        'appt': qs.filter(status='appointment').count(),
+        'embassy': qs.filter(status='embassy').count(),
+        'ready': qs.filter(status='ready').count(),
+        'completed': qs.filter(status='completed').count(),
+        'rejected': qs.filter(status='rejected').count(),
+        'cancelled': qs.filter(status='cancelled').count(),
+    }
+
+    # 4. Status Filter (Clicking the cards)
+    status_filter = request.GET.get('status', '').strip()
+    if status_filter and status_filter != 'all':
+        qs = qs.filter(status=status_filter)
+
+    # 5. Destination Filter (Dropdown)
+    dest_filter = request.GET.get('destination', '').strip()
+    if dest_filter:
+        qs = qs.filter(destination_id=dest_filter)
+
+    # 6. Pagination
+    paginator = Paginator(qs, 10)  # 10 items per page
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+
+    # 7. Serialize Data
+    data = []
+    for app in page_obj:
+        # Agency Name Handling
+        agency_name = app.agency.company_name if app.agency else "Direct Client"
+
+        # Cover Image Handling
+        cover_img = None
+        if app.destination.cover_image:
+            cover_img = app.destination.cover_image.url
+
+        data.append({
+            'id': app.id,
+            'reference': app.reference,
+            'applicant': f"{app.first_name} {app.last_name}",
+            'passport': app.passport_number,
+            'agency': agency_name,
+            'country': app.destination.country,
+            'visa_type': app.destination.visa_type,
+            'cover_image': cover_img,
+            'status': app.status,
+            'status_label': app.get_status_display(),  # Uses the choices tuple
+            # Or any format you prefer
+            'created_at': app.created_at.strftime('%Y-%m-%d'),
+        })
+
+    return JsonResponse({
+        'status': 'success',
+        'stats': stats,
+        'data': data,
+        'pagination': {
+            'current_page': page_obj.number,
+            'total_pages': paginator.num_pages,
+            'has_next': page_obj.has_next(),
+            'has_previous': page_obj.has_previous(),
+        }
+    })
+
+
 # ========================================================
 # CLIENT SIDE - PAGES
 # ========================================================

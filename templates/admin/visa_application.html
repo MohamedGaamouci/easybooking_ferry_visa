@@ -7,7 +7,16 @@
 
     <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
         <h1 class="text-xl font-bold text-slate-900">Visa Processing Center</h1>
+
         <div class="flex items-center gap-4">
+            <div class="relative group">
+                <i
+                    class="ph-bold ph-magnifying-glass absolute left-3 top-2.5 text-slate-400 group-focus-within:text-brand-500"></i>
+                <input type="text" id="admin-search" oninput="debounceLoad()"
+                    placeholder="Search ref, applicant, agency..."
+                    class="pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-brand-500 w-64 transition-all">
+            </div>
+
             <button onclick="openManualModal()"
                 class="bg-brand-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md hover:bg-brand-700 transition-colors flex items-center gap-2">
                 <i class="ph-bold ph-plus"></i> Add Manual App
@@ -20,131 +29,149 @@
 
             <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
 
-                <!-- New -->
-                <div
-                    class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-bold text-slate-400 uppercase">New</p>
-                        <p class="text-2xl font-bold text-slate-900">{{ stats.new }}</p>
-                    </div>
-                    <div
-                        class="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-xl">
-                        <i class="ph-fill ph-plus-circle"></i>
-                    </div>
-                </div>
-
-                <!-- Under Review -->
-                <div
-                    class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-bold text-slate-400 uppercase">Under Review</p>
-                        <p class="text-2xl font-bold text-slate-900">{{ stats.under_review }}</p>
-                    </div>
-                    <div
-                        class="w-10 h-10 rounded-full bg-yellow-50 text-yellow-600 flex items-center justify-center text-xl">
-                        <i class="ph-fill ph-magnifying-glass"></i>
+                <div onclick="setFilterStatus('new')" id="card-new"
+                    class="stat-card bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md cursor-pointer transition-all">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">New</p>
+                            <p class="text-2xl font-bold text-slate-900 mt-1" id="stat-new">-</p>
+                        </div>
+                        <div
+                            class="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-xl">
+                            <i class="ph-fill ph-plus-circle"></i>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Appointment Set -->
-                <div
-                    class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-bold text-slate-400 uppercase">Appointment Set</p>
-                        <p class="text-2xl font-bold text-slate-900">{{ stats.appt }}</p>
-                    </div>
-                    <div
-                        class="w-10 h-10 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center text-xl">
-                        <i class="ph-fill ph-calendar-check"></i>
-                    </div>
-                </div>
-
-                <!-- Embassy -->
-                <div
-                    class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-bold text-slate-400 uppercase">Embassy</p>
-                        <p class="text-2xl font-bold text-slate-900">{{ stats.embassy }}</p>
-                    </div>
-                    <div
-                        class="w-10 h-10 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center text-xl">
-                        <i class="ph-fill ph-buildings"></i>
+                <div onclick="setFilterStatus('review')" id="card-review"
+                    class="stat-card bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md cursor-pointer transition-all">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Under Review</p>
+                            <p class="text-2xl font-bold text-slate-900 mt-1" id="stat-review">-</p>
+                        </div>
+                        <div
+                            class="w-10 h-10 rounded-full bg-yellow-50 text-yellow-600 flex items-center justify-center text-xl">
+                            <i class="ph-fill ph-magnifying-glass"></i>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Ready -->
-                <div
-                    class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-bold text-slate-400 uppercase">Ready</p>
-                        <p class="text-2xl font-bold text-slate-900">{{ stats.ready }}</p>
-                    </div>
-                    <div
-                        class="w-10 h-10 rounded-full bg-teal-50 text-teal-600 flex items-center justify-center text-xl">
-                        <i class="ph-fill ph-package"></i>
-                    </div>
-                </div>
-
-
-                <!-- Completed -->
-                <div
-                    class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-bold text-slate-400 uppercase">Completed</p>
-                        <p class="text-2xl font-bold text-slate-900">{{ stats.completed }}</p>
-                    </div>
-                    <div
-                        class="w-10 h-10 rounded-full bg-green-50 text-green-600 flex items-center justify-center text-xl">
-                        <i class="ph-fill ph-check-circle"></i>
+                <div onclick="setFilterStatus('appointment')" id="card-appointment"
+                    class="stat-card bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md cursor-pointer transition-all">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Appointment Set</p>
+                            <p class="text-2xl font-bold text-slate-900 mt-1" id="stat-appt">-</p>
+                        </div>
+                        <div
+                            class="w-10 h-10 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center text-xl">
+                            <i class="ph-fill ph-calendar-check"></i>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Rejected -->
-                <div
-                    class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-bold text-slate-400 uppercase">Rejected</p>
-                        <p class="text-2xl font-bold text-slate-900">{{ stats.rejected }}</p>
-                    </div>
-                    <div
-                        class="w-10 h-10 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center text-xl">
-                        <i class="ph-fill ph-warning-circle"></i>
+                <div onclick="setFilterStatus('embassy')" id="card-embassy"
+                    class="stat-card bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md cursor-pointer transition-all">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Embassy</p>
+                            <p class="text-2xl font-bold text-slate-900 mt-1" id="stat-embassy">-</p>
+                        </div>
+                        <div
+                            class="w-10 h-10 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center text-xl">
+                            <i class="ph-fill ph-buildings"></i>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Cancelled -->
-                <div
-                    class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-bold text-slate-400 uppercase">Cancelled</p>
-                        <p class="text-2xl font-bold text-slate-900">{{ stats.cancelled }}</p>
+                <div onclick="setFilterStatus('ready')" id="card-ready"
+                    class="stat-card bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md cursor-pointer transition-all">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Ready</p>
+                            <p class="text-2xl font-bold text-slate-900 mt-1" id="stat-ready">-</p>
+                        </div>
+                        <div
+                            class="w-10 h-10 rounded-full bg-teal-50 text-teal-600 flex items-center justify-center text-xl">
+                            <i class="ph-fill ph-package"></i>
+                        </div>
                     </div>
-                    <div class="w-10 h-10 rounded-full bg-red-50 text-red-600 flex items-center justify-center text-xl">
-                        <i class="ph-fill ph-x-circle"></i>
+                </div>
+
+                <div onclick="setFilterStatus('completed')" id="card-completed"
+                    class="stat-card bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md cursor-pointer transition-all">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Completed</p>
+                            <p class="text-2xl font-bold text-slate-900 mt-1" id="stat-completed">-</p>
+                        </div>
+                        <div
+                            class="w-10 h-10 rounded-full bg-green-50 text-green-600 flex items-center justify-center text-xl">
+                            <i class="ph-fill ph-check-circle"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div onclick="setFilterStatus('rejected')" id="card-rejected"
+                    class="stat-card bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md cursor-pointer transition-all">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Rejected</p>
+                            <p class="text-2xl font-bold text-slate-900 mt-1" id="stat-rejected">-</p>
+                        </div>
+                        <div
+                            class="w-10 h-10 rounded-full bg-red-50 text-red-600 flex items-center justify-center text-xl">
+                            <i class="ph-fill ph-warning-circle"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div onclick="setFilterStatus('cancelled')" id="card-cancelled"
+                    class="stat-card bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md cursor-pointer transition-all">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Cancelled</p>
+                            <p class="text-2xl font-bold text-slate-900 mt-1" id="stat-cancelled">-</p>
+                        </div>
+                        <div
+                            class="w-10 h-10 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center text-xl">
+                            <i class="ph-fill ph-x-circle"></i>
+                        </div>
                     </div>
                 </div>
 
             </div>
 
-
             <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-                <div class="p-4 border-b border-slate-200 flex gap-4 bg-slate-50/50">
-                    <button
-                        class="px-3 py-1.5 text-xs font-bold bg-white border border-slate-200 rounded shadow-sm text-slate-700">All
-                        Applications</button>
-                    <select
-                        class="px-3 py-1.5 text-xs font-medium text-slate-600 bg-transparent border-none outline-none cursor-pointer hover:text-slate-900">
-                        <option value="">Filter by Destination</option>
-                        {% for dest in destinations %}
-                        <option value="{{ dest.id }}">{{ dest.country }} - {{ dest.visa_type }}</option>
-                        {% endfor %}
-                    </select>
+                <div
+                    class="p-4 border-b border-slate-200 flex flex-col md:flex-row gap-4 bg-slate-50/50 justify-between">
+
+                    <div class="flex gap-2">
+                        <button onclick="setFilterStatus('all')"
+                            class="px-3 py-1.5 text-xs font-bold bg-white border border-slate-200 rounded shadow-sm text-slate-700 hover:bg-slate-50 transition-colors">
+                            All Applications
+                        </button>
+                    </div>
+
+                    <div class="flex gap-2">
+                        <select id="filter-destination" onchange="loadAdminData()"
+                            class="px-3 py-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-lg outline-none cursor-pointer hover:text-slate-900">
+                            <option value="">Filter by Destination</option>
+                            {% for dest in destinations %}
+                            <option value="{{ dest.id }}">{{ dest.country }} - {{ dest.visa_type }}</option>
+                            {% endfor %}
+                        </select>
+                        <button onclick="loadAdminData()"
+                            class="p-1.5 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-500"><i
+                                class="ph-bold ph-arrow-clockwise"></i></button>
+                    </div>
                 </div>
 
                 <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr
-                            class="text-xs font-semibold text-slate-400 uppercase border-b border-slate-200 bg-slate-50/30">
+                    <thead
+                        class="text-xs font-semibold text-slate-400 uppercase border-b border-slate-200 bg-slate-50/30">
+                        <tr>
                             <th class="px-6 py-4">Reference</th>
                             <th class="px-6 py-4">Applicant</th>
                             <th class="px-6 py-4">Agency</th>
@@ -153,159 +180,21 @@
                             <th class="px-6 py-4 text-right">Action</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100 text-sm">
-                        {% for app in applications %}
-                        <tr
-                            class="hover:bg-slate-50 transition-colors {% if app.status == 'new' %}bg-blue-50/20{% endif %}">
-                            <td class="px-6 py-4 font-mono font-bold text-brand-600">#{{ app.reference }}</td>
-                            <td class="px-6 py-4">
-                                <div class="font-medium text-slate-900">{{ app.first_name }} {{ app.last_name }}</div>
-                                <!-- <div class="text-xs text-slate-500">
-
-                                </div> -->
-                            </td>
-                            <td class="px-6 py-4">
-                                {% if app.agency %}
-                                {{ app.agency.company_name }}
-                                {% else %}
-                                Direct Client
-                                {% endif %}
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="flex items-center gap-2">
-                                    {% if app.destination.cover_image %}
-                                    <img src="{{ app.destination.cover_image.url }}"
-                                        class="w-6 h-4 object-cover rounded shadow-sm">
-                                    {% else %}
-                                    <div
-                                        class="w-6 h-4 bg-slate-200 rounded flex items-center justify-center text-[8px]">
-                                        🏳️</div>
-                                    {% endif %}
-                                    <span>{{ app.destination.country }}</span>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4">
-                                {% if app.status == 'new' %}
-                                <span
-                                    class="inline-flex items-center gap-1.5 bg-blue-100 text-blue-700 px-2.5 py-1 rounded-full text-xs font-bold">
-                                    <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
-                                    New
-                                </span>
-
-                                {% elif app.status == 'review' %}
-                                <span
-                                    class="bg-yellow-100 text-yellow-700 px-2.5 py-1 rounded-full text-xs font-bold border border-yellow-200">
-                                    Under Review
-                                </span>
-
-                                {% elif app.status == 'appointment' %}
-                                <span
-                                    class="inline-flex items-center gap-1.5 bg-purple-50 text-purple-700 px-2.5 py-1 rounded-full text-xs font-bold border border-purple-100">
-                                    <i class="ph-bold ph-calendar"></i>
-                                    Appt: {{ app.embassy_appointment_date|date:"M d"|default:"Set Date" }}
-                                </span>
-
-                                {% elif app.status == 'embassy' %}
-                                <span
-                                    class="bg-orange-100 text-orange-700 px-2.5 py-1 rounded-full text-xs font-bold border border-orange-200">
-                                    At Embassy
-                                </span>
-
-                                {% elif app.status == 'ready' %}
-                                <span
-                                    class="bg-teal-100 text-teal-700 px-2.5 py-1 rounded-full text-xs font-bold border border-teal-200">
-                                    Ready
-                                </span>
-
-                                {% elif app.status == 'completed' %}
-                                <span
-                                    class="bg-green-100 text-green-700 px-2.5 py-1 rounded-full text-xs font-bold border border-green-200">
-                                    Completed
-                                </span>
-
-                                {% elif app.status == 'rejected' %}
-                                <span
-                                    class="bg-red-100 text-red-700 px-2.5 py-1 rounded-full text-xs font-bold border border-red-200">
-                                    Rejected
-                                </span>
-
-                                {% elif app.status == 'cancelled' %}
-                                <span
-                                    class="bg-slate-100 text-slate-700 px-2.5 py-1 rounded-full text-xs font-bold border border-slate-200">
-                                    Cancelled
-                                </span>
-                                {% endif %}
-                            </td>
-
-                            <td class="px-6 py-4 text-right">
-                                <button onclick="openProcessModal('{{ app.id }}')"
-                                    class="bg-brand-600 text-white px-3 py-1.5 rounded text-xs font-bold shadow hover:bg-brand-700">
-                                    Process
-                                </button>
-                            </td>
-                        </tr>
-                        {% empty %}
+                    <tbody id="admin-table-body" class="divide-y divide-slate-100 text-sm">
                         <tr>
-                            <td colspan="5" class="px-6 py-12 text-center text-slate-400">
-                                <i class="ph ph-files text-4xl mb-2"></i>
-                                <p>No visa applications found.</p>
-                            </td>
+                            <td colspan="6" class="px-6 py-12 text-center text-slate-400">Loading data...</td>
                         </tr>
-                        {% endfor %}
                     </tbody>
                 </table>
-                <!-- pagination -->
-                <div class="p-4 border-t border-slate-200 bg-white flex items-center justify-between">
 
-                    <div class="text-sm text-slate-500">
-                        Showing <span class="font-bold text-slate-900">{{ applications.start_index }}</span>
-                        to <span class="font-bold text-slate-900">{{ applications.end_index }}</span>
-                        of <span class="font-bold text-slate-900">{{ applications.paginator.count }}</span> results
-                    </div>
-
-                    <div class="flex items-center gap-2">
-
-                        {% if applications.has_previous %}
-                        <a href="?page={{ applications.previous_page_number }}{% if request.GET.destination_id %}&destination_id={{ request.GET.destination_id }}{% endif %}"
-                            class="px-3 py-1.5 border border-slate-300 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">
-                            Previous
-                        </a>
-                        {% else %}
-                        <span
-                            class="px-3 py-1.5 border border-slate-100 rounded-lg text-sm font-medium text-slate-300 cursor-not-allowed">
-                            Previous
-                        </span>
-                        {% endif %}
-
-                        <div class="hidden sm:flex items-center gap-1">
-                            {% for num in applications.paginator.page_range %}
-                            {# Logic to show only relevant page numbers (Current, First, Last, and neighbors) #}
-                            {% if applications.number == num %}
-                            <span
-                                class="w-8 h-8 flex items-center justify-center bg-brand-600 text-white rounded-lg text-xs font-bold shadow-sm">
-                                {{ num }}
-                            </span>
-                            {% elif num > applications.number|add:'-3' and num < applications.number|add:'3' %} <a
-                                href="?page={{ num }}{% if request.GET.destination_id %}&destination_id={{ request.GET.destination_id }}{% endif %}"
-                                class="w-8 h-8 flex items-center justify-center border border-slate-200 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-50 transition-colors">
-                                {{ num }}
-                                </a>
-                                {% endif %}
-                                {% endfor %}
-                        </div>
-
-                        {% if applications.has_next %}
-                        <a href="?page={{ applications.next_page_number }}{% if request.GET.destination_id %}&destination_id={{ request.GET.destination_id }}{% endif %}"
-                            class="px-3 py-1.5 border border-slate-300 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">
-                            Next
-                        </a>
-                        {% else %}
-                        <span
-                            class="px-3 py-1.5 border border-slate-100 rounded-lg text-sm font-medium text-slate-300 cursor-not-allowed">
-                            Next
-                        </span>
-                        {% endif %}
-
+                <div class="p-4 border-t border-slate-200 bg-white flex items-center justify-between"
+                    id="pagination-container">
+                    <span class="text-xs text-slate-500" id="page-info">Showing - results</span>
+                    <div class="flex gap-2">
+                        <button id="btn-prev" onclick="changePage(-1)"
+                            class="px-3 py-1.5 border border-slate-300 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50">Previous</button>
+                        <button id="btn-next" onclick="changePage(1)"
+                            class="px-3 py-1.5 border border-slate-300 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50">Next</button>
                     </div>
                 </div>
             </div>
@@ -647,666 +536,459 @@
 
 
 <script>
-    // === PROCESS MODAL LOGIC (AJAX POWERED) ===
+    // ==========================================
+    // 1. DASHBOARD & FILTER LOGIC (AJAX)
+    // ==========================================
+    let currentPage = 1;
+    let currentStatus = 'all'; // Default to 'all'
+    let debounceTimer;
+
+    // Load Data on Page Ready
+    document.addEventListener("DOMContentLoaded", () => {
+        loadAdminData();
+    });
+
+    // --- MAIN LOADER ---
+    function loadAdminData() {
+        const search = document.getElementById('admin-search').value || '';
+        const destSelect = document.getElementById('filter-destination');
+        const dest = destSelect ? destSelect.value : '';
+        const tbody = document.getElementById('admin-table-body');
+
+        // === FIXED URL PATH ===
+        // Now points to /admin_panel/api/list/ instead of /visas/api/list/
+        const url = `/admin_panel/api/list/?page=${currentPage}&search=${search}&status=${currentStatus}&destination=${dest}`;
+
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                // A. Update Stats Cards (If elements exist)
+                if (data.stats) {
+                    if (document.getElementById('stat-new')) document.getElementById('stat-new').innerText = data.stats.new;
+                    if (document.getElementById('stat-review')) document.getElementById('stat-review').innerText = data.stats.review; // Fixed ID from 'stat-under-review' to match HTML
+                    if (document.getElementById('stat-appt')) document.getElementById('stat-appt').innerText = data.stats.appt;
+                    if (document.getElementById('stat-embassy')) document.getElementById('stat-embassy').innerText = data.stats.embassy;
+                    if (document.getElementById('stat-ready')) document.getElementById('stat-ready').innerText = data.stats.ready;
+                    if (document.getElementById('stat-completed')) document.getElementById('stat-completed').innerText = data.stats.completed;
+                    if (document.getElementById('stat-rejected')) document.getElementById('stat-rejected').innerText = data.stats.rejected;
+                    if (document.getElementById('stat-cancelled')) document.getElementById('stat-cancelled').innerText = data.stats.cancelled;
+                }
+
+                // B. Render Table Rows
+                tbody.innerHTML = '';
+                if (data.data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-12 text-center text-slate-400 italic">No applications found matching criteria.</td></tr>';
+                    return;
+                }
+
+                data.data.forEach(app => {
+                    // Logic for Agency Name
+                    const agencyDisplay = app.agency === 'Direct Client'
+                        ? `<span class="text-slate-400 italic">Direct Client</span>`
+                        : app.agency;
+
+                    // Logic for Flag Image
+                    const imgHtml = app.cover_image
+                        ? `<img src="${app.cover_image}" class="w-6 h-4 object-cover rounded shadow-sm">`
+                        : `<div class="w-6 h-4 bg-slate-200 rounded flex items-center justify-center text-[8px]">🏳️</div>`;
+
+                    const row = `
+                        <tr class="hover:bg-slate-50 transition-colors">
+                            <td class="px-6 py-4 font-mono font-bold text-brand-600">#${app.reference}</td>
+                            <td class="px-6 py-4">
+                                <div class="font-medium text-slate-900">${app.applicant}</div>
+                                <div class="text-xs text-slate-500 font-mono">${app.passport}</div>
+                            </td>
+                            <td class="px-6 py-4 text-sm">${agencyDisplay}</td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-2">
+                                    ${imgHtml}
+                                    <span>${app.country} - ${app.visa_type}</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                ${getStatusBadge(app.status, app.status_label)}
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <button onclick="openProcessModal('${app.id}')" 
+                                    class="bg-brand-600 text-white px-3 py-1.5 rounded text-xs font-bold shadow hover:bg-brand-700 transition-colors">
+                                    Process
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.insertAdjacentHTML('beforeend', row);
+                });
+
+                // C. Update Pagination Info
+                const pageInfo = document.querySelector('#pagination-container span'); // Fixed selector
+                if (pageInfo) {
+                    pageInfo.innerHTML = `Showing page <span class="font-bold text-slate-900">${data.pagination.current_page}</span> of <span class="font-bold text-slate-900">${data.pagination.total_pages}</span>`;
+                }
+
+                // Disable/Enable buttons
+                const btnPrev = document.getElementById('btn-prev');
+                const btnNext = document.getElementById('btn-next');
+                if (btnPrev) btnPrev.disabled = !data.pagination.has_previous;
+                if (btnNext) btnNext.disabled = !data.pagination.has_next;
+
+            })
+            .catch(err => {
+                console.error("Error loading data:", err);
+                tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-red-500">Error loading data.</td></tr>';
+            });
+    }
+
+    // --- ACTIONS ---
+    function setFilterStatus(status) {
+        currentStatus = status;
+        currentPage = 1; // Reset to page 1 on filter change
+        loadAdminData();
+    }
+
+    function changePage(d) {
+        currentPage += d;
+        loadAdminData();
+    }
+
+    function debounceLoad() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            currentPage = 1;
+            loadAdminData();
+        }, 500);
+    }
+
+    // --- HELPERS ---
+    function getStatusBadge(status, label) {
+        // Map status codes to classes
+        const styles = {
+            'new': 'bg-blue-100 text-blue-700',
+            'review': 'bg-yellow-100 text-yellow-700',
+            'appointment': 'bg-purple-100 text-purple-700',
+            'embassy': 'bg-orange-100 text-orange-700',
+            'ready': 'bg-teal-100 text-teal-700',
+            'completed': 'bg-green-100 text-green-700',
+            'rejected': 'bg-red-100 text-red-700',
+            'cancelled': 'bg-slate-100 text-slate-700'
+        };
+        const css = styles[status] || 'bg-slate-100 text-slate-600';
+        return `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${css}">${label}</span>`;
+    }
+</script>
+
+<script>
+    // ==========================================
+    // 2. PROCESS MODAL LOGIC
+    // ==========================================
     const processModal = document.getElementById('process-modal');
     const statusSelect = document.getElementById('status-select');
     const fieldAppt = document.getElementById('field-appointment');
     const status_badge = document.getElementById('view-status-badge');
 
-    // --- Status Labels & Colors ---
-    const STATUS_LABELS = {
-        new: "New Application",
-        review: "Under Review",
-        appointment: "Appointment Scheduled",
-        embassy: "Submitted to Embassy",
-        ready: "Ready for Collection",
-        completed: "Completed",
-        rejected: "Rejected"
-    };
+    // Labels & Colors for the Badge inside the modal
+    const STATUS_LABELS = { new: "New Application", review: "Under Review", appointment: "Appointment Scheduled", embassy: "Submitted to Embassy", ready: "Ready for Collection", completed: "Completed", rejected: "Rejected" };
+    const STATUS_COLORS = { new: "bg-blue-100 text-blue-600", review: "bg-yellow-100 text-yellow-600", appointment: "bg-purple-100 text-purple-600", embassy: "bg-orange-100 text-orange-600", ready: "bg-green-100 text-green-600", completed: "bg-indigo-100 text-indigo-600", rejected: "bg-red-100 text-red-600" };
 
-    const STATUS_COLORS = {
-        new: "bg-blue-100 text-blue-600",
-        review: "bg-yellow-100 text-yellow-600",
-        appointment: "bg-purple-100 text-purple-600",
-        embassy: "bg-orange-100 text-orange-600",
-        ready: "bg-green-100 text-green-600",
-        completed: "bg-indigo-100 text-indigo-600",
-        rejected: "bg-red-100 text-red-600"
-    };
-
-    // === 1. OPEN MODAL & FETCH DATA ===
     function openProcessModal(appId) {
         processModal.classList.remove('hidden');
-
         document.getElementById('view-ref').innerText = 'LOADING...';
-        document.getElementById('view-applicant').innerText = 'Fetching Data...';
-        document.getElementById('answers-table-body').innerHTML = '<tr><td colspan="2" class="px-4 py-8 text-center"><i class="ph-bold ph-spinner animate-spin text-2xl text-brand-600"></i></td></tr>';
-        document.getElementById('documents-list').innerHTML = '';
 
+        // Use existing API to fetch details
         fetch(`/admin_panel/api/visa/${appId}/`)
-            .then(response => {
-                if (!response.ok) throw new Error("Network response was not ok");
-                return response.json();
-            })
+            .then(res => res.json())
             .then(data => populateModalData(data))
-            .catch(error => {
-                console.error('Error:', error);
-                alert("Failed to load application data. Please try again.");
+            .catch(err => {
+                console.error(err);
+                alert("Failed to load details.");
                 closeProcessModal();
             });
     }
 
-    // === 2. POPULATE DATA ===
     function populateModalData(data) {
-        // Header Info
         document.getElementById('process-id').value = data.id;
         document.getElementById('view-ref').innerText = '#' + data.reference;
         document.getElementById('view-applicant').innerText = data.applicant;
         document.getElementById('view-agency').innerText = data.agency_name || 'Direct Client';
-        document.getElementById('view-destination').innerText = data.destination || 'Unknown';
+        document.getElementById('view-destination').innerText = data.destination || '-';
 
-        // --- Status ---
+        // Set Select Value
         if (statusSelect.querySelector(`option[value="${data.status}"]`)) {
             statusSelect.value = data.status;
-        } else {
-            console.warn("Unknown status from API:", data.status);
-            statusSelect.value = "new";
         }
 
-        // Update badge to match select
-        updateStatusBadge(statusSelect.value);
-
-        // Show/hide fields if needed
+        updateStatusBadge(data.status);
         toggleFields();
 
-        // Listen for user changes in select (live badge update)
+        // Bind Change Event for live badge update
         statusSelect.onchange = () => {
             updateStatusBadge(statusSelect.value);
             toggleFields();
         };
 
-        // Notes
+        // Fill Notes & Date
         document.getElementById('process-notes').value = data.admin_notes || '';
-        if (data.appointment_date) {
-            document.getElementById('process-appt-date').value = data.appointment_date;
-        }
+        document.getElementById('process-appt-date').value = data.appointment_date || '';
 
-        // --- Answers Table ---
+        // Render Answers
         const tableBody = document.getElementById('answers-table-body');
         tableBody.innerHTML = '';
-        if (data.answers?.length > 0) {
+        if (data.answers?.length) {
             data.answers.forEach(ans => {
-                tableBody.insertAdjacentHTML('beforeend', `
-                    <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="px-4 py-3 border-b border-slate-100 font-medium text-slate-600">${ans.label}</td>
-                        <td class="px-4 py-3 border-b border-slate-100 font-bold text-slate-900">${ans.value}</td>
-                    </tr>
-                `);
+                tableBody.insertAdjacentHTML('beforeend', `<tr class="hover:bg-slate-50"><td class="px-4 py-3 text-slate-600 font-medium border-b border-slate-100">${ans.label}</td><td class="px-4 py-3 font-bold text-slate-900 border-b border-slate-100">${ans.value}</td></tr>`);
             });
         } else {
-            tableBody.innerHTML = '<tr><td colspan="2" class="px-4 py-4 text-center text-slate-400 italic">No additional form data provided.</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="2" class="p-4 text-center text-slate-400 italic">No answers data.</td></tr>';
         }
 
-        // --- Documents List ---
+        // Render Documents
         const docsContainer = document.getElementById('documents-list');
         docsContainer.innerHTML = '';
-        if (data.documents?.length > 0) {
+        if (data.documents?.length) {
             data.documents.forEach(doc => {
-                let statusColor = 'bg-slate-100 text-slate-600';
-                if (doc.status === 'valid') statusColor = 'bg-green-100 text-green-600';
-                if (doc.status === 'rejected') statusColor = 'bg-red-100 text-red-600';
-
+                let color = doc.status === 'rejected' ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-600';
                 docsContainer.insertAdjacentHTML('beforeend', `
-                    <div class="flex items-center justify-between bg-white p-3 rounded-lg border border-slate-200 shadow-sm group hover:border-brand-300 transition-all">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-lg ${statusColor} flex items-center justify-center text-lg">
-                                <i class="ph-fill ph-file-pdf"></i>
-                            </div>
-                            <div>
-                                <p class="text-xs font-bold text-slate-700">${doc.name}</p>
-                                <p class="text-[10px] text-slate-400 uppercase font-bold">${doc.status}</p>
-                            </div>
+                    <div class="flex justify-between items-center p-3 border rounded-lg bg-white shadow-sm">
+                        <div class="flex gap-3 items-center">
+                            <div class="w-10 h-10 flex items-center justify-center rounded-lg ${color}"><i class="ph-fill ph-file-pdf text-lg"></i></div>
+                            <div><p class="text-xs font-bold text-slate-700">${doc.name}</p></div>
                         </div>
-                        <div class="flex gap-2 opacity-100">
-                            <a href="${doc.url}" target="_blank" class="p-2 text-slate-500 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors" title="View File">
-                                <i class="ph-bold ph-eye"></i>
-                            </a>
-                        </div>
-                    </div>
-                `);
+                        <a href="${doc.url}" target="_blank" class="p-2 text-slate-500 hover:text-brand-600 bg-slate-50 rounded-lg"><i class="ph-bold ph-eye"></i></a>
+                    </div>`);
             });
         } else {
-            docsContainer.innerHTML = '<div class="p-4 border border-dashed border-slate-300 rounded-lg text-center text-slate-400 text-sm">No documents uploaded.</div>';
+            docsContainer.innerHTML = '<div class="text-center text-slate-400 text-sm italic">No documents.</div>';
         }
-    }
-
-    // === 3. UTILITIES ===
-    function closeProcessModal() { processModal.classList.add('hidden'); }
-
-    function toggleFields() {
-        const val = statusSelect.value;
-        if (val === 'appointment') {
-            fieldAppt.classList.remove('hidden');
-        } else {
-            fieldAppt.classList.add('hidden');
-        }
-    }
-
-    function updateStatusBadge(status) {
-        status_badge.className = `inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold mt-1 ${STATUS_COLORS[status] || 'bg-slate-100 text-slate-600'}`;
-        status_badge.textContent = STATUS_LABELS[status] || status;
     }
 
     function saveProcessChanges() {
-        const btn = document.querySelector('#process-modal button:last-child');
-        const originalText = btn.innerHTML;
+        const btn = document.querySelector('#process-modal button[onclick="saveProcessChanges()"]');
         const form = document.getElementById('process-form');
+        const originalText = btn.innerHTML;
 
-        // 1. UI Loading State
         btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Saving...';
         btn.disabled = true;
 
-        // 2. Prepare Data
         const formData = new FormData(form);
 
-        // 3. Send Request
         fetch("{% url 'api_visa_update' %}", {
             method: "POST",
             body: formData,
-            headers: {
-                "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value
-            }
+            headers: { "X-CSRFToken": "{{ csrf_token }}" }
         })
-            .then(response => response.json())
+            .then(res => res.json())
             .then(data => {
                 if (data.status === 'success') {
                     alert("Updated Successfully!");
                     closeProcessModal();
-                    window.location.reload(); // Refresh table to see new status
+                    loadAdminData(); // <--- REFRESH THE TABLE WITHOUT RELOAD
                 } else {
-                    // Handle Validation Errors
-                    alert("Error: " + (data.message || "Unknown error"));
-                    console.error(data.errors);
+                    alert("Error: " + data.message);
                 }
             })
-            .catch(error => {
-                console.error('Error:', error);
-                alert("Server connection failed.");
-            })
+            .catch(err => alert("Connection error"))
             .finally(() => {
-                // Reset Button
                 btn.innerHTML = originalText;
                 btn.disabled = false;
             });
     }
+
+    function closeProcessModal() { processModal.classList.add('hidden'); }
+    function toggleFields() { fieldAppt.classList.toggle('hidden', statusSelect.value !== 'appointment'); }
+    function updateStatusBadge(status) {
+        status_badge.className = `inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold mt-1 ${STATUS_COLORS[status] || 'bg-slate-100 text-slate-600'}`;
+        status_badge.textContent = STATUS_LABELS[status] || status;
+    }
 </script>
+
 <script>
     // ==========================================
-    // 1. GLOBAL VARIABLES & CACHE
+    // 3. MANUAL APP & DESTINATION LOGIC (Preserved)
     // ==========================================
     let allDestinations = [];
     let filteredDestinations = [];
-    let currentPage = 1;
+    let agenciesLoaded = false;
     const itemsPerPage = 6;
 
-    // DOM Elements
     const destModal = document.getElementById('destination-modal');
     const manualModal = document.getElementById('manual-modal');
     const destGrid = document.getElementById('dest-grid');
     const destLoading = document.getElementById('dest-loading');
     const destEmpty = document.getElementById('dest-empty');
 
-    // ==========================================
-    // 2. MODAL 1: DESTINATION SELECTION
-    // ==========================================
-
-    // Triggered by the "Add Manual Application" button
     function openManualModal() {
         destModal.classList.remove('hidden');
-
-        // Only fetch if we haven't already (Cache)
         if (allDestinations.length === 0) {
             destLoading.classList.remove('hidden');
-
-            // Fetch from the API
             fetch("{% url 'api_visa_destinations' %}")
-                .then(res => {
-                    if (!res.ok) throw new Error("API Error");
-                    return res.json();
-                })
+                .then(res => res.json())
                 .then(data => {
                     allDestinations = data.destinations;
                     filteredDestinations = [...allDestinations];
                     renderDestinations();
                 })
-                .catch(err => {
-                    console.error(err);
-                    destGrid.innerHTML = `<div class="col-span-2 text-center text-red-500 py-8">Failed to load destinations. Please refresh.</div>`;
-                })
-                .finally(() => {
-                    destLoading.classList.add('hidden');
-                });
-        } else {
-            // Data exists, just reset view
-            document.getElementById('dest-search').value = '';
-            filteredDestinations = [...allDestinations];
-            currentPage = 1;
-            renderDestinations();
+                .finally(() => destLoading.classList.add('hidden'));
         }
     }
 
-    function closeDestinationModal() {
-        destModal.classList.add('hidden');
-    }
+    function closeDestinationModal() { destModal.classList.add('hidden'); }
+    function closeManualModal() { manualModal.classList.add('hidden'); }
+    function backToDestinations() { closeManualModal(); openManualModal(); }
 
-    // Filter Logic
     function filterDestinations() {
         const query = document.getElementById('dest-search').value.toLowerCase();
-        filteredDestinations = allDestinations.filter(d =>
-            d.country.toLowerCase().includes(query) ||
-            d.visa_type.toLowerCase().includes(query)
-        );
-        currentPage = 1;
+        filteredDestinations = allDestinations.filter(d => d.country.toLowerCase().includes(query) || d.visa_type.toLowerCase().includes(query));
         renderDestinations();
     }
 
-    // Pagination Logic
-    function changePage(direction) {
-        currentPage += direction;
-        renderDestinations();
-    }
-
-    // Render Grid Logic
     function renderDestinations() {
         destGrid.innerHTML = '';
-        const start = (currentPage - 1) * itemsPerPage;
-        const end = start + itemsPerPage;
-        const pageItems = filteredDestinations.slice(start, end);
-
-        // Update UI Counters
-        const total = filteredDestinations.length;
-        const showingCount = Math.min(end, total);
-
-        document.getElementById('dest-count-display').innerText = total > 0
-            ? `Showing ${start + 1}-${showingCount} of ${total} destinations`
-            : `Showing 0 destinations`;
-
-        document.getElementById('btn-prev').disabled = (currentPage === 1);
-        document.getElementById('btn-next').disabled = (end >= total);
-
-        if (pageItems.length === 0) {
-            destEmpty.classList.remove('hidden');
-            return;
-        } else {
-            destEmpty.classList.add('hidden');
+        if (filteredDestinations.length === 0) {
+            destEmpty.classList.remove('hidden'); return;
         }
+        destEmpty.classList.add('hidden');
 
-        pageItems.forEach(dest => {
-            // NOTE: We pass ID, Country, AND Type here so the next modal knows what to display
-            const card = `
+        filteredDestinations.slice(0, 50).forEach(dest => { // Show first 50 to avoid lag
+            destGrid.insertAdjacentHTML('beforeend', `
                 <div onclick="selectDestination(${dest.id}, '${dest.country}', '${dest.visa_type}')" 
-                     class="group bg-white border border-slate-200 rounded-xl p-4 cursor-pointer hover:border-brand-500 hover:shadow-md transition-all relative overflow-hidden">
+                     class="group bg-white border border-slate-200 rounded-xl p-4 cursor-pointer hover:border-brand-500 hover:shadow-md transition-all">
                     <div class="flex justify-between items-start mb-2">
                         <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-xl border border-slate-200">🏳️</div>
-                            <div>
-                                <h4 class="font-bold text-slate-900 group-hover:text-brand-700">${dest.country}</h4>
-                                <p class="text-xs text-slate-500 font-medium">${dest.visa_type}</p>
-                            </div>
+                            <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-xl">🏳️</div>
+                            <div><h4 class="font-bold text-slate-900">${dest.country}</h4><p class="text-xs text-slate-500">${dest.visa_type}</p></div>
                         </div>
                         <span class="bg-slate-100 text-slate-700 text-xs font-bold px-2.5 py-1 rounded">DZD ${dest.selling_price}</span>
                     </div>
-                     <div class="flex items-center gap-4 text-[11px] text-slate-500 mt-3 border-t border-slate-50 pt-3">
-                        <span class="flex items-center gap-1.5 bg-slate-50 px-2 py-0.5 rounded">
-                            <i class="ph-bold ph-clock text-slate-400"></i> ${dest.processing_time}
-                        </span>
-                        <span class="flex items-center gap-1.5 text-brand-600 font-bold ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
-                            Select <i class="ph-bold ph-arrow-right"></i>
-                        </span>
-                    </div>
-                </div>
-            `;
-            destGrid.insertAdjacentHTML('beforeend', card);
+                </div>`);
         });
     }
 
-
-    // ==========================================
-    // 3. THE BRIDGE: SWITCHING MODALS
-    // ==========================================
-
     function selectDestination(id, country, type) {
-        // A. Close Destination Modal
         closeDestinationModal();
-
-        // B. Open Application Modal
-        if (manualModal) {
-            manualModal.classList.remove('hidden');
-        } else {
-            console.error("Error: manual-modal div not found in DOM");
-            return;
-        }
-
-        // C. Update Header & Hidden Input
-        // This puts the country name in the header of the second modal
-        document.getElementById('selected-dest-title').innerHTML = `<i class="ph-fill ph-airplane-tilt"></i> ${country} <span class="opacity-50 mx-2">|</span> ${type}`;
+        manualModal.classList.remove('hidden');
+        document.getElementById('selected-dest-title').innerHTML = `${country} <span class="opacity-50 mx-2">|</span> ${type}`;
         document.getElementById('hidden-dest-id').value = id;
-
-        // D. Trigger Data Load (Fetch schema from DB)
         loadVisaSchema(id);
     }
 
-    function closeManualModal() {
-        manualModal.classList.add('hidden');
-    }
-
-    function backToDestinations() {
-        closeManualModal();
-        openManualModal();
-    }
-
-
-    // ==========================================
-    // 4. DATA LOADER (SCHEMA FETCHER)
-    // ==========================================
-
     function loadVisaSchema(destId) {
-        const loading = document.getElementById('schema-loading');
-        const formSection = document.getElementById('fields-section');
-        const docSection = document.getElementById('docs-section');
-
-        // Reset UI before fetch
-        loading.classList.remove('hidden');
-        formSection.classList.add('hidden');
-        docSection.classList.add('hidden');
+        document.getElementById('schema-loading').classList.remove('hidden');
+        document.getElementById('fields-section').classList.add('hidden');
+        document.getElementById('docs-section').classList.add('hidden');
 
         fetch(`/admin_panel/api/visa/schema/${destId}/`)
             .then(res => res.json())
             .then(data => {
-                // 1. Header Version Info
-                const verDisplay = document.getElementById('display-form-version');
-                if (verDisplay) verDisplay.innerText = data.form_version;
+                document.getElementById('display-form-version').innerText = data.form_version;
 
-                // 2. Render Fields
-                const fieldsContainer = document.getElementById('dynamic-fields-container');
-                if (data.fields.length > 0) {
-                    const rows = data.fields.map(field => {
-                        let inputHtml = '';
-                        const reqAttr = field.required ? 'required' : '';
-
-                        if (field.type === 'select') {
-                            const opts = (Array.isArray(field.options) ? field.options : String(field.options || '').split(/,|\n/)).map(o => String(o).trim()).filter(o => o).map(o => `<option value="${o}">${o}</option>`).join('');
-                            inputHtml = `<select name="field_${field.id}" ${reqAttr} class="w-full border border-slate-300 rounded p-2 text-sm bg-slate-50 focus:bg-white"><option value="">Select...</option>${opts}</select>`;
-
-                        } else if (field.type === 'date') {
-                            inputHtml = `<input type="date" name="field_${field.id}" ${reqAttr} class="w-full border border-slate-300 rounded p-2 text-sm bg-slate-50 focus:bg-white">`;
-                        } else if (field.type === 'checkbox') {
-                            inputHtml = `<label class="flex items-center gap-2"><input type="checkbox" name="field_${field.id}" value="Yes" class="w-5 h-5 text-brand-600 rounded"> <span class="text-sm">Yes</span></label>`;
-                        } else {
-                            inputHtml = `<input type="text" name="field_${field.id}" ${reqAttr} class="w-full border border-slate-300 rounded p-2 text-sm bg-slate-50 focus:bg-white">`;
+                // Fields
+                const fc = document.getElementById('dynamic-fields-container');
+                fc.innerHTML = '';
+                if (data.fields.length) {
+                    data.fields.forEach(f => {
+                        let html = `<input type="text" name="field_${f.id}" class="w-full border border-slate-300 rounded p-2 text-sm">`;
+                        if (f.type === 'select') {
+                            const ops = f.options.map(o => `<option>${o}</option>`).join('');
+                            html = `<select name="field_${f.id}" class="w-full border border-slate-300 rounded p-2 text-sm"><option value="">Select...</option>${ops}</select>`;
+                        } else if (f.type === 'date') {
+                            html = `<input type="date" name="field_${f.id}" class="w-full border border-slate-300 rounded p-2 text-sm">`;
+                        } else if (f.type === 'checkbox') {
+                            html = `<label class="flex gap-2"><input type="checkbox" name="field_${f.id}" value="Yes"> Yes</label>`;
                         }
-
-                        return `
-                            <tr>
-                                <td class="px-6 py-3 text-sm font-medium text-slate-700 w-1/3">
-                                    ${field.label} ${field.required ? '<span class="text-red-500">*</span>' : ''}
-                                </td>
-                                <td class="px-6 py-3 w-2/3">${inputHtml}</td>
-                            </tr>
-                        `;
-                    }).join('');
-                    fieldsContainer.innerHTML = rows;
-                    formSection.classList.remove('hidden');
-                } else {
-                    fieldsContainer.innerHTML = '<tr><td colspan="2" class="p-4 text-center text-slate-400 italic">No extra questions required.</td></tr>';
-                    formSection.classList.remove('hidden');
+                        fc.insertAdjacentHTML('beforeend', `<tr><td class="px-6 py-3 w-1/3 text-sm font-medium text-slate-700">${f.label}</td><td class="px-6 py-3 w-2/3">${html}</td></tr>`);
+                    });
+                    document.getElementById('fields-section').classList.remove('hidden');
                 }
 
-                // 3. Render Documents
-                const docsContainer = document.getElementById('dynamic-docs-container');
-                if (data.documents.length > 0) {
-                    const docs = data.documents.map(doc => `
-                        <div class="flex items-center justify-between p-3 border border-slate-200 rounded-lg bg-slate-50 hover:bg-white transition-colors">
-                            <div>
-                                <p class="text-sm font-bold text-slate-700">${doc.name}</p>
-                                <p class="text-[10px] text-slate-500">${doc.description || 'Required'}</p>
-                            </div>
-                            <input type="file" name="doc_${doc.id}" class="text-xs text-slate-500">
-                        </div>
-                    `).join('');
-                    docsContainer.innerHTML = docs;
-                    docSection.classList.remove('hidden');
-                } else {
-                    docsContainer.innerHTML = '<p class="text-sm text-slate-400 italic">No documents required.</p>';
-                    docSection.classList.remove('hidden');
+                // Docs
+                const dc = document.getElementById('dynamic-docs-container');
+                dc.innerHTML = '';
+                if (data.documents.length) {
+                    data.documents.forEach(d => {
+                        dc.insertAdjacentHTML('beforeend', `
+                            <div class="flex justify-between items-center p-3 border rounded bg-slate-50">
+                                <div><p class="text-sm font-bold">${d.name}</p><p class="text-xs text-slate-500">${d.description || 'Required'}</p></div>
+                                <input type="file" name="doc_${d.id}" class="text-xs">
+                            </div>`);
+                    });
+                    document.getElementById('docs-section').classList.remove('hidden');
                 }
-
-                loading.classList.add('hidden');
             })
-            .catch(err => {
-                console.error(err);
-                loading.innerHTML = '<p class="text-red-500 text-center font-bold">Error loading requirements.</p>';
-            });
+            .finally(() => document.getElementById('schema-loading').classList.add('hidden'));
     }
-    // ==========================================
-    // 5. AGENCY SEARCH DROPDOWN LOGIC (API)
-    // ==========================================
 
-    let agenciesLoaded = false; // Cache flag
+    // Agency Search Logic
     const agencyDropdown = document.getElementById('agency-dropdown-list');
-    const agencyContainer = document.getElementById('agency-list-container');
-    const agencyLoading = document.getElementById('agency-loading');
     const agencyInput = document.getElementById('agency-search-input');
-    const realAgencyInput = document.getElementById('real-agency-id');
-    const noAgenciesMsg = document.getElementById('no-agencies-found');
-
     function showAgencyDropdown() {
         agencyDropdown.classList.remove('hidden');
-
-        // Fetch only if we haven't loaded them yet
-        if (!agenciesLoaded) {
-            fetchAgencies();
-        }
+        if (!agenciesLoaded) fetchAgencies();
     }
-
     function fetchAgencies() {
-        agencyLoading.classList.remove('hidden');
-
+        document.getElementById('agency-loading').classList.remove('hidden');
         fetch("{% url 'agency_management' %}")
             .then(res => res.json())
             .then(data => {
-                renderAgencies(data.agencies);
-                agenciesLoaded = true; // Mark as loaded
+                document.getElementById('agency-list-container').innerHTML = data.agencies.map(a => `
+                    <div onclick="selectAgency('${a.id}', '${a.company_name.replace(/'/g, "\\'")}')" class="agency-option p-2 hover:bg-slate-50 cursor-pointer text-sm" data-name="${a.company_name.toLowerCase()}">${a.company_name}</div>
+                `).join('');
+                agenciesLoaded = true;
             })
-            .catch(err => {
-                console.error("Error loading agencies:", err);
-                agencyContainer.innerHTML = `<div class="p-2 text-center text-red-500 text-xs">Failed to load</div>`;
-            })
-            .finally(() => {
-                agencyLoading.classList.add('hidden');
-            });
+            .finally(() => document.getElementById('agency-loading').classList.add('hidden'));
     }
-
-    function renderAgencies(list) {
-        if (list.length === 0) return;
-
-        const html = list.map(agency => `
-            <div onclick="selectAgency('${agency.id}', '${agency.company_name.replace(/'/g, "\\'")}')" 
-                 class="agency-option p-3 hover:bg-brand-50 cursor-pointer flex items-center gap-3 transition-colors"
-                 data-name="${agency.company_name.toLowerCase()}">
-                <div class="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-600">
-                    <i class="ph-fill ph-buildings"></i>
-                </div>
-                <div>
-                    <p class="text-sm font-bold text-slate-700">${agency.company_name}</p>
-                    <p class="text-[10px] text-slate-400">Balance: DZD ${agency.balance}</p>
-                </div>
-            </div>
-        `).join('');
-
-        agencyContainer.innerHTML = html;
-    }
-
     function filterAgencies() {
-        const query = agencyInput.value.toLowerCase();
-        const options = document.querySelectorAll('.agency-option');
-        let hasVisible = false;
-
-        options.forEach(option => {
-            const name = option.getAttribute('data-name');
-            if (name.includes(query)) {
-                option.classList.remove('hidden');
-                hasVisible = true;
-            } else {
-                option.classList.add('hidden');
-            }
-        });
-
-        if (!hasVisible) {
-            noAgenciesMsg.classList.remove('hidden');
-        } else {
-            noAgenciesMsg.classList.add('hidden');
-        }
+        const q = agencyInput.value.toLowerCase();
+        document.querySelectorAll('.agency-option').forEach(o => o.style.display = o.dataset.name.includes(q) ? 'block' : 'none');
     }
-
     function selectAgency(id, name) {
-        // Set Values
-        realAgencyInput.value = id;
+        document.getElementById('real-agency-id').value = id;
         agencyInput.value = name;
-
-        // Close Dropdown
         agencyDropdown.classList.add('hidden');
-
-        // Visual Feedback
-        if (id) {
-            agencyInput.classList.add('border-brand-500', 'bg-brand-50/50');
-            agencyInput.classList.remove('border-slate-300', 'bg-slate-50');
-        } else {
-            // Direct Client style
-            agencyInput.classList.remove('border-brand-500', 'bg-brand-50/50');
-            agencyInput.classList.add('border-slate-300', 'bg-slate-50');
-        }
+    }
+    window.onclick = e => {
+        if (!e.target.closest('.relative.group') && agencyDropdown) agencyDropdown.classList.add('hidden');
     }
 
-    // Close on click outside
-    document.addEventListener('click', function (e) {
-        const wrapper = agencyInput.closest('.group');
-        if (!wrapper.contains(e.target)) {
-            agencyDropdown.classList.add('hidden');
-        }
-    });
-</script>
-
-<!-- form -->
-<script>
+    // Form Submit
     document.getElementById('create-visa-form').addEventListener('submit', function (e) {
         e.preventDefault();
-
-        const btn = e.submitter; // The submit button
-        const originalText = btn.innerHTML;
-        const form = e.target;
-        const formData = new FormData();
-
-        // 1. UI Loading State
-        btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Saving...';
+        const btn = e.submitter;
         btn.disabled = true;
+        btn.innerHTML = 'Saving...';
 
-        // 2. Prepare Structure
         const payload = {
             main_info: {
-                first_name: form.querySelector('[name="first_name"]').value,
-                last_name: form.querySelector('[name="last_name"]').value,
-                passport_number: form.querySelector('[name="passport_number"]').value,
+                first_name: this.querySelector('[name="first_name"]').value,
+                last_name: this.querySelector('[name="last_name"]').value,
+                passport_number: this.querySelector('[name="passport_number"]').value,
                 destination: document.getElementById('hidden-dest-id').value,
                 agency_id: parseInt(document.getElementById('real-agency-id').value) || null
             },
             answers: []
         };
 
-        // 3. Client-side Validation (Strict Agency Check)
-        if (!payload.main_info.agency_id) {
-            alert("Please select a valid Agency.");
-            btn.innerHTML = originalText;
-            btn.disabled = false;
-            return; // Stop here if no agency
-        }
-
-        // 4. Collect Answers
-        const dynamicInputs = form.querySelectorAll('[name^="field_"]');
-        dynamicInputs.forEach(input => {
-            const fieldId = input.name.split('_')[1];
-            payload.answers.push({
-                field_id: fieldId,
-                value: input.type === 'checkbox' ? (input.checked ? 'Yes' : 'No') : input.value
-            });
+        this.querySelectorAll('[name^="field_"]').forEach(i => {
+            let val = i.type === 'checkbox' ? (i.checked ? 'Yes' : 'No') : i.value;
+            payload.answers.push({ field_id: i.name.split('_')[1], value: val });
         });
 
+        const formData = new FormData();
         formData.append('json_data', JSON.stringify(payload));
-
-        // 5. Collect Files
-        const fileInputs = form.querySelectorAll('input[type="file"]');
-        fileInputs.forEach(input => {
-            if (input.files.length > 0) {
-                formData.append(input.name, input.files[0]);
-            }
+        this.querySelectorAll('input[type="file"]').forEach(i => {
+            if (i.files.length) formData.append(i.name, i.files[0]);
         });
 
-        // 6. Send Request
         fetch("{% url 'visa_create' %}", {
-            method: 'POST',
-            body: formData,
-            headers: {
-                "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value
-            }
-        })
-            .then(response => response.json()) // Always expect JSON now
-            .then(data => {
-                if (data.status === 'success') {
-                    // === FIX IS HERE ===
-                    // Close modal immediately so it doesn't get stuck
-                    closeManualModal();
-
-                    // Then redirect
-                    window.location.href = data.redirect_url;
-                } else {
-                    // Show Error
-                    alert("Error: " + (data.message || "Unknown error"));
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert("System Error. Please check console.");
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            });
-    });
-</script>
-
-<!-- pagination -->
-<script>
-    // Add this inside your main <script> tag
-
-    // Find the filter dropdown (Add id="table-filter-dest" to your select element first!)
-    const filterSelect = document.getElementById('table-filter-dest');
-
-    if (filterSelect) {
-        filterSelect.addEventListener('change', function () {
-            const destId = this.value;
-            const currentUrl = new URL(window.location.href);
-
-            if (destId) {
-                currentUrl.searchParams.set('destination_id', destId);
+            method: 'POST', body: formData, headers: { "X-CSRFToken": "{{ csrf_token }}" }
+        }).then(res => res.json()).then(d => {
+            if (d.status === 'success') {
+                alert("Created!");
+                closeManualModal();
+                loadAdminData(); // Refresh main table
             } else {
-                currentUrl.searchParams.delete('destination_id');
+                alert("Error: " + d.message);
             }
-
-            // Reset to page 1 when filtering
-            currentUrl.searchParams.set('page', '1');
-
-            window.location.href = currentUrl.toString();
-        });
-    }
+        }).finally(() => { btn.disabled = false; btn.innerHTML = 'Submit Application'; });
+    });
 </script>
 {% endblock %}
