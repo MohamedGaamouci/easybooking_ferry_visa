@@ -4,7 +4,9 @@ from ..views import *
 
 urlpatterns = [
 
-    path("visas/", visa_list_view, name="admin_visa_app"),
+    # 1. The Page URL (Access this in your browser)
+    path('visa-requests/', visa_list_view, name='admin_visa_app'),
+
     path("api/visa/<int:app_id>/",
          get_visa_details, name="api_visa_details"),
     path("api/visa/update/",
@@ -29,4 +31,9 @@ urlpatterns = [
 
     # pagination of the visas and filtering
     path('api/list/', get_admin_visa_list_api, name='api_admin_visa_list'),
+    # agencies search api
+    path('api/agencies/search/', search_agencies_api, name='api_agency_search'),
+    # retrieve all the active destinations
+    path('api/destinations/all/', get_all_destinations_api,
+         name='api_all_destinations'),
 ]

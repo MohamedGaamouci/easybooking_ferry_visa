@@ -1,3 +1,4 @@
+from agencies.models import Agency
 from .models import VisaApplication, VisaForm
 from .forms import (
     VisaApplicationForm,
@@ -29,68 +30,14 @@ import json
 # @permission_required('visas.view_visaapplication', raise_exception=True)
 
 
+@login_required
 def visa_list_view(request):
     """
-    Renders the Visa Processing Center main page.
-    Includes:
-    - Status Statistics (New, Appointment, Embassy, Completed)
-    - Paginated Table of Applications
-    - Dropdowns for Filters
-    """
+     Renders the HTML Container for the Visa Dashboard.
+     The actual data table is loaded via AJAX (JavaScript).
+     """
 
-    # --- A. STATISTICS (Efficient Counting) ---
-    # We filter by the specific keys defined in your STATUS_CHOICES
-    stats = {
-        'new': VisaApplication.objects.filter(status='new').count(),
-        'under_review': VisaApplication.objects.filter(status='review').count(),
-        'appt': VisaApplication.objects.filter(status='appointment').count(),
-        'embassy': VisaApplication.objects.filter(status='embassy').count(),
-        'completed': VisaApplication.objects.filter(status='completed').count(),
-        'rejected': VisaApplication.objects.filter(status='rejected').count(),
-        'cancelled': VisaApplication.objects.filter(status='cancelled').count(),
-        'ready': VisaApplication.objects.filter(status='ready').count(),
-    }
-    print(stats)
-
-    # --- B. MAIN QUERY ---
-    # Optimized: select_related fetches Agency & Destination in the same SQL query
-    queryset = VisaApplication.objects.select_related(
-        'agency',
-        'destination'
-    ).order_by('-created_at')
-
-    # Optional: Filter by Destination if selected in dropdown
-    dest_filter = request.GET.get('destination_id')
-    if dest_filter and dest_filter.isdigit():
-        queryset = queryset.filter(destination_id=int(dest_filter))
-
-    # --- C. PAGINATION ---
-    # Show 20 applications per page
-    paginator = Paginator(queryset, 10)
-    page_number = request.GET.get('page', 1)
-
-    try:
-        applications = paginator.page(page_number)
-    except PageNotAnInteger:
-        # If page is not an integer, deliver first page.
-        applications = paginator.page(1)
-    except EmptyPage:
-        # If page is out of range, deliver last page of results.
-        applications = paginator.page(paginator.num_pages)
-
-    # --- D. DROPDOWN DATA ---
-    # For the manual add modal and filter dropdowns
-    # destinations = VisaDestination.objects.filter(is_active=True)
-    # agencies = Agency.objects.filter(status='active')
-
-    context = {
-        'applications': applications,  # The paginated object
-        'stats': stats,               # The counters
-        # 'destinations': destinations,  # For filters/modal
-        # 'agencies': agencies,         # For modal
-    }
-
-    return render(request, 'admin/visa_application.html', context)
+    return render(request, 'admin/visa_application.html')
 
 
 # ========================================================
@@ -109,7 +56,8 @@ def get_visa_details(request, app_id):
     # 1. Fetch Application with Optimized Query
     # select_related fetches the parent Agency and Destination data instantly
     app = get_object_or_404(
-        VisaApplication.objects.select_related('agency', 'destination'),
+        VisaApplication.objects.select_related(
+            'agency', 'destination'),
         id=app_id
     )
 
@@ -151,10 +99,11 @@ def get_visa_details(request, app_id):
         'status': app.status,
         'admin_notes': app.admin_notes,
         'appointment_date': appt_str,
+        'apply_by': app.apply_by.get_full_name() if app.apply_by else "Unknown",
+        'user_admin': app.user_admin.get_full_name() if app.apply_by else "Unknown",
         'answers': answers_data,
         'documents': docs_data,
     }
-
     return JsonResponse(data)
 # ========================================================
 # 3. UPDATE API (Secure Transactional Update)
@@ -173,7 +122,6 @@ def update_visa_application(request):
         # 1. Get the instance
         app_id = request.POST.get('application_id')
         app = get_object_or_404(VisaApplication, id=app_id)
-
         # 2. Bind data to the Form
         form = UpdateVisaStatusForm(request.POST, instance=app)
 
@@ -594,8 +542,10 @@ def get_admin_visa_list_api(request):
     Handles: Stats counting, Search, Filtering, Pagination.
     """
     # 1. Base Query
+    # ADDED 'apply_by' to select_related to prevent N+1 queries
     qs = VisaApplication.objects.select_related(
-        'agency', 'destination').order_by('-created_at')
+        'agency', 'destination', 'apply_by'
+    ).order_by('-created_at')
 
     # 2. Search (Ref, Name, Passport, Agency, Destination)
     search = request.GET.get('search', '').strip()
@@ -610,7 +560,6 @@ def get_admin_visa_list_api(request):
         )
 
     # 3. Calculate Stats (Live counts based on current search)
-    # We calculate this BEFORE applying the status filter so the cards show accurate potential totals
     stats = {
         'new': qs.filter(status='new').count(),
         'review': qs.filter(status='review').count(),
@@ -622,18 +571,18 @@ def get_admin_visa_list_api(request):
         'cancelled': qs.filter(status='cancelled').count(),
     }
 
-    # 4. Status Filter (Clicking the cards)
+    # 4. Status Filter
     status_filter = request.GET.get('status', '').strip()
     if status_filter and status_filter != 'all':
         qs = qs.filter(status=status_filter)
 
-    # 5. Destination Filter (Dropdown)
+    # 5. Destination Filter
     dest_filter = request.GET.get('destination', '').strip()
     if dest_filter:
         qs = qs.filter(destination_id=dest_filter)
 
     # 6. Pagination
-    paginator = Paginator(qs, 10)  # 10 items per page
+    paginator = Paginator(qs, 10)
     page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
 
@@ -648,18 +597,24 @@ def get_admin_visa_list_api(request):
         if app.destination.cover_image:
             cover_img = app.destination.cover_image.url
 
+        # --- ADDED: Apply By Logic ---
+        applied_by_name = "System"
+        if app.apply_by:
+            full_name = app.apply_by.get_full_name()
+            applied_by_name = full_name if full_name else app.apply_by.username
+
         data.append({
             'id': app.id,
             'reference': app.reference,
             'applicant': f"{app.first_name} {app.last_name}",
             'passport': app.passport_number,
             'agency': agency_name,
+            'apply_by': applied_by_name, # <--- Sent to frontend here
             'country': app.destination.country,
             'visa_type': app.destination.visa_type,
             'cover_image': cover_img,
             'status': app.status,
-            'status_label': app.get_status_display(),  # Uses the choices tuple
-            # Or any format you prefer
+            'status_label': app.get_status_display(),
             'created_at': app.created_at.strftime('%Y-%m-%d'),
         })
 
@@ -675,7 +630,44 @@ def get_admin_visa_list_api(request):
         }
     })
 
+@login_required
+def search_agencies_api(request):
+    """
+    AJAX API to search for agencies by name.
+    Usage: /api/agencies/search/?q=travel
+    """
+    query = request.GET.get('q', '').strip()
 
+    # Base query (Active agencies only)
+    # Ensure you have an active flag, or remove this
+    agencies = Agency.objects.filter(status='active')
+
+    if query:
+        agencies = agencies.filter(company_name__icontains=query)
+
+    # Limit results to 20 to prevent huge payloads
+    results = list(agencies.values('id', 'company_name', 'balance')[:20])
+
+    return JsonResponse({
+        'status': 'success',
+        'agencies': results
+    })
+
+
+@login_required
+def get_all_destinations_api(request):
+    """
+    API: Returns all active destinations for dropdown filters.
+    Usage: /api/visas/destinations/all/
+    """
+    destinations = VisaDestination.objects.filter(is_active=True).values(
+        'id', 'country', 'visa_type'
+    ).order_by('country')
+
+    return JsonResponse({
+        'status': 'success',
+        'destinations': list(destinations)
+    })
 # ========================================================
 # CLIENT SIDE - PAGES
 # ========================================================

@@ -158,9 +158,6 @@
                         <select id="filter-destination" onchange="loadAdminData()"
                             class="px-3 py-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-lg outline-none cursor-pointer hover:text-slate-900">
                             <option value="">Filter by Destination</option>
-                            {% for dest in destinations %}
-                            <option value="{{ dest.id }}">{{ dest.country }} - {{ dest.visa_type }}</option>
-                            {% endfor %}
                         </select>
                         <button onclick="loadAdminData()"
                             class="p-1.5 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-500"><i
@@ -218,19 +215,33 @@
                             class="text-[10px] font-bold bg-brand-100 text-brand-700 px-2 py-1 rounded uppercase tracking-wider"
                             id="view-ref">REF-LOADING</span>
                         <h2 class="text-xl font-bold text-slate-900 mt-2" id="view-applicant">Loading...</h2>
+                        <p class="text-xs text-slate-500 mt-1">
+                            Applied by
+                            <span class="font-semibold text-slate-700" id="view-applied-by">—</span>
+                        </p>
                         <div class="flex items-center gap-2 text-xs text-slate-500 mt-1">
                             <i class="ph-fill ph-buildings"></i> <span id="view-agency">-</span>
                             <span class="text-slate-300">|</span>
                             <i class="ph-fill ph-airplane-tilt"></i> <span id="view-destination">-</span>
                         </div>
                     </div>
-                    <div class="text-right">
-                        <p class="text-[10px] font-bold text-slate-400 uppercase">Current Status</p>
-                        <span id="view-status-badge"
-                            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600 mt-1">
-                            Loading...
-                        </span>
+                    <div class="text-right space-y-2">
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase">Current Status</p>
+                            <span id="view-status-badge"
+                                class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600 mt-1">
+                                Loading...
+                            </span>
+                        </div>
+
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase">Master Agent</p>
+                            <p id="view-master-agent" class="text-xs font-semibold text-slate-700">
+                                —
+                            </p>
+                        </div>
                     </div>
+
                 </div>
             </div>
 
@@ -449,7 +460,7 @@
                             <div class="relative">
                                 <i class="ph-bold ph-magnifying-glass absolute left-3 top-3 text-slate-400"></i>
                                 <input type="text" id="agency-search-input"
-                                    placeholder="Search Agency or 'Direct Client'..." onkeyup="filterAgencies()"
+                                    placeholder="Search Agency or 'Direct Client'..." oninput="filterAgencies()"
                                     onfocus="showAgencyDropdown()"
                                     class="w-full pl-10 pr-8 py-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none bg-slate-50 focus:bg-white transition-colors"
                                     autocomplete="off">
@@ -534,18 +545,18 @@
     </div>
 </div>
 
-
 <script>
     // ==========================================
     // 1. DASHBOARD & FILTER LOGIC (AJAX)
     // ==========================================
     let currentPage = 1;
-    let currentStatus = 'all'; // Default to 'all'
+    let currentStatus = 'all';
     let debounceTimer;
 
     // Load Data on Page Ready
     document.addEventListener("DOMContentLoaded", () => {
         loadAdminData();
+        loadDestinationsFilter();
     });
 
     // --- MAIN LOADER ---
@@ -556,16 +567,15 @@
         const tbody = document.getElementById('admin-table-body');
 
         // === FIXED URL PATH ===
-        // Now points to /admin_panel/api/list/ instead of /visas/api/list/
         const url = `/admin_panel/api/list/?page=${currentPage}&search=${search}&status=${currentStatus}&destination=${dest}`;
 
         fetch(url)
             .then(res => res.json())
             .then(data => {
-                // A. Update Stats Cards (If elements exist)
+                // A. Update Stats Cards (Safely check if elements exist)
                 if (data.stats) {
                     if (document.getElementById('stat-new')) document.getElementById('stat-new').innerText = data.stats.new;
-                    if (document.getElementById('stat-review')) document.getElementById('stat-review').innerText = data.stats.review; // Fixed ID from 'stat-under-review' to match HTML
+                    if (document.getElementById('stat-review')) document.getElementById('stat-review').innerText = data.stats.review;
                     if (document.getElementById('stat-appt')) document.getElementById('stat-appt').innerText = data.stats.appt;
                     if (document.getElementById('stat-embassy')) document.getElementById('stat-embassy').innerText = data.stats.embassy;
                     if (document.getElementById('stat-ready')) document.getElementById('stat-ready').innerText = data.stats.ready;
@@ -587,6 +597,10 @@
                         ? `<span class="text-slate-400 italic">Direct Client</span>`
                         : app.agency;
 
+                    // Logic for Apply By (Safe Fallback)
+                    // We check if apply_by exists, otherwise default to 'System'
+                    const applyBy = app.apply_by || 'System';
+
                     // Logic for Flag Image
                     const imgHtml = app.cover_image
                         ? `<img src="${app.cover_image}" class="w-6 h-4 object-cover rounded shadow-sm">`
@@ -599,7 +613,12 @@
                                 <div class="font-medium text-slate-900">${app.applicant}</div>
                                 <div class="text-xs text-slate-500 font-mono">${app.passport}</div>
                             </td>
-                            <td class="px-6 py-4 text-sm">${agencyDisplay}</td>
+                            <td class="px-6 py-4 text-sm">
+                                <div class="font-medium">${agencyDisplay}</div>
+                                <div class="text-xs text-slate-400 mt-1 flex items-center gap-1">
+                                    <i class="ph-bold ph-user"></i> ${applyBy}
+                                </div>
+                            </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-2">
                                     ${imgHtml}
@@ -621,7 +640,7 @@
                 });
 
                 // C. Update Pagination Info
-                const pageInfo = document.querySelector('#pagination-container span'); // Fixed selector
+                const pageInfo = document.getElementById('page-info'); // Ensure ID exists in HTML
                 if (pageInfo) {
                     pageInfo.innerHTML = `Showing page <span class="font-bold text-slate-900">${data.pagination.current_page}</span> of <span class="font-bold text-slate-900">${data.pagination.total_pages}</span>`;
                 }
@@ -642,7 +661,14 @@
     // --- ACTIONS ---
     function setFilterStatus(status) {
         currentStatus = status;
-        currentPage = 1; // Reset to page 1 on filter change
+        currentPage = 1;
+
+        // Highlight Active Card
+        document.querySelectorAll('.stat-card').forEach(c => {
+            c.classList.remove('ring-2', 'ring-brand-500', 'bg-slate-50');
+            if (c.id === `card-${status}`) c.classList.add('ring-2', 'ring-brand-500', 'bg-slate-50');
+        });
+
         loadAdminData();
     }
 
@@ -661,7 +687,6 @@
 
     // --- HELPERS ---
     function getStatusBadge(status, label) {
-        // Map status codes to classes
         const styles = {
             'new': 'bg-blue-100 text-blue-700',
             'review': 'bg-yellow-100 text-yellow-700',
@@ -674,6 +699,28 @@
         };
         const css = styles[status] || 'bg-slate-100 text-slate-600';
         return `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${css}">${label}</span>`;
+    }
+
+    // --- DESTINATIONS DROPDOWN ---
+    function loadDestinationsFilter() {
+        const select = document.getElementById('filter-destination');
+        if (!select) return;
+
+        // Ensure this URL tag is correct in your Django template
+        fetch("{% url 'api_all_destinations' %}")
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    select.innerHTML = '<option value="">Filter by Destination</option>';
+                    data.destinations.forEach(dest => {
+                        const option = document.createElement('option');
+                        option.value = dest.id;
+                        option.text = `${dest.country} - ${dest.visa_type}`;
+                        select.appendChild(option);
+                    });
+                }
+            })
+            .catch(err => console.error("Failed to load destinations filter:", err));
     }
 </script>
 
@@ -711,6 +758,10 @@
         document.getElementById('view-applicant').innerText = data.applicant;
         document.getElementById('view-agency').innerText = data.agency_name || 'Direct Client';
         document.getElementById('view-destination').innerText = data.destination || '-';
+        document.getElementById('view-master-agent').textContent = data.user_admin || '-';
+        document.getElementById("view-applied-by").textContent = data.apply_by || '-';
+
+
 
         // Set Select Value
         if (statusSelect.querySelector(`option[value="${data.status}"]`)) {
@@ -917,37 +968,103 @@
             .finally(() => document.getElementById('schema-loading').classList.add('hidden'));
     }
 
-    // Agency Search Logic
+    // ==========================================
+    // 5. AGENCY SEARCH LOGIC (Server-Side AJAX)
+    // ==========================================
+
+    let agencySearchTimer;
     const agencyDropdown = document.getElementById('agency-dropdown-list');
+    const agencyContainer = document.getElementById('agency-list-container');
+    const agencyLoading = document.getElementById('agency-loading');
     const agencyInput = document.getElementById('agency-search-input');
+    const realAgencyInput = document.getElementById('real-agency-id');
+
+    // 1. Show Dropdown & Load Default
     function showAgencyDropdown() {
         agencyDropdown.classList.remove('hidden');
-        if (!agenciesLoaded) fetchAgencies();
+        // If input is empty, fetch default list (first 20)
+        if (agencyInput.value.trim() === '') {
+            fetchAgencies('');
+        }
     }
-    function fetchAgencies() {
-        document.getElementById('agency-loading').classList.remove('hidden');
-        fetch("{% url 'agency_management' %}")
+
+    // 2. Filter Function (Triggered by onkeyup/oninput)
+    function filterAgencies() {
+        clearTimeout(agencySearchTimer);
+        const query = agencyInput.value;
+
+        // Debounce: Wait 300ms after user stops typing
+        agencySearchTimer = setTimeout(() => {
+            fetchAgencies(query);
+        }, 300);
+    }
+
+    // 3. Fetch Data from Server
+    function fetchAgencies(query) {
+        agencyLoading.classList.remove('hidden');
+        agencyContainer.innerHTML = ''; // Clear previous results
+
+        // Use the new API Endpoint
+        fetch(`{% url 'api_agency_search' %}?q=${encodeURIComponent(query)}`)
             .then(res => res.json())
             .then(data => {
-                document.getElementById('agency-list-container').innerHTML = data.agencies.map(a => `
-                    <div onclick="selectAgency('${a.id}', '${a.company_name.replace(/'/g, "\\'")}')" class="agency-option p-2 hover:bg-slate-50 cursor-pointer text-sm" data-name="${a.company_name.toLowerCase()}">${a.company_name}</div>
-                `).join('');
-                agenciesLoaded = true;
+                if (data.agencies.length === 0) {
+                    agencyContainer.innerHTML = `<div class="p-4 text-center text-xs text-slate-400 italic">No agencies found matching "${query}".</div>`;
+                } else {
+                    renderAgencies(data.agencies);
+                }
             })
-            .finally(() => document.getElementById('agency-loading').classList.add('hidden'));
+            .catch(err => {
+                console.error("Search Error:", err);
+                agencyContainer.innerHTML = `<div class="p-2 text-center text-red-500 text-xs">Error loading data</div>`;
+            })
+            .finally(() => {
+                agencyLoading.classList.add('hidden');
+            });
     }
-    function filterAgencies() {
-        const q = agencyInput.value.toLowerCase();
-        document.querySelectorAll('.agency-option').forEach(o => o.style.display = o.dataset.name.includes(q) ? 'block' : 'none');
+
+    // 4. Render HTML
+    function renderAgencies(list) {
+        const html = list.map(agency => `
+            <div onclick="selectAgency('${agency.id}', '${agency.company_name.replace(/'/g, "\\'")}')" 
+                 class="agency-option p-3 hover:bg-brand-50 cursor-pointer flex items-center gap-3 transition-colors border-b border-slate-50 last:border-0">
+                <div class="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 shrink-0">
+                    <i class="ph-fill ph-buildings"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-bold text-slate-700">${agency.company_name}</p>
+                    <p class="text-[10px] text-slate-400">Balance: DZD ${parseFloat(agency.balance).toLocaleString()}</p>
+                </div>
+            </div>
+        `).join('');
+
+        agencyContainer.innerHTML = html;
     }
+
+    // 5. Select Logic
     function selectAgency(id, name) {
-        document.getElementById('real-agency-id').value = id;
+        realAgencyInput.value = id;
         agencyInput.value = name;
         agencyDropdown.classList.add('hidden');
+
+        // Visual Feedback
+        if (id) {
+            agencyInput.classList.add('border-brand-500', 'bg-brand-50/50');
+            agencyInput.classList.remove('border-slate-300', 'bg-slate-50');
+        } else {
+            // Direct Client (Reset)
+            agencyInput.classList.remove('border-brand-500', 'bg-brand-50/50');
+            agencyInput.classList.add('border-slate-300', 'bg-slate-50');
+        }
     }
-    window.onclick = e => {
-        if (!e.target.closest('.relative.group') && agencyDropdown) agencyDropdown.classList.add('hidden');
-    }
+
+    // Close on click outside
+    window.addEventListener('click', function (e) {
+        const wrapper = agencyInput.closest('.group');
+        if (!wrapper.contains(e.target)) {
+            agencyDropdown.classList.add('hidden');
+        }
+    });
 
     // Form Submit
     document.getElementById('create-visa-form').addEventListener('submit', function (e) {

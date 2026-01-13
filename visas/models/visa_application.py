@@ -58,6 +58,24 @@ class VisaApplication(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    apply_by = models.ForeignKey(
+        'users.CustomUser',
+        on_delete=models.PROTECT,
+        related_name='apply_by',
+        help_text="The user who apply the visa.",
+        null=True,
+        blank=True
+    )
+
+    user_admin = models.ForeignKey(
+        'users.CustomUser',
+        on_delete=models.PROTECT,
+        related_name='treated_by',
+        help_text="The admin user who treat the application.",
+        null=True,
+        blank=True
+    )
+
     class Meta:
         db_table = 'visas_application'
 
