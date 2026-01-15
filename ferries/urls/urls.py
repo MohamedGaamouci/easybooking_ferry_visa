@@ -30,5 +30,7 @@ urlpatterns = [
          admin_send_offer_api, name='api_admin_offer'),
 
     path('api/request/reject/<int:pk>/',
-         admin_reject_request, name='api_reject_offer')
+         admin_reject_request, name='api_reject_offer'),
+
+    path('api/attach-voucher/', api_attach_voucher, name='api_attach_voucher'),
 ]

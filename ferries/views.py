@@ -746,3 +746,45 @@ def admin_reject_request(request, pk):
 
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
+@login_required
+@require_POST
+def api_attach_voucher(request):
+    """
+    Handles voucher file upload for a specific Ferry Request.
+    1. Validates file size (Max 5MB).
+    2. Saves the file.
+    3. Updates status to 'ready'.
+    """
+    req_id = request.POST.get('request_id')
+    voucher = request.FILES.get('voucher_file')
+
+    # 1. Basic Validation
+    if not req_id or not voucher:
+        return JsonResponse({'status': 'error', 'message': 'Missing request ID or file.'})
+
+    # 2. Size Validation (Backend Security Check)
+    # 5MB = 5 * 1024 * 1024 bytes
+    if voucher.size > 5 * 1024 * 1024:
+        return JsonResponse({'status': 'error', 'message': 'File is too large. Max size is 5MB.'})
+
+    try:
+        # 3. Get the Request
+        ferry_req = FerryRequest.objects.get(id=req_id)
+
+        # 4. Save the File
+        # Django handles the file system storage automatically here
+        ferry_req.voucher = voucher
+
+        ferry_req.save()
+
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Voucher attached and request marked as Ready.'
+        })
+
+    except FerryRequest.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Request not found.'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)})

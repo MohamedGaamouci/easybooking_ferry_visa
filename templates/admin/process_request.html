@@ -56,6 +56,45 @@
         </div>
         {% endif %}
 
+        {% if req.status == "confirmed" %}
+
+        <div class="flex flex-row items-center justify-end gap-3">
+
+            {% if req.voucher %}
+            <div class="flex flex-nowrap items-center gap-2 whitespace-nowrap
+                text-xs text-green-700 bg-green-50 px-3 py-2
+                rounded-lg border border-green-200">
+                <i class="ph-fill ph-check-circle text-lg"></i>
+                <span class="font-semibold hidden xl:inline">Voucher Attached</span>
+                <span class="text-green-300 hidden xl:inline">|</span>
+                <a href="{{ req.voucher.url }}" target="_blank" class="hover:text-green-900 font-bold underline
+                  decoration-green-300 hover:decoration-green-900
+                  underline-offset-2 transition-all">
+                    View File
+                </a>
+            </div>
+            {% endif %}
+
+            <input type="file" id="voucher-input-{{ req.id }}" class="hidden" accept="application/pdf, image/*"
+                onchange="uploadVoucher('{{ req.id }}', this)">
+
+            <button onclick="document.getElementById('voucher-input-{{ req.id }}').click()" class="{% if req.voucher_file %}
+               bg-white border border-slate-300 text-slate-700 hover:bg-slate-50
+               {% else %}
+               bg-green-600 text-white hover:bg-green-700 border border-transparent
+               {% endif %}
+               px-4 py-2 rounded-lg text-sm font-bold shadow-sm
+               transition-all flex items-center gap-2">
+                <i
+                    class="ph-bold {% if req.voucher_file %}ph-arrows-clockwise{% else %}ph-file-arrow-up{% endif %}"></i>
+                {% if req.voucher_file %} Replace Voucher {% else %} Attach Voucher {% endif %}
+            </button>
+
+        </div>
+
+        {% endif %}
+
+
 
     </header>
 
@@ -409,6 +448,67 @@
     }
 
 
+</script>
+
+<!-- Voucher -->
+<script>
+    function uploadVoucher(reqId, inputElement) {
+        // 1. Check if file is selected
+        if (!inputElement.files || !inputElement.files[0]) return;
+
+        const file = inputElement.files[0];
+
+        // --- NEW: SIZE VALIDATION (Max 5MB) ---
+        const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+        if (file.size > maxSize) {
+            alert("File is too large! Max size is 5MB.");
+            // Reset the input so they can try again
+            inputElement.value = "";
+            return;
+        }
+        // --------------------------------------
+
+        const formData = new FormData();
+        formData.append('voucher_file', file);
+        formData.append('request_id', reqId);
+
+        // 2. Visual Feedback
+        const btn = inputElement.nextElementSibling;
+        const originalContent = btn.innerHTML;
+        btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Uploading...';
+        btn.disabled = true;
+        btn.classList.add('opacity-75', 'cursor-not-allowed');
+
+        // 3. Send AJAX Request
+        fetch("{% url 'api_attach_voucher' %}", {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert("Voucher Attached Successfully!");
+                    window.location.reload();
+                } else {
+                    alert("Error: " + data.message);
+                    resetButton(btn, originalContent);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Upload failed. Please check your connection.");
+                resetButton(btn, originalContent);
+            });
+    }
+
+    function resetButton(btn, content) {
+        btn.innerHTML = content;
+        btn.disabled = false;
+        btn.classList.remove('opacity-75', 'cursor-not-allowed');
+    }
 </script>
 
 {% endblock %}

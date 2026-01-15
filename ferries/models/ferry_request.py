@@ -84,7 +84,8 @@ class FerryRequest(models.Model):
         max_length=20, choices=STATUS_CHOICES, default='pending')
 
     # 6. Documents
-    voucher = models.FileField(upload_to='vouchers/', null=True, blank=True)
+    voucher = models.FileField(
+        upload_to='ferry/vouchers/', null=True, blank=True)
 
     user_admin = models.ForeignKey(
         'users.CustomUser',
