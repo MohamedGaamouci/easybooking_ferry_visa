@@ -122,76 +122,90 @@
 </main>
 
 <div id="track-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
-    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeTrackModal()"></div>
+    <div class="absolute inset-0 bg-slate-900/70 backdrop-blur-sm transition-opacity" onclick="closeTrackModal()"></div>
 
-    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div
+        class="relative bg-white rounded-3xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh] animate-fade-in-up">
 
-        <div class="bg-slate-50 p-6 border-b border-slate-200 flex justify-between items-start shrink-0">
+        <div
+            class="bg-white px-8 py-6 border-b border-slate-100 flex justify-between items-start shrink-0 sticky top-0 z-10">
             <div>
                 <div class="flex items-center gap-3">
-                    <h2 class="text-xl font-bold text-slate-900" id="tm-destination">Loading...</h2>
-                    <span id="tm-ref"
-                        class="bg-brand-100 text-brand-700 text-xs font-bold px-2 py-0.5 rounded font-mono">#</span>
+                    <div
+                        class="w-12 h-12 rounded-xl bg-brand-50 flex items-center justify-center text-2xl shadow-sm border border-brand-100">
+                        <i class="ph-fill ph-airplane-tilt text-brand-600"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-900 leading-tight" id="tm-destination">Loading...</h2>
+                        <div class="flex items-center gap-2 text-sm text-slate-500 mt-0.5">
+                            <span class="font-medium" id="tm-applicant">-</span>
+                            <span class="text-slate-300">•</span>
+                            <span id="tm-ref"
+                                class="font-mono bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs font-bold">#</span>
+                        </div>
+                    </div>
                 </div>
-                <p class="text-sm text-slate-500 mt-1">Applicant: <span class="font-semibold text-slate-800"
-                        id="tm-applicant">-</span></p>
             </div>
             <button onclick="closeTrackModal()"
-                class="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors">
-                <i class="ph-bold ph-x"></i>
+                class="w-9 h-9 rounded-full bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors flex items-center justify-center">
+                <i class="ph-bold ph-x text-lg"></i>
             </button>
         </div>
 
-        <div class="flex-1 overflow-y-auto p-0">
-            <div class="grid grid-cols-1 md:grid-cols-3 min-h-full">
+        <div class="flex-1 overflow-y-auto bg-slate-50/50">
+            <div class="p-8 max-w-4xl mx-auto space-y-8">
 
-                <div class="col-span-1 md:col-span-2 p-6 border-r border-slate-100">
-
-                    <div class="col-span-1 md:col-span-2 p-6 border-r border-slate-100">
-
-                        <div id="tm-visa-ready-box"
-                            class="hidden mb-6 bg-green-50 border border-green-200 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
-                            <div class="flex items-center gap-3">
-                                <div
-                                    class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 shrink-0">
-                                    <i class="ph-fill ph-check-circle text-xl"></i>
-                                </div>
-                                <div>
-                                    <h4 class="text-sm font-bold text-green-800">Visa Approved & Ready!</h4>
-                                    <p class="text-xs text-green-600 mt-0.5">Your final document is ready for download.
-                                    </p>
-                                </div>
+                <div id="tm-visa-ready-box"
+                    class="hidden relative overflow-hidden bg-gradient-to-br from-green-600 to-green-700 rounded-2xl p-6 shadow-lg shadow-green-200 text-white">
+                    <div class="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+                    <div class="relative flex flex-col sm:flex-row items-center justify-between gap-6">
+                        <div class="flex items-center gap-5">
+                            <div
+                                class="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center border border-white/30 backdrop-blur-sm">
+                                <i class="ph-fill ph-check-circle text-3xl text-white"></i>
                             </div>
-                            <a id="tm-visa-download-btn" href="#" target="_blank"
-                                class="w-full sm:w-auto px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-lg shadow transition-colors flex items-center justify-center gap-2">
-                                <i class="ph-bold ph-download-simple"></i> Download Visa
-                            </a>
+                            <div>
+                                <h3 class="text-lg font-bold">Visa Approved & Ready!</h3>
+                                <p class="text-green-100 text-sm opacity-90">Congratulations! Your document is ready for
+                                    download.</p>
+                            </div>
                         </div>
-
-                        <div id="tm-alert-box" class="hidden mb-8 rounded-xl p-4 border flex gap-3">
-                        </div>
-
-                        <h3 class="text-xs font-bold text-slate-400 uppercase mb-6 tracking-wider">Status Timeline</h3>
-                        <div class="relative pl-4 border-l-2 border-slate-100 space-y-8 ml-2" id="tm-timeline">
-                        </div>
-
-                    </div>
-
-                    <h3 class="text-xs font-bold text-slate-400 uppercase mb-6 tracking-wider">Status Timeline</h3>
-
-                    <div class="relative pl-4 border-l-2 border-slate-100 space-y-8 ml-2" id="tm-timeline">
+                        <a id="tm-visa-download-btn" href="#" target="_blank"
+                            class="w-full sm:w-auto px-6 py-3 bg-white text-green-700 text-sm font-bold rounded-xl shadow-lg hover:bg-green-50 hover:scale-105 transition-all flex items-center justify-center gap-2 group">
+                            <i class="ph-bold ph-download-simple group-hover:animate-bounce"></i> Download Visa
+                        </a>
                     </div>
                 </div>
 
-                <div class="col-span-1 bg-slate-50 p-6">
-                    <h3 class="text-xs font-bold text-slate-400 uppercase mb-4 tracking-wider">Uploaded Documents</h3>
-                    <div class="space-y-3" id="tm-docs-list">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+                    <div class="lg:col-span-2 space-y-6">
+
+                        <div id="tm-alert-box" class="hidden"></div>
+
+                        <div class="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
+                            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-6">Tracking Timeline
+                            </h3>
+                            <div id="tm-timeline" class="space-y-0">
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="mt-8 pt-6 border-t border-slate-200">
-                        <h3 class="text-xs font-bold text-slate-400 uppercase mb-3 tracking-wider">Application Data</h3>
-                        <div class="space-y-2 text-xs" id="tm-answers-list">
+                    <div class="lg:col-span-1 space-y-6">
+
+                        <div class="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
+                            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">My Documents</h3>
+                            <div id="tm-docs-list" class="space-y-3">
+                            </div>
                         </div>
+
+                        <div class="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
+                            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Application
+                                Details</h3>
+                            <div id="tm-answers-list" class="space-y-3 text-sm">
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -341,129 +355,181 @@
             });
     }
 
+    // ==========================================
+    // 4. TRACK MODAL LOGIC (MODERN UI/UX)
+    // ==========================================
+
+    function openTrackModal(appId) {
+        const modal = document.getElementById('track-modal');
+        modal.classList.remove('hidden');
+
+        // 1. Reset UI Elements (Clear previous data)
+        document.getElementById('tm-destination').innerText = "Loading...";
+        document.getElementById('tm-ref').innerText = "...";
+        document.getElementById('tm-applicant').innerText = "-";
+
+        // Hide specific boxes
+        document.getElementById('tm-visa-ready-box').classList.add('hidden');
+        document.getElementById('tm-alert-box').innerHTML = ''; // Clear inner HTML
+
+        // Set loaders
+        document.getElementById('tm-timeline').innerHTML = '<div class="p-4 text-sm text-slate-400">Loading timeline...</div>';
+        document.getElementById('tm-docs-list').innerHTML = '<div class="text-sm text-slate-400">Loading docs...</div>';
+        document.getElementById('tm-answers-list').innerHTML = '';
+
+        // 2. Fetch Data
+        fetch(`/admin_panel/api/visa/${appId}/`)
+            .then(res => res.json())
+            .then(data => {
+                populateModal(data);
+            })
+            .catch(err => {
+                console.error(err);
+                document.getElementById('tm-destination').innerText = "Error loading details";
+            });
+    }
+
     function populateModal(data) {
-        // 1. Header
+        // --- 1. Header Data ---
         document.getElementById('tm-destination').innerText = data.destination;
-        document.getElementById('tm-ref').innerText = data.reference;
+        document.getElementById('tm-ref').innerText = '#' + data.reference;
         document.getElementById('tm-applicant').innerText = data.applicant;
 
-        // === NEW: VISA READY LOGIC ===
+        // --- 2. Visa Ready Hero Card ---
         const visaBox = document.getElementById('tm-visa-ready-box');
         const visaBtn = document.getElementById('tm-visa-download-btn');
 
-        // Show box if status is ready/completed AND a document URL exists
-        // (Ensure your API returns 'visa_document_url')
+        // Check if status is ready/completed AND api returned a document URL
         if ((data.status === 'ready' || data.status === 'completed') && data.visa_document_url) {
             visaBox.classList.remove('hidden');
             visaBtn.href = data.visa_document_url;
         } else {
             visaBox.classList.add('hidden');
         }
-        // =============================
 
-        // 2. Alert Box Logic
+        // --- 3. Dynamic Alert Box (Ticket Style) ---
         const alertBox = document.getElementById('tm-alert-box');
-        const alertTitle = document.getElementById('tm-alert-title');
-        const alertMsg = document.getElementById('tm-alert-msg');
-        const alertIcon = document.getElementById('tm-alert-icon');
+        alertBox.innerHTML = ''; // Clear previous content
 
-        // Note: The API returns date string "YYYY-MM-DDTHH:MM" or similar
         if (data.status === 'appointment' && data.appointment_date) {
-            alertBox.className = "mb-8 rounded-xl p-4 border flex gap-3 bg-purple-50 border-purple-100 text-purple-900";
-            alertIcon.innerHTML = '<i class="ph-fill ph-calendar-check text-xl text-purple-600"></i>';
-            alertTitle.innerText = "Appointment Scheduled";
-
-            // Basic date formatting
             const dateObj = new Date(data.appointment_date);
-            const dateStr = dateObj.toLocaleDateString();
-            const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const day = dateObj.getDate();
+            const month = dateObj.toLocaleString('default', { month: 'short' });
+            const time = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-            alertMsg.innerHTML = `Please arrive at the embassy by <strong>${timeStr}</strong> on <strong>${dateStr}</strong>.<br>Bring all original documents.`;
+            // Render Ticket UI
+            alertBox.innerHTML = `
+                <div class="relative bg-white rounded-2xl border border-purple-100 shadow-sm overflow-hidden flex flex-col sm:flex-row mb-6">
+                    <div class="bg-purple-600 p-4 text-white flex flex-col items-center justify-center min-w-[90px] text-center">
+                        <span class="text-2xl font-bold leading-none">${day}</span>
+                        <span class="text-xs font-bold uppercase tracking-wider opacity-80">${month}</span>
+                    </div>
+                    <div class="p-4 flex-1">
+                        <div class="flex items-center gap-2 text-purple-700 font-bold text-xs uppercase tracking-wide mb-1">
+                            <i class="ph-fill ph-calendar-check"></i> Appointment Confirmed
+                        </div>
+                        <p class="text-slate-600 text-sm">Please arrive at the embassy by <strong class="text-slate-900">${time}</strong>.</p>
+                        <p class="text-xs text-slate-400 mt-1">Bring your passport and original documents.</p>
+                    </div>
+                    <div class="absolute top-1/2 left-0 sm:left-[90px] -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-white border border-purple-100 rounded-full"></div>
+                    <div class="absolute top-1/2 right-0 sm:left-[90px] -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-white border border-purple-100 rounded-full sm:hidden"></div>
+                </div>`;
             alertBox.classList.remove('hidden');
 
         } else if (data.admin_notes) {
-            alertBox.className = "mb-8 rounded-xl p-4 border flex gap-3 bg-yellow-50 border-yellow-200 text-yellow-900";
-            alertIcon.innerHTML = '<i class="ph-fill ph-info text-xl text-yellow-600"></i>';
-            alertTitle.innerText = "Message from Agent";
-            alertMsg.innerText = data.admin_notes;
+            // Render Note UI
+            alertBox.innerHTML = `
+                <div class="bg-yellow-50 border border-yellow-100 rounded-xl p-4 flex gap-3 mb-6">
+                    <div class="w-8 h-8 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center shrink-0">
+                        <i class="ph-fill ph-info text-lg"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-bold text-yellow-800 uppercase">Note from Agent</h4>
+                        <p class="text-sm text-yellow-700 mt-1 leading-relaxed">${data.admin_notes}</p>
+                    </div>
+                </div>`;
             alertBox.classList.remove('hidden');
         } else {
             alertBox.classList.add('hidden');
         }
 
-        // 3. Timeline
+        // --- 4. Connected Timeline ---
         const steps = [
-            { id: 'new', label: 'Application Submitted' },
+            { id: 'new', label: 'Application Submitted', date: data.created_at }, // Assumes created_at is sent
             { id: 'review', label: 'Under Review' },
-            { id: 'appointment', label: 'Appointment Set' },
+            { id: 'appointment', label: 'Appointment Scheduled' },
             { id: 'embassy', label: 'At Embassy' },
-            { id: 'ready', label: 'Ready for Pickup' },
+            { id: 'ready', label: 'Ready for Collection' },
         ];
 
         let currentIndex = steps.findIndex(s => s.id === data.status);
-        if (data.status === 'completed') currentIndex = 4;
+        if (data.status === 'completed') currentIndex = 4; // Treat completed same as ready
         if (currentIndex === -1) currentIndex = 0;
 
         let timelineHtml = '';
         steps.forEach((step, index) => {
-            let colorClass = 'bg-slate-200 border-white';
-            let textClass = 'text-slate-400';
+            const isCompleted = index <= currentIndex;
+            const isLast = index === steps.length - 1;
 
-            if (index < currentIndex) {
-                colorClass = 'bg-green-500 border-white ring-4 ring-green-50';
-                textClass = 'text-slate-700';
-            } else if (index === currentIndex) {
-                colorClass = 'bg-brand-600 border-white ring-4 ring-brand-50 animate-pulse';
-                textClass = 'text-brand-700 font-bold';
-            }
+            // Visual Styles
+            const icon = isCompleted ? '<i class="ph-bold ph-check text-white text-xs"></i>' : '';
+            const circleClass = isCompleted ? 'bg-brand-600 border-brand-600' : 'bg-slate-100 border-slate-200';
+            const textClass = isCompleted ? 'text-slate-900 font-bold' : 'text-slate-400 font-medium';
+            const lineClass = isCompleted ? 'bg-brand-200' : 'bg-slate-100';
 
             timelineHtml += `
-                <div class="relative">
-                    <span class="absolute -left-[23px] w-3.5 h-3.5 rounded-full border-2 ${colorClass}"></span>
-                    <p class="text-sm ${textClass}">${step.label}</p>
+                <div class="relative pl-8 pb-8 last:pb-0">
+                    ${!isLast ? `<div class="absolute left-[11px] top-6 bottom-0 w-0.5 ${lineClass}"></div>` : ''}
+                    
+                    <div class="absolute left-0 top-1 w-6 h-6 rounded-full border-2 ${circleClass} flex items-center justify-center z-10 transition-colors">
+                        ${icon}
+                    </div>
+
+                    <div>
+                        <p class="text-sm ${textClass} leading-tight">${step.label}</p>
+                        ${step.date && isCompleted && index === 0 ? `<p class="text-[10px] text-slate-400 mt-1">${step.date}</p>` : ''}
+                    </div>
                 </div>`;
         });
         document.getElementById('tm-timeline').innerHTML = timelineHtml;
 
-        // 4. Documents
+        // --- 5. Document Cards ---
         const docContainer = document.getElementById('tm-docs-list');
         docContainer.innerHTML = '';
         if (data.documents && data.documents.length > 0) {
             data.documents.forEach(doc => {
-                let statusIcon = '<i class="ph-bold ph-check text-green-500"></i>';
-                if (doc.status === 'missing') statusIcon = '<i class="ph-bold ph-warning text-red-500"></i>';
-
-                const actionBtn = doc.url
-                    ? `<a href="${doc.url}" target="_blank" class="text-slate-400 hover:text-brand-600"><i class="ph-bold ph-download-simple"></i></a>`
-                    : `<span class="text-xs text-slate-300">No file</span>`;
-
+                const isUrl = !!doc.url;
                 docContainer.innerHTML += `
-                    <div class="bg-white border border-slate-200 p-3 rounded-lg flex items-center justify-between shadow-sm">
-                        <div class="flex items-center gap-2 overflow-hidden">
-                            ${statusIcon}
+                    <div class="group flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-white hover:border-brand-200 hover:shadow-sm transition-all">
+                        <div class="flex items-center gap-3 overflow-hidden">
+                            <div class="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400 group-hover:text-brand-600 transition-colors">
+                                <i class="ph-fill ph-file-text"></i>
+                            </div>
                             <div class="truncate">
-                                <p class="text-xs font-bold text-slate-700 truncate">${doc.name}</p>
-                                <p class="text-[10px] text-slate-400 uppercase">${doc.status}</p>
+                                <p class="text-xs font-bold text-slate-700 truncate group-hover:text-brand-700">${doc.name}</p>
+                                <p class="text-[10px] text-slate-400 uppercase font-bold">${doc.status}</p>
                             </div>
                         </div>
-                        ${actionBtn}
+                        ${isUrl ? `<a href="${doc.url}" target="_blank" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-brand-50 text-slate-400 hover:text-brand-600 transition-colors"><i class="ph-bold ph-eye"></i></a>` : ''}
                     </div>`;
             });
         } else {
-            docContainer.innerHTML = '<p class="text-xs text-slate-400 italic">No documents uploaded.</p>';
+            docContainer.innerHTML = '<div class="text-center py-4 border-2 border-dashed border-slate-100 rounded-xl text-xs text-slate-400">No documents uploaded yet.</div>';
         }
 
-        // 5. Answers
+        // --- 6. Application Details (Answers) ---
         const ansContainer = document.getElementById('tm-answers-list');
         ansContainer.innerHTML = '';
         if (data.answers && data.answers.length > 0) {
-            data.answers.slice(0, 5).forEach(ans => {
+            data.answers.slice(0, 8).forEach(ans => {
                 ansContainer.innerHTML += `
-                    <div class="flex justify-between border-b border-slate-100 pb-1 mb-1">
-                        <span class="text-slate-500">${ans.label}</span>
-                        <span class="font-medium text-slate-800">${ans.value}</span>
+                    <div class="flex flex-col border-b border-slate-50 last:border-0 pb-2 mb-2">
+                        <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">${ans.label}</span>
+                        <span class="text-sm font-medium text-slate-700 mt-0.5 break-words">${ans.value}</span>
                     </div>`;
             });
+        } else {
+            ansContainer.innerHTML = '<span class="text-xs text-slate-400 italic">No additional application data.</span>';
         }
     }
 
