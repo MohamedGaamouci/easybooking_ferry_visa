@@ -103,6 +103,7 @@ def get_visa_details(request, app_id):
         'user_admin': app.user_admin.get_full_name() if app.apply_by else "Unknown",
         'answers': answers_data,
         'documents': docs_data,
+        'visa_document_url': app.visa_doc.url if app.visa_doc else None,
     }
     return JsonResponse(data)
 # ========================================================
@@ -112,35 +113,30 @@ def get_visa_details(request, app_id):
 
 @login_required
 @require_POST
+@login_required
+@require_POST  # Good practice to restrict this to POST only
 def update_visa_application(request):
     """
     API: Handles the 'Save Changes' action from the Process Modal.
-    - Validates data using UpdateVisaStatusForm.
-    - Uses Atomic Transaction to ensure data integrity.
     """
     try:
-        # 1. Get the instance
         app_id = request.POST.get('application_id')
         app = get_object_or_404(VisaApplication, id=app_id)
-        # 2. Bind data to the Form
-        form = UpdateVisaStatusForm(request.POST, instance=app)
 
-        # 3. Validation Step
+        # --- THE FIX IS HERE ---
+        # You MUST pass request.FILES to the form, otherwise the file is ignored.
+        form = UpdateVisaStatusForm(request.POST, request.FILES, instance=app)
+
         if form.is_valid():
-
-            # 4. Transactional Save
-            # 'update all or fail all' logic starts here
             with transaction.atomic():
-                # Save the Application (Status, Notes, Date)
                 updated_app = form.save()
 
-                # Future-Proofing:
-                # If you add logic here later (e.g., "Create Invoice" or "Send Email"),
-                # and that logic fails, the status change above will ROLLBACK automatically.
-
-                # Example:
-                # if updated_app.status == 'completed':
-                #     send_completion_email(updated_app)
+                # Optional: specific logic if a file was uploaded
+                if 'visa_doc' in request.FILES:
+                    # e.g. Ensure status is set to ready if a doc is uploaded
+                    if updated_app.status not in ['ready', 'completed']:
+                        updated_app.status = 'ready'
+                        updated_app.save()
 
             return JsonResponse({
                 'status': 'success',
@@ -148,7 +144,6 @@ def update_visa_application(request):
             })
 
         else:
-            # Validation Failed (e.g., Invalid Date format, missing fields)
             return JsonResponse({
                 'status': 'error',
                 'message': 'Validation Failed',
@@ -156,7 +151,6 @@ def update_visa_application(request):
             }, status=400)
 
     except Exception as e:
-        # Unexpected System Error
         return JsonResponse({
             'status': 'error',
             'message': f"Server Error: {str(e)}"
@@ -609,7 +603,7 @@ def get_admin_visa_list_api(request):
             'applicant': f"{app.first_name} {app.last_name}",
             'passport': app.passport_number,
             'agency': agency_name,
-            'apply_by': applied_by_name, # <--- Sent to frontend here
+            'apply_by': applied_by_name,  # <--- Sent to frontend here
             'country': app.destination.country,
             'visa_type': app.destination.visa_type,
             'cover_image': cover_img,
@@ -629,6 +623,7 @@ def get_admin_visa_list_api(request):
             'has_previous': page_obj.has_previous(),
         }
     })
+
 
 @login_required
 def search_agencies_api(request):

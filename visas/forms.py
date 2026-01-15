@@ -121,7 +121,8 @@ class UpdateVisaStatusForm(forms.ModelForm):
     """
     class Meta:
         model = VisaApplication
-        fields = ['status', 'admin_notes', 'embassy_appointment_date']
+        fields = ['status', 'admin_notes',
+                  'embassy_appointment_date', "visa_doc"]
 
     def clean(self):
         cleaned_data = super().clean()

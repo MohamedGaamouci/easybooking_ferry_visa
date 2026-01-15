@@ -147,12 +147,34 @@
 
                 <div class="col-span-1 md:col-span-2 p-6 border-r border-slate-100">
 
-                    <div id="tm-alert-box" class="hidden mb-8 rounded-xl p-4 border flex gap-3">
-                        <div id="tm-alert-icon" class="mt-0.5"></div>
-                        <div>
-                            <h4 class="text-sm font-bold" id="tm-alert-title"></h4>
-                            <p class="text-xs mt-1" id="tm-alert-msg"></p>
+                    <div class="col-span-1 md:col-span-2 p-6 border-r border-slate-100">
+
+                        <div id="tm-visa-ready-box"
+                            class="hidden mb-6 bg-green-50 border border-green-200 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 shrink-0">
+                                    <i class="ph-fill ph-check-circle text-xl"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-bold text-green-800">Visa Approved & Ready!</h4>
+                                    <p class="text-xs text-green-600 mt-0.5">Your final document is ready for download.
+                                    </p>
+                                </div>
+                            </div>
+                            <a id="tm-visa-download-btn" href="#" target="_blank"
+                                class="w-full sm:w-auto px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-lg shadow transition-colors flex items-center justify-center gap-2">
+                                <i class="ph-bold ph-download-simple"></i> Download Visa
+                            </a>
                         </div>
+
+                        <div id="tm-alert-box" class="hidden mb-8 rounded-xl p-4 border flex gap-3">
+                        </div>
+
+                        <h3 class="text-xs font-bold text-slate-400 uppercase mb-6 tracking-wider">Status Timeline</h3>
+                        <div class="relative pl-4 border-l-2 border-slate-100 space-y-8 ml-2" id="tm-timeline">
+                        </div>
+
                     </div>
 
                     <h3 class="text-xs font-bold text-slate-400 uppercase mb-6 tracking-wider">Status Timeline</h3>
@@ -324,6 +346,20 @@
         document.getElementById('tm-destination').innerText = data.destination;
         document.getElementById('tm-ref').innerText = data.reference;
         document.getElementById('tm-applicant').innerText = data.applicant;
+
+        // === NEW: VISA READY LOGIC ===
+        const visaBox = document.getElementById('tm-visa-ready-box');
+        const visaBtn = document.getElementById('tm-visa-download-btn');
+
+        // Show box if status is ready/completed AND a document URL exists
+        // (Ensure your API returns 'visa_document_url')
+        if ((data.status === 'ready' || data.status === 'completed') && data.visa_document_url) {
+            visaBox.classList.remove('hidden');
+            visaBtn.href = data.visa_document_url;
+        } else {
+            visaBox.classList.add('hidden');
+        }
+        // =============================
 
         // 2. Alert Box Logic
         const alertBox = document.getElementById('tm-alert-box');

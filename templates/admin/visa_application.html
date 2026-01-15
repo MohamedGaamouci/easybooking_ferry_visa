@@ -320,11 +320,49 @@
                         </div>
                     </div>
 
+                    <div id="field-visa-upload"
+                        class="hidden space-y-4 p-4 bg-green-50 rounded-xl border border-green-100 mt-4 animate-fade-in">
+
+                        <h4 class="text-xs font-bold text-green-700 uppercase flex items-center gap-2">
+                            <i class="ph-bold ph-file-pdf"></i> Upload Final Visa
+                        </h4>
+
+                        <div id="existing-visa-badge"
+                            class="hidden flex items-center gap-2 text-xs text-green-700 bg-white px-3 py-2 rounded-lg border border-green-200 shadow-sm mb-2">
+                            <i class="ph-fill ph-check-circle text-lg text-green-600"></i>
+                            <span class="font-semibold">Visa Already Uploaded</span>
+                            <span class="text-green-300">|</span>
+                            <a id="existing-visa-link" href="#" target="_blank"
+                                class="font-bold underline decoration-green-300 hover:text-green-900 transition-colors">
+                                View File
+                            </a>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-green-600 mb-2">
+                                Attach Scanned Visa (PDF or Image)
+                            </label>
+
+                            <div class="relative group">
+                                <input type="file" name="visa_doc" id="visa_doc_input" accept=".pdf, .jpg, .jpeg, .png"
+                                    class="block w-full text-xs text-slate-500
+                              file:mr-4 file:py-2 file:px-4
+                              file:rounded-full file:border-0
+                              file:text-xs file:font-semibold
+                              file:bg-green-100 file:text-green-700
+                              hover:file:bg-green-200
+                              cursor-pointer">
+                            </div>
+                            <p class="text-[10px] text-green-600/70 mt-1 italic">
+                                * Uploading this will allow the client to download their visa immediately.
+                            </p>
+                        </div>
+                    </div>
+
                     <div class="mt-6">
                         <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Internal Notes</label>
                         <textarea id="process-notes" name="admin_notes"
                             class="w-full border border-slate-300 rounded-lg p-3 text-sm h-32 resize-none focus:ring-2 focus:ring-brand-500 shadow-sm"
-                            placeholder="Write internal remarks here (e.g. 'Pending payment', 'Missing signature')..."></textarea>
+                            placeholder="Write internal remarks here..."></textarea>
                     </div>
                 </form>
             </div>
@@ -769,6 +807,18 @@
         }
 
         updateStatusBadge(data.status);
+        // --- VISA DOC BADGE LOGIC (NEW) ---
+        const visaBadge = document.getElementById('existing-visa-badge');
+        const visaLink = document.getElementById('existing-visa-link');
+
+        // Check if the API returned a document URL
+        // Ensure your API sends 'visa_document_url' or adjust this key
+        if (data.visa_document_url) {
+            visaBadge.classList.remove('hidden');
+            visaLink.href = data.visa_document_url;
+        } else {
+            visaBadge.classList.add('hidden');
+        }
         toggleFields();
 
         // Bind Change Event for live badge update
@@ -845,8 +895,28 @@
     }
 
     function closeProcessModal() { processModal.classList.add('hidden'); }
-    function toggleFields() { fieldAppt.classList.toggle('hidden', statusSelect.value !== 'appointment'); }
-    function updateStatusBadge(status) {
+    function toggleFields() {
+        const val = statusSelect.value;
+
+        // 1. Handle Appointment Field
+        // Shows only when status is 'appointment'
+        if (val === 'appointment') {
+            fieldAppt.classList.remove('hidden');
+        } else {
+            fieldAppt.classList.add('hidden');
+        }
+
+        // 2. Handle Visa Upload Field (New)
+        // Shows when status is 'ready' or 'completed'
+        const visaField = document.getElementById('field-visa-upload');
+        if (visaField) { // Check if element exists to avoid errors
+            if (val === 'ready' || val === 'completed') {
+                visaField.classList.remove('hidden');
+            } else {
+                visaField.classList.add('hidden');
+            }
+        }
+    } function updateStatusBadge(status) {
         status_badge.className = `inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold mt-1 ${STATUS_COLORS[status] || 'bg-slate-100 text-slate-600'}`;
         status_badge.textContent = STATUS_LABELS[status] || status;
     }
@@ -1107,5 +1177,28 @@
             }
         }).finally(() => { btn.disabled = false; btn.innerHTML = 'Submit Application'; });
     });
+</script>
+
+<!-- visa doc -->
+<script>
+    function toggleFields() {
+        const val = document.getElementById('status-select').value;
+        const apptField = document.getElementById('field-appointment');
+        const visaField = document.getElementById('field-visa-upload');
+
+        // 1. Appointment Logic
+        if (val === 'appointment') {
+            apptField.classList.remove('hidden');
+        } else {
+            apptField.classList.add('hidden');
+        }
+
+        // 2. Visa Upload Logic (Show if 'ready' or 'completed')
+        if (val === 'ready' || val === 'completed') {
+            visaField.classList.remove('hidden');
+        } else {
+            visaField.classList.add('hidden');
+        }
+    }
 </script>
 {% endblock %}
