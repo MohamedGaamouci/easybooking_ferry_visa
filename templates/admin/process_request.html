@@ -47,7 +47,7 @@
             </span>
         </div>
 
-        {% if req.status == "pending" or req.status == 'new' %}
+        {% if req.status == "pending" or req.status == 'new' or req.status == 'processing'%}
         <div class="flex gap-3">
             <button onclick="reject_offer('{{ req.id }}', this)"
                 class="text-red-600 hover:bg-red-50 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-transparent hover:border-red-200">

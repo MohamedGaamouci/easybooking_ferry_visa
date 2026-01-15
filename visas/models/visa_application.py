@@ -76,6 +76,9 @@ class VisaApplication(models.Model):
         blank=True
     )
 
+    visa_doc = models.FileField(
+        upload_to='visa_uploads/ready/', blank=True, null=True)
+
     class Meta:
         db_table = 'visas_application'
 

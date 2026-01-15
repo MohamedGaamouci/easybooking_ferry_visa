@@ -6,20 +6,52 @@ from .models import CustomUser, Role
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
     # Columns to show in the list
-    list_display = ('email', 'first_name', 'last_name',
-                    'agency', 'role', 'phone', 'is_active')
+    list_display = (
+        'email', 'username', 'first_name', 'last_name',
+        'agency', 'role', 'phone', 'is_active'
+    )
     list_filter = ('agency', 'role', 'is_active')
     search_fields = ('email', 'first_name', 'last_name', 'phone')
     ordering = ('email',)
 
     # Configuration for the "Edit User" form
     fieldsets = (
-        (None, {'fields': ('email', 'password')}),
-        ('Personal Info', {'fields': ('first_name',
-         'last_name', 'phone', 'state', 'address')}),
+        (None, {'fields': ('username', 'email', 'password')}),
+        ('Personal Info', {
+            'fields': ('first_name', 'last_name', 'phone', 'state')
+        }),
+        ('Professional', {
+            'fields': ('agency', 'role')
+        }),
         ('Permissions', {
-         'fields': ('role', 'is_active', 'is_staff', 'is_superuser')}),
-        ('Professional', {'fields': ('agency',)}),  # <--- Our custom field
+            'fields': (
+                'is_active',
+                'is_staff',
+                'is_superuser',
+                'groups',
+                'user_permissions',
+            )
+        }),
+    )
+
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': (
+                'username',
+                'email',
+                'password1',
+                'password2',
+                'first_name',
+                'last_name',
+                'phone',
+                'state',
+                'agency',
+                'role',
+                'is_staff',
+                'is_superuser',
+            ),
+        }),
     )
 
 

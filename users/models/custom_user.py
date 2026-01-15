@@ -18,7 +18,7 @@ class CustomUser(AbstractUser):
     # Platform users have NO agency (Null). Agency users have an agency.
     agency = models.ForeignKey(
         'agencies.Agency',
-        on_delete=models.SET_NULL,
+        on_delete=models.CASCADE,
         related_name='users',
         null=True,
         blank=True

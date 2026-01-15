@@ -734,8 +734,8 @@ def admin_reject_request(request, pk):
     try:
         req = get_object_or_404(FerryRequest, pk=pk)
         data = json.loads(request.body)
-        if data.status in ['confirmed', 'rejected', 'cancelled']:
-            return JsonResponse({"status": 'error', 'message': f'The status is already in {data.status}'})
+        if req.status in ['confirmed', 'rejected', 'cancelled']:
+            return JsonResponse({"status": 'error', 'message': f'The status is already in {req.status}'})
         req.status = 'rejected'
         req.admin_note = data.get('note')
         # You could save 'notes' to a new field in model if needed
