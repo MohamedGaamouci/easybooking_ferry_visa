@@ -215,12 +215,13 @@
 
                     <span class="border-r border-slate-200 h-6 my-auto mx-2"></span>
 
-                    <a href="{% url 'accounting' %}" class="px-3 py-2 text-sm rounded-md transition-colors
-       {% if request.resolver_match.url_name == 'accounting' %}
-           font-bold text-brand-700 bg-brand-50 ring-1 ring-brand-100
-       {% else %}
-           font-medium text-slate-500 hover:text-brand-600 hover:bg-slate-50
-       {% endif %}">
+                    <a href="{% url 'finance:dashboard' %}" class="px-3 py-2 text-sm rounded-md transition-colors
+   
+   {% if request.resolver_match.url_name == 'dashboard' and request.resolver_match.app_name == 'finance' %}
+       font-bold text-brand-700 bg-brand-50 ring-1 ring-brand-100
+   {% else %}
+       font-medium text-slate-500 hover:text-brand-600 hover:bg-slate-50
+   {% endif %}">
                         Accounting
                     </a>
 

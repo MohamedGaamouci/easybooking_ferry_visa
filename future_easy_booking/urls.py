@@ -40,10 +40,6 @@ def dashboard_view(request):
     return render(request, 'client/dashboard.html')
 
 
-def accounting_view(request):
-    return render(request, 'client/accounting.html')
-
-
 def new_ferry_view(request):
     return render(request, 'client/new_ferry.html')
 
@@ -98,7 +94,7 @@ client_urls = [
     path('users/', include('users.urls.client_urls')),
     path('visas/', include('visas.urls.client_urls')),
     path('dashboard/', dashboard_view, name='dashboard'),
-    path('accounting/', accounting_view, name='accounting'),
+    path('accounting/', include('finance.urls.client_urls')),
     path('setting/', setting_view, name='setting'),
 ]
 urlpatterns += client_urls

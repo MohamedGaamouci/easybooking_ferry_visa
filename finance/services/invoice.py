@@ -1,8 +1,11 @@
+from ..models import Invoice
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from ..models import Invoice, InvoiceItem, Transaction, Account
-from .wallet import get_account
+from .wallet import get_account_balance
+
 
 # =========================================================
 # 1. CREATION LOGIC (GATE 1: CREDIT & RESERVATION)
@@ -25,7 +28,7 @@ def create_invoice(agency, items_data, user=None, due_date=None):
 
     with transaction.atomic():
         # 1. GET & LOCK ACCOUNT
-        account = get_account(agency)
+        account = get_account_balance(agency)
         acc_locked = Account.objects.select_for_update().get(id=account.id)
 
         # 2. GATE 1: CHECK OPERATIONAL VOLUME (Credit Limit)
@@ -104,8 +107,10 @@ def pay_invoice(invoice_id, user=None):
             return False, f"Invoice is {invoice.status}, cannot pay."
 
         # 2. Lock Account
-        account = get_account(invoice.agency)
-        acc_locked = Account.objects.select_for_update().get(id=account.id)
+        try:
+            acc_locked = Account.objects.select_for_update().get(agency=invoice.agency)
+        except Account.DoesNotExist:
+            return False, "Agency Account not found."
         amount = invoice.total_amount
 
         # 3. GATE 2: CHECK REAL CASH BALANCE
@@ -157,7 +162,7 @@ def cancel_invoice(invoice_id, user):
             raise ValidationError("Can only cancel unpaid invoices.")
 
         # Release the Hold so they get their Buying Power back
-        account = get_account(invoice.agency)
+        account = get_account_balance(invoice.agency)
         acc_locked = Account.objects.select_for_update().get(id=account.id)
 
         acc_locked.unpaid_hold -= invoice.total_amount
@@ -205,3 +210,86 @@ def auto_settle_invoices(account):
             break
 
     return results
+
+
+# ... (Previous create/pay/cancel functions) ...
+
+# =========================================================
+# 5. SEARCH & FILTER ENGINE
+# =========================================================
+
+
+def search_invoices(agency=None, user=None, search_term=None, status=None, min_amount=None, max_amount=None,
+                    service_type=None, created_after=None, created_before=None,
+                    paid_after=None, paid_before=None, due_date=None):
+    """
+    Master Search Method for Invoices.
+
+    Args:
+        agency (Agency): Filter by specific agency.
+        user (User): Filter by the creator (created_by).
+        search_term (str): Searches Invoice Number OR Item Descriptions.
+        status (str): 'paid', 'unpaid', 'cancelled', 'refunded'.
+        min_amount (decimal): Total amount >= X.
+        max_amount (decimal): Total amount <= X.
+        service_type (str): Searches for specific service keywords (e.g., 'Visa').
+        created_after (date/datetime): Created on or after this date.
+        created_before (date/datetime): Created on or before this date.
+        paid_after (date/datetime): Paid on or after this date.
+        paid_before (date/datetime): Paid on or before this date.
+        due_date (date): Exact due date match.
+    """
+
+    # 1. Start with all (or agency specific)
+    queryset = Invoice.objects.select_related(
+        'agency', 'created_by').prefetch_related('items')
+
+    if agency:
+        queryset = queryset.filter(agency=agency)
+
+    # 2. User Filter (Creator)
+    if user:
+        queryset = queryset.filter(created_by=user)
+
+    # 3. Status Filter
+    if status:
+        queryset = queryset.filter(status=status)
+
+    # 4. Amount Range (Greater/Less Than)
+    if min_amount is not None:
+        queryset = queryset.filter(total_amount__gte=min_amount)
+    if max_amount is not None:
+        queryset = queryset.filter(total_amount__lte=max_amount)
+
+    # 5. Dates Logic
+    # Created At
+    if created_after:
+        queryset = queryset.filter(created_at__gte=created_after)
+    if created_before:
+        queryset = queryset.filter(created_at__lte=created_before)
+
+    # Paid At
+    if paid_after:
+        queryset = queryset.filter(paid_at__gte=paid_after)
+    if paid_before:
+        queryset = queryset.filter(paid_at__lte=paid_before)
+
+    # Due Date (Exact)
+    if due_date:
+        queryset = queryset.filter(due_date=due_date)
+
+    # 6. Service Type (Contextual Search)
+    # Checks if any item inside the invoice matches the description
+    if service_type:
+        queryset = queryset.filter(
+            items__description__icontains=service_type).distinct()
+
+    # 7. General Text Search (Smart Search)
+    # Searches Invoice Number OR inside the Items (e.g., searching "Turkey" finds Visa Turkey invoices)
+    if search_term:
+        queryset = queryset.filter(
+            Q(invoice_number__icontains=search_term) |
+            Q(items__description__icontains=search_term)
+        ).distinct()
+
+    return queryset.order_by('-created_at')

@@ -1,235 +1,786 @@
 {% extends 'client/base_client.html' %}
+{% load humanize %}
 
 {% block content %}
 
-<main class="max-w-7xl mx-auto px-6 pt-24 pb-12 fade-in">
+<main class="max-w-7xl mx-auto px-6 pt-24 pb-12 fade-in" x-data="{ tab: 'invoices', showFilters: false }">
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
 
         <div
-            class="md:col-span-1 bg-gradient-to-br from-brand-900 to-slate-900 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
-            <div class="absolute top-0 right-0 p-6 opacity-10"><i class="ph-fill ph-wallet text-8xl"></i></div>
-            <div class="relative z-10">
-                <p class="text-slate-300 text-sm font-medium mb-1">Available Balance</p>
-                <h2 class="text-4xl font-bold mb-6">€ 2,450.00</h2>
-
-                <div class="flex items-center gap-4 text-xs text-slate-300 border-t border-white/10 pt-4">
-                    <div>
-                        <span class="block text-slate-400">Credit Limit</span>
-                        <span class="font-bold text-white">€ 5,000.00</span>
-                    </div>
-                    <div class="h-8 w-px bg-white/10"></div>
-                    <div>
-                        <span class="block text-slate-400">Blocked</span>
-                        <span class="font-bold text-white">€ 0.00</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="md:col-span-2 grid grid-cols-2 gap-6">
-            <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
-                <div>
-                    <div
-                        class="w-10 h-10 bg-red-50 text-red-600 rounded-full flex items-center justify-center mb-3 text-xl">
-                        <i class="ph-bold ph-trend-down"></i>
-                    </div>
-                    <p class="text-slate-500 text-sm">Spent this Month</p>
-                    <h3 class="text-2xl font-bold text-slate-900">€ 8,240.00</h3>
-                </div>
-                <div class="mt-4">
-                    <span class="text-xs text-green-600 font-medium bg-green-50 px-2 py-1 rounded">+12% vs last
-                        month</span>
-                </div>
-            </div>
-
+            class="md:col-span-1 bg-gradient-to-br from-slate-900 to-brand-900 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden group">
             <div
-                class="bg-brand-50 border border-brand-100 rounded-2xl p-6 flex flex-col justify-center items-center text-center">
-                <div
-                    class="w-12 h-12 bg-white text-brand-600 rounded-full flex items-center justify-center mb-3 text-2xl shadow-sm">
-                    <i class="ph-fill ph-bank"></i>
+                class="absolute -top-12 -right-12 p-6 opacity-10 group-hover:opacity-20 transition-opacity duration-500 transform group-hover:scale-110">
+                <i class="ph-fill ph-wallet text-9xl"></i>
+            </div>
+
+            <div class="relative z-10 flex flex-col h-full justify-between">
+                <div>
+                    <div class="flex items-center gap-2 mb-1">
+                        <div class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
+                        <p class="text-slate-300 text-xs font-bold uppercase tracking-wider">Available Balance</p>
+                    </div>
+                    <h2 class="text-4xl font-bold tracking-tight text-white mb-1" id="display-balance">
+                        {{stats.cash_balance|intcomma }} <span class="text-lg text-slate-400 font-medium">DZD</span>
+                    </h2>
                 </div>
-                <h3 class="font-bold text-brand-900 mb-1">Need more credit?</h3>
-                <p class="text-xs text-brand-700 mb-4 px-4">Upload your bank transfer receipt to top up your wallet
-                    instantly.</p>
-                <button onclick="openTopUpModal()"
-                    class="bg-brand-600 text-white px-6 py-2.5 rounded-lg text-sm font-bold shadow-md hover:bg-brand-700 transition-colors w-full max-w-[200px]">
-                    Request Top-Up
-                </button>
-            </div>
-        </div>
-    </div>
 
-    <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-
-        <div class="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
-            <h3 class="font-bold text-slate-800">Transaction History</h3>
-            <div class="flex gap-2">
-                <button
-                    class="px-3 py-1.5 text-xs font-medium bg-white border border-slate-200 rounded-lg shadow-sm text-slate-700 hover:bg-slate-50">This
-                    Month</button>
-                <button
-                    class="px-3 py-1.5 text-xs font-medium bg-white border border-slate-200 rounded-lg shadow-sm text-slate-700 hover:bg-slate-50"><i
-                        class="ph-bold ph-download-simple"></i> Statement</button>
+                <div class="grid grid-cols-2 gap-4 mt-6 pt-6 border-t border-white/10">
+                    <div>
+                        <span class="block text-slate-400 text-xs mb-0.5">Buying Power</span>
+                        <span class="font-bold text-white text-lg">{{ stats.buying_power|intcomma }}</span>
+                    </div>
+                    <div class="text-right">
+                        <span class="block text-slate-400 text-xs mb-0.5">Held Amount</span>
+                        <span class="font-bold text-yellow-400 text-lg">{{ stats.reserved_amount|intcomma }}</span>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <table class="w-full text-left border-collapse">
-            <thead class="bg-slate-50 text-xs uppercase text-slate-500 font-semibold border-b border-slate-200">
-                <tr>
-                    <th class="px-6 py-4">Date</th>
-                    <th class="px-6 py-4">Description / Reference</th>
-                    <th class="px-6 py-4">Type</th>
-                    <th class="px-6 py-4 text-right">Amount</th>
-                    <th class="px-6 py-4 text-center">Status</th>
-                    <th class="px-6 py-4 text-right">Invoice</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100 text-sm">
+        <div
+            class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col justify-between relative overflow-hidden">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-2">Total Spend</p>
+                    <h3 class="text-3xl font-bold text-slate-900">{{ stats.total_spent|intcomma }} <span
+                            class="text-sm text-slate-400 font-medium">DZD</span></h3>
+                </div>
+                <div class="w-10 h-10 bg-brand-50 text-brand-600 rounded-xl flex items-center justify-center text-xl">
+                    <i class="ph-bold ph-chart-bar"></i>
+                </div>
+            </div>
+            <div class="mt-4">
+                {% if stats.unpaid_invoices_count > 0 %}
+                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-50 border border-red-100">
+                    <i class="ph-fill ph-warning-circle text-red-500"></i>
+                    <span class="text-xs font-bold text-red-700">{{ stats.unpaid_invoices_count }} Unpaid
+                        Invoices</span>
+                </div>
+                {% else %}
+                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-green-50 border border-green-100">
+                    <i class="ph-fill ph-check-circle text-green-500"></i>
+                    <span class="text-xs font-bold text-green-700">All caught up!</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
 
-                <tr class="hover:bg-slate-50 transition-colors">
-                    <td class="px-6 py-4 text-slate-500">Oct 24, 2025</td>
-                    <td class="px-6 py-4">
-                        <div class="font-medium text-slate-900">Ferry Booking - Corsica Linea</div>
-                        <div class="text-xs text-slate-500 font-mono">Ref: #REQ-88290</div>
-                    </td>
-                    <td class="px-6 py-4"><span
-                            class="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded">Purchase</span>
-                    </td>
-                    <td class="px-6 py-4 text-right font-bold text-red-600">- € 320.00</td>
-                    <td class="px-6 py-4 text-center"><i class="ph-fill ph-check-circle text-green-500 text-lg"></i>
-                    </td>
-                    <td class="px-6 py-4 text-right">
-                        <button class="text-slate-400 hover:text-brand-600"><i
-                                class="ph-bold ph-file-pdf text-lg"></i></button>
-                    </td>
-                </tr>
-
-                <tr class="hover:bg-slate-50 transition-colors">
-                    <td class="px-6 py-4 text-slate-500">Oct 20, 2025</td>
-                    <td class="px-6 py-4">
-                        <div class="font-medium text-slate-900">Bank Transfer Deposit</div>
-                        <div class="text-xs text-slate-500 font-mono">ID: #DEP-9921</div>
-                    </td>
-                    <td class="px-6 py-4"><span
-                            class="text-xs font-bold text-green-700 bg-green-100 px-2 py-1 rounded">Top Up</span>
-                    </td>
-                    <td class="px-6 py-4 text-right font-bold text-green-600">+ € 1,000.00</td>
-                    <td class="px-6 py-4 text-center"><i class="ph-fill ph-check-circle text-green-500 text-lg"></i>
-                    </td>
-                    <td class="px-6 py-4 text-right">
-                        <button class="text-slate-400 hover:text-brand-600"><i
-                                class="ph-bold ph-file-pdf text-lg"></i></button>
-                    </td>
-                </tr>
-
-                <tr class="hover:bg-slate-50 transition-colors">
-                    <td class="px-6 py-4 text-slate-500">Oct 18, 2025</td>
-                    <td class="px-6 py-4">
-                        <div class="font-medium text-slate-900">Ferry Booking - GNV</div>
-                        <div class="text-xs text-slate-500 font-mono">Ref: #REQ-88100</div>
-                    </td>
-                    <td class="px-6 py-4"><span
-                            class="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded">Purchase</span>
-                    </td>
-                    <td class="px-6 py-4 text-right font-bold text-red-600">- € 450.00</td>
-                    <td class="px-6 py-4 text-center"><i class="ph-fill ph-check-circle text-green-500 text-lg"></i>
-                    </td>
-                    <td class="px-6 py-4 text-right">
-                        <button class="text-slate-400 hover:text-brand-600"><i
-                                class="ph-bold ph-file-pdf text-lg"></i></button>
-                    </td>
-                </tr>
-
-                <tr class="hover:bg-slate-50 transition-colors bg-yellow-50/30">
-                    <td class="px-6 py-4 text-slate-500">Oct 15, 2025</td>
-                    <td class="px-6 py-4">
-                        <div class="font-medium text-slate-900">Cash Deposit (Agency)</div>
-                        <div class="text-xs text-slate-500 font-mono">ID: #DEP-9900</div>
-                    </td>
-                    <td class="px-6 py-4"><span
-                            class="text-xs font-bold text-green-700 bg-green-100 px-2 py-1 rounded">Top Up</span>
-                    </td>
-                    <td class="px-6 py-4 text-right font-bold text-slate-400">+ € 500.00</td>
-                    <td class="px-6 py-4 text-center">
-                        <span
-                            class="bg-yellow-100 text-yellow-700 text-[10px] px-2 py-0.5 rounded font-bold uppercase">Pending</span>
-                    </td>
-                    <td class="px-6 py-4 text-right">--</td>
-                </tr>
-
-            </tbody>
-        </table>
+        <div
+            class="bg-slate-50 border border-slate-200 rounded-2xl p-6 flex flex-col justify-center items-center text-center relative">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-400 to-brand-600"></div>
+            <div
+                class="w-12 h-12 bg-white text-brand-600 rounded-full flex items-center justify-center mb-3 text-2xl shadow-sm border border-slate-100">
+                <i class="ph-duotone ph-bank"></i>
+            </div>
+            <h3 class="font-bold text-slate-900 mb-1">Low on funds?</h3>
+            <p class="text-xs text-slate-500 mb-5 px-4">Upload a receipt to instantly request a wallet top-up.</p>
+            <button onclick="openTopUpModal()"
+                class="w-full bg-brand-600 hover:bg-brand-700 text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-brand-600/20 transition-all transform hover:-translate-y-0.5">
+                <i class="ph-bold ph-plus mr-1"></i> Request Top-Up
+            </button>
+        </div>
     </div>
 
+    {% if pending_topups %}
+    <div
+        class="mb-8 bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3 shadow-sm animate-pulse-slow">
+        <div class="mt-0.5 bg-amber-100 p-1.5 rounded-full text-amber-600">
+            <i class="ph-fill ph-clock text-lg"></i>
+        </div>
+        <div>
+            <h4 class="text-sm font-bold text-amber-900">Pending Requests</h4>
+            <div class="space-y-1 mt-1">
+                {% for req in pending_topups %}
+                <p class="text-xs text-amber-800">
+                    Requesting <span class="font-mono font-bold">{{ req.amount|intcomma }} DZD</span>
+                    via {{ req.reference_number|default:"Cash" }}
+                    <span class="opacity-60 ml-1">({{ req.created_at|timesince }} ago)</span>
+                </p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col">
+
+        <div class="border-b border-slate-200 bg-slate-50/50 p-1">
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-2">
+
+                <div class="flex bg-slate-200/50 p-1 rounded-xl w-fit">
+                    <button @click="tab = 'invoices'"
+                        :class="{'bg-white text-brand-700 shadow-sm ring-1 ring-black/5': tab === 'invoices', 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50': tab !== 'invoices'}"
+                        class="px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-2">
+                        <i class="ph-bold ph-receipt"></i> Invoices
+                        {% if stats.unpaid_invoices_count > 0 %}
+                        <span class="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">
+                            {{ stats.unpaid_invoices_count }}</span>
+                        {% endif %}
+                    </button>
+                    <button @click="tab = 'transactions'"
+                        :class="{'bg-white text-brand-700 shadow-sm ring-1 ring-black/5': tab === 'transactions', 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50': tab !== 'transactions'}"
+                        class="px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-2">
+                        <i class="ph-bold ph-arrows-left-right"></i> History
+                    </button>
+                </div>
+
+                <div class="flex items-center gap-2 w-full lg:w-auto">
+                    <div class="relative w-full lg:w-64 group">
+                        <i
+                            class="ph-bold ph-magnifying-glass absolute left-3 top-2.5 text-slate-400 group-focus-within:text-brand-500 transition-colors"></i>
+                        <input type="text" id="searchInput" placeholder="Search ID, service, amount..."
+                            class="pl-9 pr-4 py-2.5 text-xs font-medium bg-white border border-slate-300 rounded-xl shadow-sm focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none w-full transition-all">
+                    </div>
+                    <button @click="showFilters = !showFilters"
+                        :class="{'bg-brand-50 border-brand-200 text-brand-600': showFilters, 'bg-white border-slate-300 text-slate-600': !showFilters}"
+                        class="px-3 py-2.5 border rounded-xl shadow-sm hover:bg-slate-50 transition-colors flex items-center gap-2">
+                        <i class="ph-bold ph-faders"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div x-show="showFilters" x-collapse style="display: none;"
+                class="border-t border-slate-200 bg-slate-50 p-4">
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">From Date</label>
+                        <input type="date" id="filterDateFrom" onchange="triggerSearch()"
+                            class="w-full text-xs border border-slate-300 rounded-lg p-2 focus:ring-1 focus:ring-brand-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">To Date</label>
+                        <input type="date" id="filterDateTo" onchange="triggerSearch()"
+                            class="w-full text-xs border border-slate-300 rounded-lg p-2 focus:ring-1 focus:ring-brand-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Min Amount</label>
+                        <input type="number" id="filterMin" placeholder="0.00" onkeyup="triggerSearch()"
+                            class="w-full text-xs border border-slate-300 rounded-lg p-2 focus:ring-1 focus:ring-brand-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Max Amount</label>
+                        <input type="number" id="filterMax" placeholder="Max" onkeyup="triggerSearch()"
+                            class="w-full text-xs border border-slate-300 rounded-lg p-2 focus:ring-1 focus:ring-brand-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Status</label>
+                        <select id="filterStatus" onchange="triggerSearch()"
+                            class="w-full text-xs border border-slate-300 rounded-lg p-2 bg-white focus:ring-1 focus:ring-brand-500 outline-none">
+                            <option value="">All Statuses</option>
+                            <option value="unpaid">Unpaid Only</option>
+                            <option value="paid">Paid Only</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="relative min-h-[300px]">
+            <div id="loadingIndicator"
+                class="absolute inset-0 bg-white/60 backdrop-blur-[1px] z-10 hidden flex items-center justify-center">
+                <div class="flex flex-col items-center">
+                    <i class="ph-bold ph-spinner animate-spin text-3xl text-brand-600"></i>
+                </div>
+            </div>
+
+            <div x-show="tab === 'invoices'" class="fade-in">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead
+                            class="bg-slate-50 text-xs uppercase text-slate-500 font-bold border-b border-slate-200 tracking-wider">
+                            <tr>
+                                <th class="px-6 py-4">Invoice ID</th>
+                                <th class="px-6 py-4">Created</th>
+                                <th class="px-6 py-4">Total Amount</th>
+                                <th class="px-6 py-4 text-center">Status</th>
+                                <th class="px-6 py-4 text-right">Receipt</th>
+                            </tr>
+                        </thead>
+                        <tbody id="invoice-body" class="divide-y divide-slate-100 text-sm">
+                            {% for invoice in invoices %}
+                            <tr onclick="openInvoiceModal({{ invoice.id }})"
+                                class="group hover:bg-slate-50 transition-colors">
+                                <td class="px-6 py-4">
+                                    <span
+                                        class="font-mono font-bold text-slate-900 bg-slate-100 px-2 py-1 rounded text-xs">#
+                                        {{invoice.invoice_number }}</span>
+                                </td>
+                                <td class="px-6 py-4 text-slate-500 text-xs font-medium">
+                                    {{ invoice.created_at|date:"M d, Y" }}</td>
+                                <td class="px-6 py-4 font-bold text-slate-900 tabular-nums">
+                                    {{invoice.total_amount|intcomma }} <span
+                                        class="text-[10px] text-slate-400 font-normal">DZD</span></td>
+                                <td class="px-6 py-4 text-center">
+                                    {% if invoice.status == 'unpaid' %}
+                                    <span
+                                        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-red-50 text-red-700 border border-red-100 uppercase tracking-wide">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span> Unpaid
+                                    </span>
+                                    {% elif invoice.status == 'paid' %}
+                                    <span
+                                        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-green-50 text-green-700 border border-green-100 uppercase tracking-wide">
+                                        <i class="ph-bold ph-check text-green-600"></i> Paid
+                                    </span>
+                                    {% else %}
+                                    <span
+                                        class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200 uppercase tracking-wide">
+                                        {{ invoice.status }}
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <button
+                                        class="text-slate-400 hover:text-brand-600 transition-colors p-2 hover:bg-brand-50 rounded-lg">
+                                        <i class="ph-bold ph-download-simple text-lg"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="px-6 py-16 text-center text-slate-400">
+                                    <div class="flex flex-col items-center">
+                                        <div
+                                            class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-3 text-2xl text-slate-300">
+                                            <i class="ph-duotone ph-receipt"></i>
+                                        </div>
+                                        <p class="font-medium">No invoices found</p>
+                                        <p class="text-xs opacity-60">Try adjusting your filters</p>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div x-show="tab === 'transactions'" style="display: none;" class="fade-in">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead
+                            class="bg-slate-50 text-xs uppercase text-slate-500 font-bold border-b border-slate-200 tracking-wider">
+                            <tr>
+                                <th class="px-6 py-4">Date</th>
+                                <th class="px-6 py-4">Description</th>
+                                <th class="px-6 py-4">Type</th>
+                                <th class="px-6 py-4 text-right">Amount</th>
+                                <th class="px-6 py-4 text-center">Balance</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transaction-body" class="divide-y divide-slate-100 text-sm">
+                            {% for t in transactions %}
+                            <tr class="group hover:bg-slate-50 transition-colors">
+                                <td class="px-6 py-4 text-slate-500 whitespace-nowrap">
+                                    <span class="font-medium text-slate-700 block">
+                                        {{ t.created_at|date:"M d, Y" }}</span>
+                                    <span class="text-[10px] text-slate-400">{{ t.created_at|time:"H:i" }}</span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="font-bold text-slate-800">{{ t.description }}</div>
+                                    <div class="text-xs text-slate-400 font-mono mt-0.5">
+                                        {% if t.invoice %} Ref: #{{ t.invoice.invoice_number }}
+                                        {% elif t.top_up %} Ref: #{{ t.top_up.reference_number|default:"CASH" }}
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    {% if t.transaction_type == 'deposit' %}
+                                    <span
+                                        class="text-[10px] font-bold text-green-700 bg-green-50 border border-green-100 px-2 py-1 rounded uppercase">Top
+                                        Up</span>
+                                    {% elif t.transaction_type == 'refund' %}
+                                    <span
+                                        class="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-100 px-2 py-1 rounded uppercase">Refund</span>
+                                    {% else %}
+                                    <span
+                                        class="text-[10px] font-bold text-slate-500 bg-slate-100 border border-slate-200 px-2 py-1 rounded uppercase">Payment</span>
+                                    {% endif %}
+                                </td>
+                                <td
+                                    class="px-6 py-4 text-right font-bold tabular-nums {% if t.amount > 0 %}text-green-600{% else %}text-slate-800{% endif %}">
+                                    {% if t.amount > 0 %}+{% endif %}{{ t.amount|intcomma }}
+                                </td>
+                                <td class="px-6 py-4 text-center font-mono text-xs text-slate-500 tabular-nums">
+                                    {{ t.balance_after|intcomma }}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="px-6 py-16 text-center text-slate-400">
+                                    <div class="flex flex-col items-center">
+                                        <div
+                                            class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-3 text-2xl text-slate-300">
+                                            <i class="ph-duotone ph-list-dashes"></i>
+                                        </div>
+                                        <p class="font-medium">No transactions found</p>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
 </main>
 
 <div id="topup-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
-    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeTopUpModal()">
-    </div>
-    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 fade-in">
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeTopUpModal()"></div>
+    <div
+        class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 fade-in transform transition-all scale-100">
 
-        <div class="flex justify-between items-center mb-6">
-            <h3 class="text-lg font-bold text-slate-900">Request Top-Up</h3>
-            <button onclick="closeTopUpModal()" class="text-slate-400 hover:text-slate-600"><i
-                    class="ph-bold ph-x text-lg"></i></button>
+        <div class="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
+            <div>
+                <h3 class="text-xl font-bold text-slate-900">Request Top-Up</h3>
+                <p class="text-xs text-slate-500">Add funds to your agency wallet</p>
+            </div>
+            <button onclick="closeTopUpModal()"
+                class="w-8 h-8 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-500 flex items-center justify-center transition-colors">
+                <i class="ph-bold ph-x"></i>
+            </button>
         </div>
 
-        <form onsubmit="event.preventDefault(); submitTopUp();" class="space-y-4">
+        <form id="topupForm" class="space-y-5">
+            {% csrf_token %}
             <div>
-                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Amount to Add</label>
-                <div class="relative">
-                    <span class="absolute left-3 top-2.5 text-slate-400 font-bold">€</span>
-                    <input type="number"
-                        class="w-full border border-slate-300 rounded-lg py-2 pl-8 pr-4 focus:ring-2 focus:ring-brand-500 outline-none font-bold text-slate-900"
+                <label class="block text-xs font-bold text-slate-700 uppercase mb-1.5">Amount to Add</label>
+                <div class="relative group">
+                    <span
+                        class="absolute left-3 top-3 text-slate-400 font-bold group-focus-within:text-brand-600">DZD</span>
+                    <input type="number" name="amount" required step="0.01"
+                        class="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-12 pr-4 focus:ring-2 focus:ring-brand-500 focus:bg-white outline-none font-bold text-slate-900 text-lg transition-all"
                         placeholder="0.00">
                 </div>
             </div>
 
             <div>
-                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Payment Method</label>
-                <select class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white">
-                    <option>Bank Transfer (CCP/BNA/AGB)</option>
-                    <option>Cash Deposit at Office</option>
-                </select>
+                <label class="block text-xs font-bold text-slate-700 uppercase mb-1.5">Payment Reference</label>
+                <input type="text" name="reference" placeholder="e.g. CCP Trans 990212"
+                    class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all">
             </div>
 
             <div>
-                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Upload Receipt</label>
-                <div
-                    class="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:bg-slate-50 transition-colors cursor-pointer">
-                    <i class="ph-duotone ph-upload-simple text-3xl text-slate-400 mb-2"></i>
-                    <p class="text-xs text-slate-500">Click to upload photo or PDF</p>
+                <label class="block text-xs font-bold text-slate-700 uppercase mb-1.5">Upload Receipt</label>
+                <div class="relative group">
+                    <input type="file" name="receipt_image" required id="fileInput"
+                        class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                        onchange="updateFileName(this)">
+                    <div
+                        class="border-2 border-dashed border-slate-300 group-hover:border-brand-400 group-hover:bg-brand-50/50 rounded-xl p-6 text-center transition-all">
+                        <div
+                            class="w-12 h-12 bg-white rounded-full shadow-sm flex items-center justify-center mx-auto mb-3 text-brand-600">
+                            <i class="ph-duotone ph-upload-simple text-2xl"></i>
+                        </div>
+                        <p id="fileNameDisplay" class="text-sm font-medium text-slate-600">Click to upload photo or PDF
+                        </p>
+                        <p class="text-[10px] text-slate-400 mt-1">Max file size 5MB</p>
+                    </div>
                 </div>
             </div>
 
             <div class="pt-2">
-                <button type="submit"
-                    class="w-full bg-brand-600 text-white font-bold py-3 rounded-lg shadow-md hover:bg-brand-700 transition-colors">
+                <button type="button" onclick="submitTopUpAJAX()"
+                    class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-brand-600/20 hover:shadow-brand-600/30 transition-all transform hover:-translate-y-0.5">
                     Submit Request
                 </button>
             </div>
         </form>
-
     </div>
 </div>
 
+<!-- modal -->
+<div id="invoice-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeInvoiceModal()">
+    </div>
+
+    <div
+        class="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden fade-in transform transition-all scale-100 flex flex-col max-h-[90vh]">
+
+        <div class="bg-slate-50 border-b border-slate-100 p-6 flex justify-between items-start">
+            <div>
+                <p class="text-xs font-bold text-slate-500 uppercase mb-1">Invoice Details</p>
+                <h3 class="text-2xl font-bold text-slate-900 flex items-center gap-3">
+                    <span id="modal-inv-number">Loading...</span>
+                    <span id="modal-inv-status"
+                        class="text-xs px-2 py-1 rounded-full bg-slate-200 text-slate-600 uppercase tracking-wide">...</span>
+                </h3>
+            </div>
+            <button onclick="closeInvoiceModal()"
+                class="w-8 h-8 rounded-full bg-white border border-slate-200 hover:bg-slate-50 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-colors">
+                <i class="ph-bold ph-x"></i>
+            </button>
+        </div>
+
+        <div class="p-6 overflow-y-auto">
+            <div class="flex gap-8 mb-8 text-sm">
+                <div>
+                    <span class="block text-slate-400 text-xs font-medium">Issue Date</span>
+                    <span class="font-bold text-slate-700" id="modal-inv-date">-</span>
+                </div>
+                <div>
+                    <span class="block text-slate-400 text-xs font-medium">Due Date</span>
+                    <span class="font-bold text-slate-700" id="modal-inv-due">-</span>
+                </div>
+            </div>
+
+            <table class="w-full text-left text-sm border-collapse mb-6">
+                <thead class="bg-slate-50 text-xs uppercase text-slate-500 font-semibold">
+                    <tr>
+                        <th class="px-4 py-3 rounded-l-lg">Description</th>
+                        <th class="px-4 py-3 text-right rounded-r-lg">Amount</th>
+                    </tr>
+                </thead>
+                <tbody id="modal-items-list" class="divide-y divide-slate-100">
+                </tbody>
+                <tfoot class="border-t-2 border-slate-100">
+                    <tr>
+                        <td class="px-4 py-4 text-right font-bold text-slate-500 uppercase text-xs">Total</td>
+                        <td class="px-4 py-4 text-right text-xl font-bold text-slate-900" id="modal-inv-total">0.00 DZD
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <div class="p-4 border-t border-slate-100 bg-slate-50 flex justify-between items-center">
+
+            <div id="modal-payment-section">
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="printInvoiceFromModal()"
+                    class="px-4 py-2 text-sm font-bold text-slate-600 hover:text-slate-900 flex items-center gap-2">
+                    <i class="ph-bold ph-printer"></i> Print
+                </button>
+                <a id="modal-download-btn" href="#" target="_blank"
+                    class="px-4 py-2 text-sm font-bold text-brand-600 hover:text-brand-700 bg-brand-50 hover:bg-brand-100 rounded-lg flex items-center gap-2 transition-colors">
+                    <i class="ph-bold ph-download-simple"></i> Download PDF
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="//unpkg.com/alpinejs" defer></script>
 <script>
-    function openTopUpModal() {
-        document.getElementById('topup-modal').classList.remove('hidden');
+    // --- 1. MODAL LOGIC ---
+    function openTopUpModal() { document.getElementById('topup-modal').classList.remove('hidden'); }
+    function closeTopUpModal() { document.getElementById('topup-modal').classList.add('hidden'); }
+    function updateFileName(input) {
+        if (input.files && input.files[0]) {
+            const name = input.files[0].name;
+            document.getElementById('fileNameDisplay').innerText = name.length > 25 ? name.substring(0, 25) + '...' : name;
+            document.getElementById('fileNameDisplay').classList.add('text-brand-600', 'font-bold');
+        }
     }
-    function closeTopUpModal() {
-        document.getElementById('topup-modal').classList.add('hidden');
+
+    // --- 2. TOP UP AJAX ---
+    function submitTopUpAJAX() {
+        const form = document.getElementById('topupForm');
+        const btn = form.querySelector('button');
+        const originalText = btn.innerText;
+
+        if (!form.checkValidity()) { form.reportValidity(); return; }
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Sending...';
+
+        const formData = new FormData(form);
+        fetch("{% url 'finance:submit_topup_ajax' %}", { method: 'POST', body: formData, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(r => r.json()).then(d => {
+                if (d.status === 'success') {
+                    btn.innerHTML = '<i class="ph-bold ph-check"></i> Sent!';
+                    btn.classList.replace('bg-brand-600', 'bg-green-600');
+                    setTimeout(() => { closeTopUpModal(); window.location.reload(); }, 1000);
+                } else {
+                    alert("Error: " + d.msg);
+                    btn.disabled = false; btn.innerText = originalText;
+                }
+            }).catch(e => { console.error(e); alert("Server Error"); btn.disabled = false; btn.innerText = originalText; });
     }
-    function submitTopUp() {
-        const btn = document.querySelector('#topup-modal button[type="submit"]');
-        btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Submitting...';
-        setTimeout(() => {
-            alert("Top-up request sent! Admin will validate shortly.");
-            closeTopUpModal();
-            btn.innerHTML = 'Submit Request'; // Reset
-        }, 1000);
+
+    // --- 3. LIVE SEARCH & FILTER ENGINE ---
+    let searchTimeout;
+    const inputs = ['searchInput', 'filterStatus', 'filterDateFrom', 'filterDateTo', 'filterMin', 'filterMax'];
+
+    // Attach listeners to all filter inputs
+    inputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', triggerSearch);
+            el.addEventListener('change', triggerSearch); // For dates/selects
+        }
+    });
+
+    function triggerSearch() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(performSearch, 400); // 400ms debounce
+    }
+
+    function performSearch() {
+        // Gather values
+        const params = new URLSearchParams();
+        params.append('q', document.getElementById('searchInput').value);
+        params.append('status', document.getElementById('filterStatus').value);
+        params.append('date_from', document.getElementById('filterDateFrom').value);
+        params.append('date_to', document.getElementById('filterDateTo').value);
+        params.append('min_amount', document.getElementById('filterMin').value);
+        params.append('max_amount', document.getElementById('filterMax').value);
+
+        const url = "{% url 'finance:dashboard' %}?" + params.toString();
+
+        // Show Loading
+        const loader = document.getElementById('loadingIndicator');
+        loader.classList.remove('hidden');
+
+        fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    rebuildInvoices(data.invoices);
+                    rebuildTransactions(data.transactions);
+                }
+            })
+            .finally(() => {
+                // Hide Loading
+                setTimeout(() => loader.classList.add('hidden'), 200); // Short delay for smoothness
+            });
+    }
+
+    function rebuildInvoices(items) {
+        const tbody = document.getElementById('invoice-body');
+        tbody.innerHTML = '';
+
+        if (items.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-16 text-center text-slate-400">
+                <div class="flex flex-col items-center">
+                    <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-3 text-2xl text-slate-300"><i class="ph-duotone ph-receipt"></i></div>
+                    <p class="font-medium">No invoices found</p>
+                </div>
+            </td></tr>`;
+            return;
+        }
+
+        items.forEach(item => {
+            let statusHTML = '';
+            if (item.status === 'unpaid') {
+                statusHTML = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-red-50 text-red-700 border border-red-100 uppercase tracking-wide"><span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span> Unpaid</span>`;
+            } else if (item.status === 'paid') {
+                statusHTML = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-green-50 text-green-700 border border-green-100 uppercase tracking-wide"><i class="ph-bold ph-check text-green-600"></i> Paid</span>`;
+            } else {
+                statusHTML = `<span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200 uppercase tracking-wide">${item.status_display}</span>`;
+            }
+
+            tbody.innerHTML += `
+                <tr class="group hover:bg-slate-50 transition-colors">
+                    <td class="px-6 py-4"><span class="font-mono font-bold text-slate-900 bg-slate-100 px-2 py-1 rounded text-xs">#${item.number}</span></td>
+                    <td class="px-6 py-4 text-slate-500 text-xs font-medium">${item.date}</td>
+                    <td class="px-6 py-4 font-bold text-slate-900 tabular-nums">${item.amount} <span class="text-[10px] text-slate-400 font-normal">DZD</span></td>
+                    <td class="px-6 py-4 text-center">${statusHTML}</td>
+                    <td class="px-6 py-4 text-right"><button class="text-slate-400 hover:text-brand-600 transition-colors p-2 hover:bg-brand-50 rounded-lg"><i class="ph-bold ph-download-simple text-lg"></i></button></td>
+                </tr>`;
+        });
+    }
+
+    function rebuildTransactions(items) {
+        const tbody = document.getElementById('transaction-body');
+        tbody.innerHTML = '';
+
+        if (items.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-16 text-center text-slate-400">
+                <div class="flex flex-col items-center">
+                    <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-3 text-2xl text-slate-300"><i class="ph-duotone ph-list-dashes"></i></div>
+                    <p class="font-medium">No transactions found</p>
+                </div>
+            </td></tr>`;
+            return;
+        }
+
+        items.forEach(item => {
+            let typeBadge = '';
+            if (item.type === 'deposit') typeBadge = '<span class="text-[10px] font-bold text-green-700 bg-green-50 border border-green-100 px-2 py-1 rounded uppercase">Top Up</span>';
+            else if (item.type === 'refund') typeBadge = '<span class="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-100 px-2 py-1 rounded uppercase">Refund</span>';
+            else typeBadge = '<span class="text-[10px] font-bold text-slate-500 bg-slate-100 border border-slate-200 px-2 py-1 rounded uppercase">Payment</span>';
+
+            const amountClass = item.amount_is_positive ? 'text-green-600' : 'text-slate-800';
+            const sign = item.amount_is_positive ? '+' : '';
+
+            tbody.innerHTML += `
+                <tr class="group hover:bg-slate-50 transition-colors">
+                    <td class="px-6 py-4 text-slate-500 whitespace-nowrap"><span class="font-medium text-slate-700 block">${item.date}</span><span class="text-[10px] text-slate-400">${item.time}</span></td>
+                    <td class="px-6 py-4"><div class="font-bold text-slate-800">${item.description}</div><div class="text-xs text-slate-400 font-mono mt-0.5">${item.ref}</div></td>
+                    <td class="px-6 py-4">${typeBadge}</td>
+                    <td class="px-6 py-4 text-right font-bold tabular-nums ${amountClass}">${sign}${item.amount}</td>
+                    <td class="px-6 py-4 text-center font-mono text-xs text-slate-500 tabular-nums">${item.balance_after}</td>
+                </tr>`;
+        });
     }
 </script>
+<!-- invoice logic -->
+<script>
+    // --- 4. INVOICE MODAL LOGIC (NEW) ---
+    function openInvoiceModal(id) {
+        const modal = document.getElementById('invoice-modal');
+        modal.classList.remove('hidden');
+
+        // Reset UI to loading state
+        document.getElementById('modal-inv-number').innerText = 'Loading...';
+        document.getElementById('modal-items-list').innerHTML = '<tr><td colspan="2" class="p-4 text-center text-slate-400 italic">Fetching details...</td></tr>';
+
+        // We set the href directly to our Django View
+        document.getElementById('modal-download-btn').href = `/accounting/invoice/${id}/pdf/`;
+
+        // Fetch Data
+        fetch(`/accounting/api/invoice/${id}/details/`) // Make sure this matches your URL pattern structure
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const inv = data.invoice;
+
+                    // Fill Header
+                    document.getElementById('modal-inv-number').innerText = '#' + inv.number;
+                    document.getElementById('modal-inv-date').innerText = inv.date;
+                    document.getElementById('modal-inv-due').innerText = inv.due_date;
+                    document.getElementById('modal-inv-total').innerText = inv.total + ' DZD';
+
+                    // --- NEW: PAYMENT BUTTON LOGIC ---
+                    const paySection = document.getElementById('modal-payment-section');
+
+                    if (inv.status === 'unpaid') {
+                        paySection.innerHTML = `
+                        <button onclick="payInvoiceAJAX(${id})" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg text-sm font-bold shadow-md shadow-green-600/20 transition-all flex items-center gap-2">
+                            <i class="ph-bold ph-wallet"></i> Pay Now (${inv.total})
+                        </button>
+                    `;
+                    } else if (inv.status === 'paid') {
+                        paySection.innerHTML = `
+                        <div class="flex items-center gap-2 text-green-700 font-bold text-sm bg-green-50 px-3 py-1.5 rounded-lg border border-green-100">
+                            <i class="ph-fill ph-check-circle"></i> Paid on ${inv.date}
+                        </div>
+                    `;
+                    } else {
+                        paySection.innerHTML = ''; // Cancelled/Refunded
+                    }
+
+                    // Status Badge Logic
+                    const statusEl = document.getElementById('modal-inv-status');
+                    statusEl.innerText = inv.status;
+                    if (inv.status === 'paid') statusEl.className = "text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 font-bold uppercase tracking-wide";
+                    else if (inv.status === 'unpaid') statusEl.className = "text-xs px-2 py-1 rounded-full bg-red-100 text-red-700 font-bold uppercase tracking-wide";
+                    else statusEl.className = "text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-600 font-bold uppercase tracking-wide";
+
+                    // Build Items
+                    const tbody = document.getElementById('modal-items-list');
+                    tbody.innerHTML = '';
+                    data.items.forEach(item => {
+                        tbody.innerHTML += `
+                        <tr>
+                            <td class="px-4 py-3 text-slate-700 font-medium">
+                                ${item.description}
+                                <span class="block text-[10px] text-slate-400 font-normal">Service ID: ${item.service}</span>
+                            </td>
+                            <td class="px-4 py-3 text-right font-bold text-slate-900">${item.amount}</td>
+                        </tr>
+                    `;
+                    });
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Failed to load invoice details.");
+                closeInvoiceModal();
+            });
+    }
+
+    function closeInvoiceModal() {
+        document.getElementById('invoice-modal').classList.add('hidden');
+    }
+
+    // --- UPDATE: Modify rebuildInvoices to add onclick events ---
+    function rebuildInvoices(items) {
+        const tbody = document.getElementById('invoice-body');
+        tbody.innerHTML = '';
+
+        if (items.length === 0) {
+            tbody.innerHTML = `... (Keep your existing empty state) ...`;
+            return;
+        }
+
+        items.forEach(item => {
+            // ... (Keep your existing status logic) ...
+
+            // NOTE: We added onclick="openInvoiceModal(${item.id})" to the TR
+            tbody.innerHTML += `
+                <tr onclick="openInvoiceModal(${item.id})" class="group hover:bg-slate-50 transition-colors cursor-pointer">
+                   </tr>`;
+        });
+    }
+    // 2. NEW PRINT FUNCTION
+    function printInvoiceFromModal() {
+        // We open the PDF link in a new window, which triggers the browser's PDF viewer
+        // This is much cleaner than trying to print the modal HTML directly.
+        const url = document.getElementById('modal-download-btn').href;
+        if (url && url !== '#') {
+            window.open(url, '_blank').print();
+        } else {
+            alert("Invoice loading... please wait.");
+        }
+    }
+
+
+    // 2. NEW: PAY FUNCTION
+    function payInvoiceAJAX(id) {
+        if (!confirm("Are you sure you want to pay this invoice with your wallet balance?")) return;
+
+        const btn = document.querySelector('#modal-payment-section button');
+        const originalContent = btn.innerHTML;
+
+        // Loading State
+        btn.disabled = true;
+        btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Processing...';
+
+        // CSRF Token is needed for POST requests
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        fetch(`/accounting/api/invoice/${id}/pay/`, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': csrfToken
+            }
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Success UI
+                    btn.className = "bg-green-600 text-white px-5 py-2 rounded-lg text-sm font-bold flex items-center gap-2 cursor-default";
+                    btn.innerHTML = '<i class="ph-bold ph-check"></i> Paid Successfully!';
+
+                    // Refresh Page Data after 1 second
+                    setTimeout(() => {
+                        closeInvoiceModal();
+                        // Optional: Call performSearch() instead of reload to stay on same page state
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    // Error UI
+                    alert("Payment Failed: " + data.msg);
+                    btn.disabled = false;
+                    btn.innerHTML = originalContent;
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Server connection error.");
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
+            });
+    }
+</script>
+
 
 {% endblock %}

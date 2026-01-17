@@ -32,4 +32,4 @@ class TopUpRequest(models.Model):
         db_table = 'finance_top_up_request'
 
     def __str__(self):
-        return f"{self.agency} - {self.amount} DZD ({self.status})"
+        return f"{self.account.agency} - {self.amount} DZD ({self.status})"
