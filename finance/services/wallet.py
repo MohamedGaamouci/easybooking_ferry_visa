@@ -19,50 +19,27 @@ def execute_transaction(
 ):
     """
     The Single Source of Truth for moving money.
-    - Locks the account row (thread-safety).
-    - Checks for sufficient funds (if spending).
-    - Updates the balance.
-    - Creates the Audit Log (Transaction record).
 
-    Args:
-        account_id (int): The ID of the wallet/account.
-        amount (Decimal): Positive for Deposits, Negative for Payments.
-        trans_type (str): 'deposit', 'payment', 'refund', or 'adjustment'.
-        description (str): Human readable note.
-        user (User): The admin or agent performing the action.
-        related_invoice (Invoice): Optional link.
-        related_topup (TopUpRequest): Optional link.
-
-    Returns:
-        Transaction: The created transaction object.
+    STRICT MODE UPDATE:
+    - Deposits (Positive): Always allowed.
+    - Payments (Negative): Only allowed if Balance stays >= 0.
+    - Credit Limits are IGNORED here (they are handled in Invoice Creation).
     """
 
-    # START ATOMIC BLOCK
-    # (Either everything succeeds, or nothing changes)
     with transaction.atomic():
-
         # 1. LOCK THE ROW
-        # select_for_update() ensures no one else can modify this specific
-        # account until this function finishes. Prevents "Race Conditions".
         try:
             acc_locked = Account.objects.select_for_update().get(id=account_id)
         except Account.DoesNotExist:
             raise ValidationError("Account not found.")
 
-        # 2. CHECK FUNDS (Only for money leaving the account)
+        # 2. CHECK FUNDS (Strict Cash Rule)
+        # If money is leaving, we must have enough REAL CASH.
         if amount < 0:
-            # Calculate what the balance would be
-            future_balance = acc_locked.balance + amount
-
-            # Check against Credit Limit
-            # Example: Balance 0, Limit 50000. Available = 50000.
-            # Spend -60000 -> Future -60000. Limit is -50000. FAIL.
-            limit_threshold = -acc_locked.credit_limit
-
-            if future_balance < limit_threshold:
+            if acc_locked.balance + amount < 0:
                 raise ValidationError(
-                    f"Insufficient funds. Transaction declined. "
-                    f"Available Limit: {acc_locked.balance + acc_locked.credit_limit} DZD"
+                    f"Insufficient Cash Funds. "
+                    f"Balance: {acc_locked.balance} | Required: {abs(amount)}"
                 )
 
         # 3. UPDATE BALANCE
@@ -86,33 +63,19 @@ def execute_transaction(
 
 
 # =========================================================
-# 2. HELPER SERVICES (Getters & Checks)
+# 2. HELPER SERVICES
 # =========================================================
 
 def get_account_balance(agency):
     """
-    Quickly get the balance for an Agency object.
-    Creates an account if one doesn't exist (Safety net).
+    Quickly get the balance. Auto-heals if account is missing.
     """
     if hasattr(agency, 'account'):
         return agency.account.balance
     else:
-        # Auto-heal: Create account if missing
         acc = Account.objects.create(agency=agency)
         return acc.balance
 
 
-def check_solvency(account, amount_needed):
-    """
-    Returns True if the account can afford 'amount_needed'.
-    amount_needed should be a positive number (cost).
-    """
-    purchasing_power = account.balance + account.credit_limit
-    return purchasing_power >= amount_needed
-
-
 def get_transaction_history(account_id, limit=50):
-    """
-    Get recent movements for a specific wallet.
-    """
     return Transaction.objects.filter(account_id=account_id).order_by('-created_at')[:limit]

@@ -1,40 +1,50 @@
-
 from django.db import models
 
 
 class Account(models.Model):
-    """
-    The Single Main Wallet for the Agency.
-    """
-    agency = models.OneToOneField(  # Changed from ForeignKey to OneToOne
+    agency = models.OneToOneField(
         'agencies.Agency',
         on_delete=models.CASCADE,
         related_name='account'
     )
 
-# 1. THE WALLET BALANCE
-    # Positive = They have money.
-    # Negative = They owe you money (if you allow it).
+    # GATE 2: SETTLEMENT FUNDS (Real Cash)
+    # Used ONLY to pay invoices. Cannot go negative.
     balance = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         default=0.00,
-        verbose_name="Wallet Balance"
+        verbose_name="Cash Balance"
     )
-# 2. CREDIT LIMIT (Overdraft)
-    # If this is 50,000, the agency can spend until their balance is -50,000.
-    # Set to 0 if they must prepay for everything.
+
+    # GATE 1: PURCHASING LIMITS
+    # The maximum volume of unpaid invoices allowed at once.
     credit_limit = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         default=0.00,
-        verbose_name="Credit Limit"
+        verbose_name="Credit Line"
+    )
+
+    # CONSUMED VOLUME
+    # Sum of all currently UNPAID invoices.
+    unpaid_hold = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0.00
     )
 
     updated_at = models.DateTimeField(auto_now=True)
 
-    class Meta:
-        db_table = 'finance_account'
+    @property
+    def buying_power(self):
+        """
+        STRICT MODE:
+        Purchasing Power comes ONLY from the Credit Line.
+        Formula: Credit Limit - Used Hold.
+        (Balance is ignored here).
+        """
+        return self.credit_limit - self.unpaid_hold
 
     def __str__(self):
-        return f"{self.agency.company_name} ({self.balance} DZD)"
+        return f"{self.agency}: Cash {self.balance} | Avail Vol {self.buying_power}"

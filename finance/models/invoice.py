@@ -1,6 +1,10 @@
+from django.contrib.contenttypes.models import ContentType        # <--- Import this
+from django.contrib.contenttypes.fields import GenericForeignKey  # <--- Import this
 import random
 import string
 from django.db import models
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 
 
 def generate_invoice_number():
@@ -49,35 +53,41 @@ class Invoice(models.Model):
         return f"{self.invoice_number} - {self.total_amount} DZD"
 
 
+# ... (Your Invoice class remains the same) ...
+
+
 class InvoiceItem(models.Model):
     """
     The Invoice Rows.
-    Each row links to ONE specific service (Ferry OR Visa).
+    Each row links dynamically to ONE specific service (Ferry, Visa, etc.).
     """
     invoice = models.ForeignKey(
-        Invoice, on_delete=models.CASCADE, related_name='items')
+        'Invoice',  # String reference allows Invoice to be defined below or above
+        on_delete=models.CASCADE,
+        related_name='items'
+    )
 
     description = models.CharField(
         max_length=255, help_text="e.g. Ferry Ticket ALG-MRS")
     amount = models.DecimalField(max_digits=12, decimal_places=2)
 
-    # --- Dynamic Links ---
-    # We can add a Ferry Request OR a Visa Application to this line item.
-    ferry_request = models.ForeignKey(
-        'ferries.FerryRequest',
+    # =========================================================
+    # DYNAMIC SERVICE LINK (Generic Foreign Key)
+    # =========================================================
+
+    # A. Which Model? (e.g., "visas.VisaApplication" or "ferries.FerryRequest")
+    content_type = models.ForeignKey(
+        ContentType,
         on_delete=models.SET_NULL,
         null=True,
-        blank=True,
-        related_name='invoice_items'
+        blank=True
     )
 
-    visa_application = models.ForeignKey(
-        'visas.VisaApplication',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='invoice_items'
-    )
+    # B. Which ID? (e.g., ID #45)
+    object_id = models.PositiveIntegerField(null=True, blank=True)
+
+    # C. The Actual Object (Usage: item.service_object)
+    service_object = GenericForeignKey('content_type', 'object_id')
 
     class Meta:
         db_table = 'finance_invoice_item'
