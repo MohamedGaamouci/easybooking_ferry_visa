@@ -12,12 +12,24 @@ class Account(models.Model):
         related_name='account'
     )
 
+# 1. THE WALLET BALANCE
+    # Positive = They have money.
+    # Negative = They owe you money (if you allow it).
     balance = models.DecimalField(
-        max_digits=12, decimal_places=2, default=0.00)
-
-    # Optional: If you want to allow them to go negative (Credit)
-    overdraft_limit = models.DecimalField(
-        max_digits=12, decimal_places=2, default=0.00)
+        max_digits=12,
+        decimal_places=2,
+        default=0.00,
+        verbose_name="Wallet Balance"
+    )
+# 2. CREDIT LIMIT (Overdraft)
+    # If this is 50,000, the agency can spend until their balance is -50,000.
+    # Set to 0 if they must prepay for everything.
+    credit_limit = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0.00,
+        verbose_name="Credit Limit"
+    )
 
     updated_at = models.DateTimeField(auto_now=True)
 

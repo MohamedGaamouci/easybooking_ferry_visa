@@ -100,9 +100,9 @@ def agency_create_api(request):
                 logo=request.FILES.get('logo'),
                 rc_document=request.FILES.get('rc_document'),
                 status=data.get('status', 'pending'),
-                credit_limit=data.get('credit_limit', 0.00),
+                # credit_limit=data.get('credit_limit', 0.00),
                 # Balance usually starts at 0, but if migration:
-                balance=data.get('balance', 0.00)
+                # balance=data.get('balance', 0.00)
             )
 
             # 2. Handle Tags

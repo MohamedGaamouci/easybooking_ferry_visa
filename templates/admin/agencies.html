@@ -121,7 +121,6 @@
                             <button data-id="{{ agency.id }}" data-name="{{ agency.company_name }}"
                                 data-rc="{{ agency.rc_number }}" data-phone="{{ agency.phone }}"
                                 data-address="{{ agency.address }}" data-city="{{ agency.city }}"
-                                data-balance="{{ agency.balance }}" data-limit="{{ agency.credit_limit }}"
                                 data-tags="{% for t in agency.tags.all %}{{ t.name }}{% if not forloop.last %},{% endif %}{% endfor %}"
                                 data-date="{{ agency.created_at|date:'M d, Y' }}"
                                 data-logo="{% if agency.logo %}{{ agency.logo.url }}{% endif %}"
@@ -237,7 +236,6 @@
                                         data-company-name="{{ agency.company_name }}" data-rc="{{ agency.rc_number }}"
                                         data-phone="{{ agency.phone }}" data-city="{{ agency.city }}"
                                         data-address="{{ agency.address }}" data-status="{{ agency.status }}"
-                                        data-limit="{{ agency.credit_limit }}"
                                         data-tags="{% for t in agency.tags.all %}{{ t.name }}{% if not forloop.last %},{% endif %}{% endfor %}"
                                         data-logo="{% if agency.logo %}{{ agency.logo.url }}{% endif %}"
                                         class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-all">
@@ -349,8 +347,8 @@
                         </div>
                         <div>
                             <label class="block text-[10px] text-slate-500 mb-1">Credit Limit (DZD)</label>
-                            <input type="number" name="credit_limit" value="0"
-                                class="w-full border border-slate-300 rounded-lg p-2 text-sm">
+                            <!-- <input type="number" name="credit_limit" value="0" -->
+                            class="w-full border border-slate-300 rounded-lg p-2 text-sm">
                         </div>
                         <div class="col-span-2">
                             <label class="block text-[10px] text-slate-500 mb-1">Tags (Comma separated)</label>
@@ -535,11 +533,11 @@
                                     <option value="rejected">Rejected</option>
                                 </select>
                             </div>
-                            <div>
+                            <!-- <div>
                                 <label class="block text-[10px] text-slate-500 mb-1">Credit Limit (DZD)</label>
                                 <input type="number" id="edit-limit" name="credit_limit"
                                     class="w-full border border-slate-300 rounded-lg p-2 text-sm font-bold text-slate-700">
-                            </div>
+                            </div> -->
                             <div class="col-span-2">
                                 <label class="block text-[10px] text-slate-500 mb-1">Tags</label>
                                 <input type="text" id="edit-tags" name="tags" placeholder="e.g. VIP, Wholesaler"
@@ -794,7 +792,7 @@
         document.getElementById('edit-city').value = btn.dataset.city;
         document.getElementById('edit-address').value = btn.dataset.address;
         document.getElementById('edit-status').value = btn.dataset.status;
-        document.getElementById('edit-limit').value = btn.dataset.limit.replace(/[^\d.-]/g, '');
+        // document.getElementById('edit-limit').value = btn.dataset.limit.replace(/[^\d.-]/g, '');
         document.getElementById('edit-tags').value = btn.dataset.tags || '';
 
         // LOGO PREVIEW
@@ -930,7 +928,7 @@
         formData.append('phone', document.getElementById('store-phone').value);
         formData.append('city', document.getElementById('store-city').value);
         formData.append('address', document.getElementById('store-address').value);
-        formData.append('credit_limit', document.getElementById('store-limit').value);
+        // formData.append('credit_limit', document.getElementById('store-limit').value);
         formData.append('tags', document.getElementById('store-tags').value);
 
         if (!confirm(`Are you sure you want to mark this agency as ${status.toUpperCase()}?`)) return;

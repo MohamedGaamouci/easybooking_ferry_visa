@@ -9,13 +9,13 @@ class InvoiceItemInline(admin.TabularInline):
 
 @admin.register(Account)
 class AccountAdmin(admin.ModelAdmin):
-    list_display = ('agency', 'balance', 'overdraft_limit', 'updated_at')
+    list_display = ('agency', 'balance', 'credit_limit', 'updated_at')
     search_fields = ('agency__company_name',)
 
 
 @admin.register(TopUpRequest)
 class TopUpRequestAdmin(admin.ModelAdmin):
-    list_display = ('agency', 'amount', 'status', 'created_at')
+    list_display = ('account', 'amount', 'status', 'created_at')
     list_filter = ('status',)
     search_fields = ('agency__company_name', 'reference_number')
 

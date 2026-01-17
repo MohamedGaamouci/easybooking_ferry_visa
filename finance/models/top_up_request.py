@@ -8,7 +8,11 @@ class TopUpRequest(models.Model):
         ('rejected', 'Rejected'),
     )
 
-    agency = models.ForeignKey('agencies.Agency', on_delete=models.CASCADE)
+    account = models.ForeignKey(
+        'finance.Account',
+        on_delete=models.CASCADE,
+        related_name='topup_requests'
+    )
     amount = models.DecimalField(max_digits=12, decimal_places=2)
 
     # Proof
@@ -26,3 +30,6 @@ class TopUpRequest(models.Model):
 
     class Meta:
         db_table = 'finance_top_up_request'
+
+    def __str__(self):
+        return f"{self.agency} - {self.amount} DZD ({self.status})"

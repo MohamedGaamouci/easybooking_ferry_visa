@@ -1,4 +1,7 @@
 from django.db import models
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
+from django.conf import settings
 
 
 class Transaction(models.Model):
@@ -18,9 +21,29 @@ class Transaction(models.Model):
 
     # Optional links to explain the money movement
     invoice = models.ForeignKey(
-        'finance.Invoice', on_delete=models.SET_NULL, null=True, blank=True)
+        'finance.Invoice', on_delete=models.PROTECT, null=True, blank=True)
     top_up = models.ForeignKey(
-        'finance.TopUpRequest', on_delete=models.SET_NULL, null=True, blank=True)
+        'finance.TopUpRequest', on_delete=models.PROTECT, null=True, blank=True)
+
+    # =========================================================
+    # 2. THE UNIVERSAL SERVICE LINK (Generic Foreign Key)
+    # =========================================================
+    # This combination allows you to link to ANY model (Visa, Ferry, etc.)
+
+    # A. Which Table? (e.g., "visas.VisaApplication" or "ferries.FerryRequest")
+    content_type = models.ForeignKey(
+        ContentType,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    # B. Which Row ID? (e.g., ID #45)
+    object_id = models.PositiveIntegerField(null=True, blank=True)
+
+    # C. The Actual Object (Usage: transaction.service_object)
+    service_object = GenericForeignKey('content_type', 'object_id')
+    # =========================================================
 
     # 2. Money Details
     transaction_type = models.CharField(max_length=20, choices=TYPES)
@@ -33,9 +56,10 @@ class Transaction(models.Model):
 
     # 3. Audit (Who did this?)
     created_at = models.DateTimeField(auto_now_add=True)
+
     created_by = models.ForeignKey(
-        'users.CustomUser',
-        on_delete=models.SET_NULL,  # If user is deleted, keep the record but set user to NULL
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name='performed_transactions'

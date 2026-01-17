@@ -33,12 +33,6 @@ class Agency(models.Model):
     rc_document = models.FileField(
         upload_to='legal_docs/', null=True, blank=True)
 
-    # Wallet / Finance
-    balance = models.DecimalField(
-        max_digits=12, decimal_places=2, default=0.00)
-    credit_limit = models.DecimalField(
-        max_digits=12, decimal_places=2, default=0.00)
-
     # Status
     status = models.CharField(
         max_length=20, choices=STATUS_CHOICES, default='pending')
@@ -47,11 +41,26 @@ class Agency(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    # === HELPER ===
+    @property
+    def wallet(self):
+        """
+        Safe access to the account. 
+        (Handles case where account might be missing during dev)
+        """
+        if hasattr(self, 'account'):
+            return self.account
+        return None
+
+    @property
+    def current_balance(self):
+        return self.account.balance if hasattr(self, 'account') else 0.00
+
     class Meta:
         db_table = 'agencies_agency'
 
     def __str__(self):
-        return self.company_name
+        return f"{self.company_name}"
 
     @property
     def tags_list(self):
