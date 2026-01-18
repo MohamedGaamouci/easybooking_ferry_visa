@@ -7,3 +7,4 @@ pyphen==0.17.2
 tinyhtml5==2.0.0
 xhtml2pdf==0.2.17
 zopfli==0.4.0
+decouple 
