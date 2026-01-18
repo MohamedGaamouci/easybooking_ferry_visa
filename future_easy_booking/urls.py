@@ -24,10 +24,6 @@ def admin_setting_view(request):
     return render(request, 'admin/setting.html')
 
 
-def admin_accounting_view(request):
-    return render(request, 'admin/accounting.html')
-
-
 # ======================
 # client Views
 # ======================
@@ -67,8 +63,10 @@ admin_urls = [
     path("admin_panel/", home, name="admin_dashboard"),
     path("admin_panel/dashboard/", admin_dashboard_view, name="admin_dashboard"),
     path("admin_panel/settings/", admin_setting_view, name="admin_setting"),
-    path("admin_panel/accounting/", admin_accounting_view, name="admin_accounting"),
 
+
+    #   AGENCIES
+    path("admin_panel/", include('finance.urls.urls')),
 
     #   AGENCIES
     path("admin_panel/", include('agencies.urls')),

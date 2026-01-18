@@ -1,3 +1,5 @@
+from django.forms import ValidationError
+from django.urls import reverse
 from agencies.models import Agency
 from .models import VisaApplication, VisaForm
 from .forms import (
@@ -16,11 +18,12 @@ from django.shortcuts import render
 from .models import VisaApplication, VisaDestination
 
 from django.shortcuts import render
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.core.paginator import Paginator
 from django.contrib.auth.decorators import login_required, permission_required
 from django.db.models import Q
 
 from django.contrib import messages
+from finance.services.invoice import create_single_service_invoice
 
 import json
 # ========================================================
@@ -227,6 +230,10 @@ def get_visa_destinations_api(request):
     return JsonResponse({'destinations': data})
 
 
+# Import your Finance Models
+
+# Import your Visa/App Models & Forms
+
 @login_required
 @require_POST
 def visa_create_view(request):
@@ -240,98 +247,108 @@ def visa_create_view(request):
         main_info = data.get('main_info', {})
         answers_list = data.get('answers', [])
 
-        # Start Transaction (All or Nothing)
+        # Start Transaction
         with transaction.atomic():
 
-            # ====================================================
-            # STEP A: Validate & Create Main Application
-            # ====================================================
-            # Map JSON keys to Form keys
+            # --- STEP A: Main Application ---
             app_data = {
                 'first_name': main_info.get('first_name'),
                 'last_name': main_info.get('last_name'),
                 'passport_number': main_info.get('passport_number'),
-                # ID (Form handles ModelChoiceField IDs)
                 'destination': main_info.get('destination'),
-                'agency': main_info.get('agency_id'),       # ID
+                'agency': main_info.get('agency_id'),
                 'status': 'new'
             }
 
             app_form = VisaApplicationForm(data=app_data)
-
             if not app_form.is_valid():
-                # Extract the first error message to show the user
                 first_error = next(iter(app_form.errors.values()))[0]
                 raise ValueError(f"Application Error: {first_error}")
 
-            # Save parent to get the ID (needed for answers/docs)
             application = app_form.save()
 
-            # ====================================================
-            # STEP B: Validate & Create Answers
-            # ====================================================
+            # --- STEP B: Answers ---
             for item in answers_list:
                 ans_data = {
                     'application': application.id,
                     'field': int(item['field_id']),
                     'value': item['value']
                 }
-
-                # Check validation (clean_value logic)
                 ans_form = VisaApplicationAnswerForm(data=ans_data)
                 if not ans_form.is_valid():
                     raise ValueError(
-                        f"Answer Error (Field {item['field_id']}): {ans_form.errors.as_text()}")
-
+                        f"Answer Error: {ans_form.errors.as_text()}")
                 ans_form.save()
 
-            # ====================================================
-            # STEP C: Validate & Create Documents
-            # ====================================================
+            # --- STEP C: Documents ---
             for key, file_obj in request.FILES.items():
                 if key.startswith('doc_'):
                     req_doc_id = int(key.split('_')[1])
-
                     doc_data = {
                         'application': application.id,
                         'required_doc': req_doc_id,
                         'status': 'pending'
                     }
-
-                    # Pass 'data' for fields and 'files' for the file
                     doc_form = VisaApplicationDocumentForm(
                         data=doc_data, files={'file': file_obj})
-
                     if not doc_form.is_valid():
-                        # This triggers your clean_file (size/extension check)
                         error_msg = doc_form.errors.get(
                             'file', ['Invalid file'])[0]
-                        doc_name = file_obj.name
-                        raise ValueError(
-                            f"Document Error ({doc_name}): {error_msg}")
-
+                        raise ValueError(f"Document Error: {error_msg}")
                     doc_form.save()
 
-        # Success Response
+            # --- STEP D: FINANCE (The Bridge) ---
+
+            # 1. Get Destination & Price
+            destination = application.destination
+            if not destination:
+                raise ValueError("Destination not found.")
+
+            price = destination.selling_price
+            if not price or price <= 0:
+                raise ValueError(
+                    f"Selling price is not set for {destination.country}")
+
+            # 2. CREATE INVOICE (Gate 1 Check happens here)
+            # We call it 'generated_invoice' to avoid variable name conflicts
+            generated_invoice = create_single_service_invoice(
+                service_object=application,
+                amount=price,
+                description=f"Visa App: {application.first_name} {application.last_name} -> {destination.country}",
+                user=request.user
+            )
+
+            # 3. Link Application to Invoice
+            application.invoice = generated_invoice
+            application.save()
+
+        # Success Response (Outside Transaction)
         messages.success(
-            request, f"Application #{application.reference} created successfully.")
+            request, f"Application #{application.reference} created. Invoice #{generated_invoice.invoice_number} generated.")
+
         return JsonResponse({
             'status': 'success',
             'redirect_url': reverse('admin_visa_app')
         })
 
-    except ValueError as ve:
-        # Validation Errors (User fault)
-        return JsonResponse({'status': 'error', 'message': str(ve)}, status=400)
-    except Exception as e:
-        # System Errors (Server fault)
-        print(f"System Error: {e}")
-        return JsonResponse({'status': 'error', 'message': "System Error occurred."}, status=500)
+    except ValidationError as ve:
+        # This catches "Credit Limit Reached" errors
+        msg = ve.message if hasattr(ve, 'message') else str(ve)
+        return JsonResponse({'status': 'error', 'message': msg}, status=400)
 
+    except ValueError as ve:
+        # This catches Form/Logic errors
+        return JsonResponse({'status': 'error', 'message': str(ve)}, status=400)
+
+    except Exception as e:
+        # This catches unexpected crashes
+        print(f"System Error: {e}")
+        return JsonResponse({'status': 'error', 'message': f"System Error: {str(e)}"}, status=500)
 
 # ================================================================================================================
 # 6. CREATE THE DESTINATION WITH IT'S DOCS AND FORM
 # ================================================================================================================
+
 
 @login_required
 @permission_required('visas.add_visadestination', raise_exception=True)

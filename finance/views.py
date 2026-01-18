@@ -1,3 +1,4 @@
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from .services.invoice import pay_invoice
 from xhtml2pdf import pisa
 from django.http import HttpResponse
@@ -39,15 +40,10 @@ def finance_dashboard(request):
     except AttributeError:
         return render(request, 'client/error.html', {'msg': 'No agency assigned.'})
 
-    # =========================================================
     # 1. EXTRACT FILTERS
-    # =========================================================
-    # Common text search (applies to both Invoices and Transactions)
     query = request.GET.get('q', '')
+    status = request.GET.get('status') or None
 
-    # Advanced Invoice Filters
-    status = request.GET.get('status')            # 'paid', 'unpaid', etc.
-# FIX: Check if string is empty, otherwise None
     min_amt = request.GET.get('min_amount')
     if min_amt == '':
         min_amt = None
@@ -55,41 +51,49 @@ def finance_dashboard(request):
     max_amt = request.GET.get('max_amount')
     if max_amt == '':
         max_amt = None
-    date_from = request.GET.get('date_from')      # Created After
-    date_to = request.GET.get('date_to')          # Created Before
-    service = request.GET.get('service_type')     # e.g. "Visa"
 
-    # =========================================================
-    # 2. GET DATA (Using Services)
-    # =========================================================
+    date_from = request.GET.get('date_from') or None
+    date_to = request.GET.get('date_to') or None
+    service = request.GET.get('service_type') or None
 
-    # A. Search Invoices (The Power Engine)
-    invoices = search_invoices(
-        agency=agency,
-        search_term=query,
-        status=status,
-        min_amount=min_amt,
-        max_amount=max_amt,
+    # NEW: Page Numbers (Default to 1)
+    p_inv = request.GET.get('p_inv', 1)
+    p_trans = request.GET.get('p_trans', 1)
+
+    # 2. GET QUERYSETS (Do not evaluate yet)
+    invoices_qs = search_invoices(
+        agency=agency, search_term=query, status=status,
+        min_amount=min_amt, max_amount=max_amt,
         created_after=parse_date(date_from) if date_from else None,
         created_before=parse_date(date_to) if date_to else None,
         service_type=service
     )
 
-    # B. Search Transactions
-    # (We keep this simple for now, mostly filtering by the text query)
-    transactions = get_transaction_ledger(
-        account=account,
-        search_query=query
+    transactions_qs = get_transaction_ledger(
+        account=account, search_query=query
     )
 
-    # =========================================================
-    # 3. AJAX RESPONSE (JSON)
-    # =========================================================
+    # 3. PAGINATE (10 items per page)
+    # --- Invoices ---
+    paginator_inv = Paginator(invoices_qs, 10)
+    try:
+        invoices_page = paginator_inv.page(p_inv)
+    except (PageNotAnInteger, EmptyPage):
+        invoices_page = paginator_inv.page(1)
+
+    # --- Transactions ---
+    paginator_trans = Paginator(transactions_qs, 10)
+    try:
+        transactions_page = paginator_trans.page(p_trans)
+    except (PageNotAnInteger, EmptyPage):
+        transactions_page = paginator_trans.page(1)
+
+    # 4. AJAX RESPONSE (JSON)
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
 
         # Serialize Invoices
         invoices_data = []
-        for inv in invoices:
+        for inv in invoices_page:
             invoices_data.append({
                 'id': inv.id,
                 'number': inv.invoice_number,
@@ -101,8 +105,7 @@ def finance_dashboard(request):
 
         # Serialize Transactions
         transactions_data = []
-        for t in transactions:
-            # Smart Reference display
+        for t in transactions_page:
             ref = "-"
             if t.invoice:
                 ref = f"Ref: #{t.invoice.invoice_number}"
@@ -123,24 +126,35 @@ def finance_dashboard(request):
         return JsonResponse({
             'status': 'success',
             'invoices': invoices_data,
-            'transactions': transactions_data
+            'transactions': transactions_data,
+            # NEW: SEND PAGINATION INFO TO JS
+            'pagination': {
+                'inv': {
+                    'current': invoices_page.number,
+                    'total_pages': paginator_inv.num_pages,
+                    'has_next': invoices_page.has_next(),
+                    'has_prev': invoices_page.has_previous()
+                },
+                'trans': {
+                    'current': transactions_page.number,
+                    'total_pages': paginator_trans.num_pages,
+                    'has_next': transactions_page.has_next(),
+                    'has_prev': transactions_page.has_previous()
+                }
+            }
         })
 
-    # =========================================================
-    # 4. STANDARD PAGE LOAD (HTML)
-    # =========================================================
+    # 5. STANDARD LOAD (HTML)
     stats = get_account_stats(account)
     pending_topups = TopUpRequest.objects.filter(
-        account=account,
-        status='pending'
-    ).order_by('-created_at')
+        account=account, status='pending').order_by('-created_at')
 
     context = {
         'account': account,
         'stats': stats,
-        'transactions': transactions[:20],  # Limit initial load for speed
+        'transactions': transactions_page,  # Pass Page Object
+        'invoices': invoices_page,         # Pass Page Object
         'pending_topups': pending_topups,
-        'invoices': invoices[:20],         # Limit initial load for speed
     }
     return render(request, 'client/accounting.html', context)
 

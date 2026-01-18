@@ -253,6 +253,21 @@
                             {% endfor %}
                         </tbody>
                     </table>
+                    <div class="p-4 border-t border-slate-200 bg-slate-50 flex justify-between items-center"
+                        id="inv-pagination-controls">
+                        <span class="text-xs text-slate-500">
+                            Page <span id="inv-current-page">{{ invoices.number }}</span> of <span
+                                id="inv-total-pages">{{ invoices.paginator.num_pages }}</span>
+                        </span>
+                        <div class="flex gap-2">
+                            <button id="inv-prev-btn" onclick="changePage('inv', -1)" {% if not invoices.has_previous %}
+                                disabled {% endif %}
+                                class="px-3 py-1 text-xs font-bold bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50">Prev</button>
+                            <button id="inv-next-btn" onclick="changePage('inv', 1)" {% if not invoices.has_next %}
+                                disabled {% endif %}
+                                class="px-3 py-1 text-xs font-bold bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50">Next</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -321,6 +336,26 @@
                             {% endfor %}
                         </tbody>
                     </table>
+                    <div class="p-4 border-t border-slate-200 bg-slate-50 flex justify-between items-center"
+                        id="trans-pagination-controls">
+                        <span class="text-xs text-slate-500">
+                            Page <span id="trans-current-page">{{ transactions.number }}</span> of <span
+                                id="trans-total-pages">{{ transactions.paginator.num_pages }}</span>
+                        </span>
+                        <div class="flex gap-2">
+                            <button id="trans-prev-btn" onclick="changePage('trans', -1)" 
+                            {% if not transactions.has_previous %} 
+                            disabled 
+                            {% endif %}
+                                class="px-3 py-1 text-xs font-bold bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50">Prev</button>
+                            <button id="trans-next-btn" onclick="changePage('trans', 1)"
+                            
+                            {% if not transactions.has_next%} 
+                            disabled 
+                            {% endif %}
+                                class="px-3 py-1 text-xs font-bold bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50">Next</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -466,10 +501,16 @@
 </div>
 
 <script src="//unpkg.com/alpinejs" defer></script>
+
+
+
 <script>
-    // --- 1. MODAL LOGIC ---
+    // ========================================================
+    // 1. TOP-UP MODAL & AJAX SUBMISSION
+    // ========================================================
     function openTopUpModal() { document.getElementById('topup-modal').classList.remove('hidden'); }
     function closeTopUpModal() { document.getElementById('topup-modal').classList.add('hidden'); }
+
     function updateFileName(input) {
         if (input.files && input.files[0]) {
             const name = input.files[0].name;
@@ -478,7 +519,6 @@
         }
     }
 
-    // --- 2. TOP UP AJAX ---
     function submitTopUpAJAX() {
         const form = document.getElementById('topupForm');
         const btn = form.querySelector('button');
@@ -490,8 +530,13 @@
         btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Sending...';
 
         const formData = new FormData(form);
-        fetch("{% url 'finance:submit_topup_ajax' %}", { method: 'POST', body: formData, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-            .then(r => r.json()).then(d => {
+        fetch("{% url 'finance:submit_topup_ajax' %}", {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+            .then(r => r.json())
+            .then(d => {
                 if (d.status === 'success') {
                     btn.innerHTML = '<i class="ph-bold ph-check"></i> Sent!';
                     btn.classList.replace('bg-brand-600', 'bg-green-600');
@@ -500,29 +545,50 @@
                     alert("Error: " + d.msg);
                     btn.disabled = false; btn.innerText = originalText;
                 }
-            }).catch(e => { console.error(e); alert("Server Error"); btn.disabled = false; btn.innerText = originalText; });
+            })
+            .catch(e => {
+                console.error(e);
+                alert("Server Error");
+                btn.disabled = false;
+                btn.innerText = originalText;
+            });
     }
 
-    // --- 3. LIVE SEARCH & FILTER ENGINE ---
+    // ========================================================
+    // 2. LIVE SEARCH, FILTERING & PAGINATION ENGINE
+    // ========================================================
+    let currentInvPage = 1;
+    let currentTransPage = 1;
     let searchTimeout;
+
+    // Inputs to watch
     const inputs = ['searchInput', 'filterStatus', 'filterDateFrom', 'filterDateTo', 'filterMin', 'filterMax'];
 
-    // Attach listeners to all filter inputs
     inputs.forEach(id => {
         const el = document.getElementById(id);
         if (el) {
             el.addEventListener('input', triggerSearch);
-            el.addEventListener('change', triggerSearch); // For dates/selects
+            el.addEventListener('change', triggerSearch);
         }
     });
 
+    // 1. Trigger Search (Resets to Page 1)
     function triggerSearch() {
         clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(performSearch, 400); // 400ms debounce
+        currentInvPage = 1;
+        currentTransPage = 1;
+        searchTimeout = setTimeout(performSearch, 400);
     }
 
+    // 2. Change Page (Next/Prev)
+    function changePage(type, delta) {
+        if (type === 'inv') currentInvPage += delta;
+        else currentTransPage += delta;
+        performSearch(); // Fetch data for new page
+    }
+
+    // 3. Perform Fetch
     function performSearch() {
-        // Gather values
         const params = new URLSearchParams();
         params.append('q', document.getElementById('searchInput').value);
         params.append('status', document.getElementById('filterStatus').value);
@@ -531,9 +597,12 @@
         params.append('min_amount', document.getElementById('filterMin').value);
         params.append('max_amount', document.getElementById('filterMax').value);
 
+        // Add Pagination Params
+        params.append('p_inv', currentInvPage);
+        params.append('p_trans', currentTransPage);
+
         const url = "{% url 'finance:dashboard' %}?" + params.toString();
 
-        // Show Loading
         const loader = document.getElementById('loadingIndicator');
         loader.classList.remove('hidden');
 
@@ -541,16 +610,41 @@
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
+                    // Rebuild Tables
                     rebuildInvoices(data.invoices);
                     rebuildTransactions(data.transactions);
+
+                    // Update Pagination Controls
+                    updatePaginationUI('inv', data.pagination.inv);
+                    updatePaginationUI('trans', data.pagination.trans);
                 }
             })
             .finally(() => {
-                // Hide Loading
-                setTimeout(() => loader.classList.add('hidden'), 200); // Short delay for smoothness
+                setTimeout(() => loader.classList.add('hidden'), 200);
             });
     }
 
+    function updatePaginationUI(type, pageData) {
+        // Safe check if elements exist (in case user switches tabs or hides controls)
+        const currentEl = document.getElementById(`${type}-current-page`);
+        if (!currentEl) return;
+
+        currentEl.innerText = pageData.current;
+        document.getElementById(`${type}-total-pages`).innerText = pageData.total_pages;
+
+        const prevBtn = document.getElementById(`${type}-prev-btn`);
+        const nextBtn = document.getElementById(`${type}-next-btn`);
+
+        prevBtn.disabled = !pageData.has_prev;
+        nextBtn.disabled = !pageData.has_next;
+
+        prevBtn.style.opacity = pageData.has_prev ? '1' : '0.5';
+        nextBtn.style.opacity = pageData.has_next ? '1' : '0.5';
+    }
+
+    // ========================================================
+    // 3. TABLE REBUILDERS
+    // ========================================================
     function rebuildInvoices(items) {
         const tbody = document.getElementById('invoice-body');
         tbody.innerHTML = '';
@@ -576,12 +670,12 @@
             }
 
             tbody.innerHTML += `
-                <tr class="group hover:bg-slate-50 transition-colors">
+                <tr onclick="openInvoiceModal(${item.id})" class="group hover:bg-slate-50 transition-colors cursor-pointer">
                     <td class="px-6 py-4"><span class="font-mono font-bold text-slate-900 bg-slate-100 px-2 py-1 rounded text-xs">#${item.number}</span></td>
                     <td class="px-6 py-4 text-slate-500 text-xs font-medium">${item.date}</td>
                     <td class="px-6 py-4 font-bold text-slate-900 tabular-nums">${item.amount} <span class="text-[10px] text-slate-400 font-normal">DZD</span></td>
                     <td class="px-6 py-4 text-center">${statusHTML}</td>
-                    <td class="px-6 py-4 text-right"><button class="text-slate-400 hover:text-brand-600 transition-colors p-2 hover:bg-brand-50 rounded-lg"><i class="ph-bold ph-download-simple text-lg"></i></button></td>
+                    <td class="px-6 py-4 text-right"><button onclick="event.stopPropagation()" class="text-slate-400 hover:text-brand-600 transition-colors p-2 hover:bg-brand-50 rounded-lg"><i class="ph-bold ph-download-simple text-lg"></i></button></td>
                 </tr>`;
         });
     }
@@ -619,23 +713,23 @@
                 </tr>`;
         });
     }
-</script>
-<!-- invoice logic -->
-<script>
-    // --- 4. INVOICE MODAL LOGIC (NEW) ---
+
+    // ========================================================
+    // 4. INVOICE MODAL & PAYMENTS
+    // ========================================================
     function openInvoiceModal(id) {
         const modal = document.getElementById('invoice-modal');
         modal.classList.remove('hidden');
 
-        // Reset UI to loading state
+        // Reset UI
         document.getElementById('modal-inv-number').innerText = 'Loading...';
         document.getElementById('modal-items-list').innerHTML = '<tr><td colspan="2" class="p-4 text-center text-slate-400 italic">Fetching details...</td></tr>';
 
-        // We set the href directly to our Django View
+        // Set Download Link
         document.getElementById('modal-download-btn').href = `/accounting/invoice/${id}/pdf/`;
 
-        // Fetch Data
-        fetch(`/accounting/api/invoice/${id}/details/`) // Make sure this matches your URL pattern structure
+        // Fetch Details
+        fetch(`/accounting/api/invoice/${id}/details/`)
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'success') {
@@ -647,23 +741,22 @@
                     document.getElementById('modal-inv-due').innerText = inv.due_date;
                     document.getElementById('modal-inv-total').innerText = inv.total + ' DZD';
 
-                    // --- NEW: PAYMENT BUTTON LOGIC ---
+                    // Payment Button Logic
                     const paySection = document.getElementById('modal-payment-section');
-
                     if (inv.status === 'unpaid') {
                         paySection.innerHTML = `
-                        <button onclick="payInvoiceAJAX(${id})" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg text-sm font-bold shadow-md shadow-green-600/20 transition-all flex items-center gap-2">
-                            <i class="ph-bold ph-wallet"></i> Pay Now (${inv.total})
-                        </button>
-                    `;
+                            <button onclick="payInvoiceAJAX(${id})" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg text-sm font-bold shadow-md shadow-green-600/20 transition-all flex items-center gap-2">
+                                <i class="ph-bold ph-wallet"></i> Pay Now (${inv.total})
+                            </button>
+                        `;
                     } else if (inv.status === 'paid') {
                         paySection.innerHTML = `
-                        <div class="flex items-center gap-2 text-green-700 font-bold text-sm bg-green-50 px-3 py-1.5 rounded-lg border border-green-100">
-                            <i class="ph-fill ph-check-circle"></i> Paid on ${inv.date}
-                        </div>
-                    `;
+                            <div class="flex items-center gap-2 text-green-700 font-bold text-sm bg-green-50 px-3 py-1.5 rounded-lg border border-green-100">
+                                <i class="ph-fill ph-check-circle"></i> Paid on ${inv.date}
+                            </div>
+                        `;
                     } else {
-                        paySection.innerHTML = ''; // Cancelled/Refunded
+                        paySection.innerHTML = '';
                     }
 
                     // Status Badge Logic
@@ -673,19 +766,18 @@
                     else if (inv.status === 'unpaid') statusEl.className = "text-xs px-2 py-1 rounded-full bg-red-100 text-red-700 font-bold uppercase tracking-wide";
                     else statusEl.className = "text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-600 font-bold uppercase tracking-wide";
 
-                    // Build Items
+                    // Build Items List
                     const tbody = document.getElementById('modal-items-list');
                     tbody.innerHTML = '';
                     data.items.forEach(item => {
                         tbody.innerHTML += `
-                        <tr>
-                            <td class="px-4 py-3 text-slate-700 font-medium">
-                                ${item.description}
-                                <span class="block text-[10px] text-slate-400 font-normal">Service ID: ${item.service}</span>
-                            </td>
-                            <td class="px-4 py-3 text-right font-bold text-slate-900">${item.amount}</td>
-                        </tr>
-                    `;
+                            <tr>
+                                <td class="px-4 py-3 text-slate-700 font-medium">
+                                    ${item.description}
+                                    <span class="block text-[10px] text-slate-400 font-normal">Service ID: ${item.service}</span>
+                                </td>
+                                <td class="px-4 py-3 text-right font-bold text-slate-900">${item.amount}</td>
+                            </tr>`;
                     });
                 }
             })
@@ -700,29 +792,7 @@
         document.getElementById('invoice-modal').classList.add('hidden');
     }
 
-    // --- UPDATE: Modify rebuildInvoices to add onclick events ---
-    function rebuildInvoices(items) {
-        const tbody = document.getElementById('invoice-body');
-        tbody.innerHTML = '';
-
-        if (items.length === 0) {
-            tbody.innerHTML = `... (Keep your existing empty state) ...`;
-            return;
-        }
-
-        items.forEach(item => {
-            // ... (Keep your existing status logic) ...
-
-            // NOTE: We added onclick="openInvoiceModal(${item.id})" to the TR
-            tbody.innerHTML += `
-                <tr onclick="openInvoiceModal(${item.id})" class="group hover:bg-slate-50 transition-colors cursor-pointer">
-                   </tr>`;
-        });
-    }
-    // 2. NEW PRINT FUNCTION
     function printInvoiceFromModal() {
-        // We open the PDF link in a new window, which triggers the browser's PDF viewer
-        // This is much cleaner than trying to print the modal HTML directly.
         const url = document.getElementById('modal-download-btn').href;
         if (url && url !== '#') {
             window.open(url, '_blank').print();
@@ -731,19 +801,15 @@
         }
     }
 
-
-    // 2. NEW: PAY FUNCTION
     function payInvoiceAJAX(id) {
         if (!confirm("Are you sure you want to pay this invoice with your wallet balance?")) return;
 
         const btn = document.querySelector('#modal-payment-section button');
         const originalContent = btn.innerHTML;
 
-        // Loading State
         btn.disabled = true;
         btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Processing...';
 
-        // CSRF Token is needed for POST requests
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
         fetch(`/accounting/api/invoice/${id}/pay/`, {
@@ -756,18 +822,15 @@
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'success') {
-                    // Success UI
                     btn.className = "bg-green-600 text-white px-5 py-2 rounded-lg text-sm font-bold flex items-center gap-2 cursor-default";
                     btn.innerHTML = '<i class="ph-bold ph-check"></i> Paid Successfully!';
 
-                    // Refresh Page Data after 1 second
+                    // Refresh Data without reload (optional: window.location.reload() is simpler)
                     setTimeout(() => {
                         closeInvoiceModal();
-                        // Optional: Call performSearch() instead of reload to stay on same page state
-                        window.location.reload();
+                        triggerSearch(); // Refresh list to show 'paid' status
                     }, 1000);
                 } else {
-                    // Error UI
                     alert("Payment Failed: " + data.msg);
                     btn.disabled = false;
                     btn.innerHTML = originalContent;

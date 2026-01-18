@@ -1,162 +1,191 @@
 {% extends 'admin/base_admin.html' %}
+{% load humanize %}
 
 {% block content %}
 
-<main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+<main class="flex-1 flex flex-col h-screen overflow-hidden relative bg-slate-50" x-data="{ tab: 'overview' }">
 
-    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
-        <h1 class="text-xl font-bold text-slate-900">Financial Control Center</h1>
-        <div class="flex items-center gap-4">
+    <header
+        class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0 shadow-sm z-20">
+        <h1 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+            <div class="p-1.5 bg-brand-50 rounded-lg text-brand-600"><i class="ph-bold ph-bank"></i></div>
+            Financial Control Center
+        </h1>
+        <div>
             <button onclick="openManualTransactionModal()"
-                class="bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md hover:bg-slate-800 transition-colors flex items-center gap-2">
+                class="bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg shadow-slate-900/20 hover:bg-slate-800 transition-all hover:-translate-y-0.5 flex items-center gap-2">
                 <i class="ph-bold ph-plus-minus"></i> Manual Transaction
             </button>
         </div>
     </header>
 
-    <div class="px-8 pt-6 pb-0 bg-white border-b border-slate-200">
-        <div class="flex gap-6">
-            <button onclick="switchTab('overview')" id="tab-overview"
-                class="pb-3 border-b-2 border-brand-600 text-brand-600 font-bold text-sm">Overview &
-                Approvals</button>
-            <button onclick="switchTab('ledger')" id="tab-ledger"
-                class="pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-medium text-sm">Global
-                Ledger (History)</button>
+    <div class="px-8 pt-6 pb-0 bg-white border-b border-slate-200 sticky top-0 z-10">
+        <div class="flex gap-8">
+            <button @click="tab = 'overview'"
+                :class="{'border-brand-600 text-brand-600': tab === 'overview', 'border-transparent text-slate-500 hover:text-slate-700': tab !== 'overview'}"
+                class="pb-3 border-b-2 font-bold text-sm transition-colors flex items-center gap-2">
+                <i class="ph-bold ph-squares-four"></i> Overview & Approvals
+                <span id="pending-badge"
+                    class="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full {% if pending_topups.count == 0 %}hidden{% endif %}">
+                    {{pending_topups.count }}</span>
+            </button>
+            <button @click="tab = 'invoices'; loadInvoices(1);"
+                :class="{'border-brand-600 text-brand-600': tab === 'invoices', 'border-transparent text-slate-500 hover:text-slate-700': tab !== 'invoices'}"
+                class="pb-3 border-b-2 font-medium text-sm transition-colors flex items-center gap-2">
+                <i class="ph-bold ph-receipt"></i> Invoices
+            </button>
+            <button @click="tab = 'ledger'; loadLedger(1);"
+                :class="{'border-brand-600 text-brand-600': tab === 'ledger', 'border-transparent text-slate-500 hover:text-slate-700': tab !== 'ledger'}"
+                class="pb-3 border-b-2 font-medium text-sm transition-colors flex items-center gap-2">
+                <i class="ph-bold ph-list-dashes"></i> Global Ledger
+            </button>
         </div>
     </div>
 
     <div class="flex-1 overflow-y-auto p-8">
-        <div class="max-w-7xl mx-auto">
+        <div class="max-w-7xl mx-auto space-y-8">
 
-            <div id="view-overview" class="space-y-8 animate-fade-in">
+            <div x-show="tab === 'overview'" class="space-y-8 animate-fade-in">
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                        <div class="flex justify-between items-start mb-4">
-                            <div>
-                                <p class="text-xs font-bold text-slate-400 uppercase">Total Agency Balances</p>
-                                <h3 class="text-2xl font-bold text-slate-900">€ 42,500.00</h3>
-                            </div>
-                            <div
-                                class="w-10 h-10 bg-brand-50 text-brand-600 rounded-full flex items-center justify-center text-xl">
-                                <i class="ph-fill ph-wallet"></i>
-                            </div>
-                        </div>
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+                        <div class="absolute right-0 top-0 p-6 opacity-5"><i
+                                class="ph-fill ph-wallet text-8xl text-brand-600"></i></div>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Total System Liquidity
+                        </p>
+                        <h3 class="text-3xl font-bold text-slate-900">
+                            <span id="stat-balance">{{ total_balance|intcomma }}</span> <span
+                                class="text-sm text-slate-400">DZD</span>
+                        </h3>
                     </div>
-                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                        <div class="flex justify-between items-start mb-4">
-                            <div>
-                                <p class="text-xs font-bold text-slate-400 uppercase">Agency Debt</p>
-                                <h3 class="text-2xl font-bold text-red-600">€ 3,250.00</h3>
-                            </div>
-                            <div
-                                class="w-10 h-10 bg-red-50 text-red-600 rounded-full flex items-center justify-center text-xl">
-                                <i class="ph-fill ph-trend-down"></i>
-                            </div>
-                        </div>
+
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+                        <div class="absolute right-0 top-0 p-6 opacity-5"><i
+                                class="ph-fill ph-trend-down text-8xl text-red-600"></i></div>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Total Agency Debt</p>
+                        <h3 class="text-3xl font-bold text-red-600">
+                            {{ total_debt|intcomma }} <span class="text-sm text-red-200">DZD</span>
+                        </h3>
                     </div>
-                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                        <div class="flex justify-between items-start mb-4">
-                            <div>
-                                <p class="text-xs font-bold text-slate-400 uppercase">Pending Deposits</p>
-                                <h3 class="text-2xl font-bold text-yellow-600">€ 1,500.00</h3>
-                            </div>
-                            <div
-                                class="w-10 h-10 bg-yellow-50 text-yellow-600 rounded-full flex items-center justify-center text-xl">
-                                <i class="ph-fill ph-hourglass"></i>
-                            </div>
-                        </div>
+
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+                        <div class="absolute right-0 top-0 p-6 opacity-5"><i
+                                class="ph-fill ph-hourglass text-8xl text-yellow-600"></i></div>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Pending Deposits</p>
+                        <h3 class="text-3xl font-bold text-yellow-600">
+                            <span id="stat-pending">{{ pending_total|intcomma }}</span> <span
+                                class="text-sm text-yellow-200">DZD</span>
+                        </h3>
                     </div>
                 </div>
 
                 <div>
                     <h3 class="text-sm font-bold text-slate-900 uppercase mb-4 flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></span> Pending Top-Ups
+                        <span id="topup-pulse" class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse hidden"></span>
+                        Pending Top-Up Requests
                     </h3>
-                    <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+
+                    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
                         <table class="w-full text-left border-collapse">
                             <thead
-                                class="bg-slate-50 text-xs uppercase text-slate-500 font-semibold border-b border-slate-200">
+                                class="bg-slate-50/50 text-xs uppercase text-slate-500 font-bold border-b border-slate-200">
                                 <tr>
                                     <th class="px-6 py-4">Date</th>
                                     <th class="px-6 py-4">Agency</th>
-                                    <th class="px-6 py-4">Method</th>
+                                    <th class="px-6 py-4">Method / Ref</th>
                                     <th class="px-6 py-4 text-right">Amount</th>
-                                    <th class="px-6 py-4 text-right">Receipt</th>
+                                    <th class="px-6 py-4 text-center">Receipt</th>
                                     <th class="px-6 py-4 text-right">Action</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-slate-100 text-sm">
-                                <tr class="hover:bg-slate-50 transition-colors">
-                                    <td class="px-6 py-4 text-slate-500">Oct 24, 10:30</td>
-                                    <td class="px-6 py-4 font-bold text-slate-900">Global Travel</td>
-                                    <td class="px-6 py-4">Bank Transfer (BNA)</td>
-                                    <td class="px-6 py-4 text-right font-bold text-green-600">+ € 1,000.00</td>
-                                    <td class="px-6 py-4 text-right"><button onclick="openReceiptModal()"
-                                            class="text-brand-600 hover:underline font-bold text-xs">View
-                                            Image</button></td>
-                                    <td class="px-6 py-4 text-right flex justify-end gap-2">
-                                        <button
-                                            class="text-red-500 hover:bg-red-50 px-3 py-1.5 rounded text-xs font-bold">Reject</button>
-                                        <button
-                                            class="bg-green-600 text-white px-3 py-1.5 rounded text-xs font-bold shadow hover:bg-green-700">Approve</button>
-                                    </td>
+                            <tbody id="topup-body" class="divide-y divide-slate-100 text-sm">
+                                <tr>
+                                    <td colspan="6" class="p-6 text-center text-slate-400">Loading requests...</td>
                                 </tr>
                             </tbody>
                         </table>
+
+                        <div id="topup-pagination"
+                            class="p-3 border-t border-slate-200 flex justify-between items-center bg-slate-50 hidden">
+                            <span class="text-xs text-slate-500">Page <span id="topup-page-current">1</span> of <span
+                                    id="topup-page-total">1</span></span>
+                            <div class="flex gap-2">
+                                <button id="topup-btn-prev" onclick="changeTopupPage(-1)"
+                                    class="px-3 py-1 text-xs font-bold bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50">Prev</button>
+                                <button id="topup-btn-next" onclick="changeTopupPage(1)"
+                                    class="px-3 py-1 text-xs font-bold bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50">Next</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-
                 <div>
-                    <h3 class="text-sm font-bold text-slate-900 uppercase mb-4">Partner Agencies</h3>
-                    <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-bold text-slate-900 uppercase">Partner Agencies</h3>
+
+                        <div class="relative w-64">
+                            <i class="ph-bold ph-magnifying-glass absolute left-3 top-2.5 text-slate-400"></i>
+                            <input type="text" id="agency-search" oninput="triggerAgencySearch()"
+                                placeholder="Search agencies..."
+                                class="w-full pl-9 pr-4 py-2 text-xs border border-slate-300 rounded-lg outline-none focus:ring-1 focus:ring-brand-500 bg-white">
+                        </div>
+                    </div>
+
+                    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
                         <table class="w-full text-left border-collapse">
                             <thead
-                                class="bg-slate-50 text-xs uppercase text-slate-500 font-semibold border-b border-slate-200">
+                                class="bg-slate-50/50 text-xs uppercase text-slate-500 font-bold border-b border-slate-200">
                                 <tr>
                                     <th class="px-6 py-4">Agency Name</th>
                                     <th class="px-6 py-4">Current Balance</th>
-                                    <th class="px-6 py-4">Credit Limit</th>
-                                    <th class="px-6 py-4">Status</th>
-                                    <th class="px-6 py-4 text-right">Manage</th>
+                                    <th class="px-6 py-4">Credit Status</th>
+                                    <th class="px-6 py-4 text-right">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-slate-100 text-sm">
-                                <tr class="hover:bg-slate-50 transition-colors">
-                                    <td class="px-6 py-4 font-bold text-slate-900">Global Travel</td>
-                                    <td class="px-6 py-4 font-bold text-slate-900">€ 2,450.00</td>
-                                    <td class="px-6 py-4 text-slate-500">Max -€2,000</td>
-                                    <td class="px-6 py-4"><span
-                                            class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-bold">Active</span>
-                                    </td>
-                                    <td class="px-6 py-4 text-right">
-                                        <button onclick="openEditAgency('Global Travel', 2450)"
-                                            class="text-brand-600 border border-brand-200 px-3 py-1.5 rounded text-xs font-bold hover:bg-brand-50">Settings</button>
-                                        <button
-                                            class="text-slate-500 px-3 py-1.5 rounded text-xs font-bold hover:text-slate-700"><i
-                                                class="ph-bold ph-file-pdf"></i> Statement</button>
-                                    </td>
+                            <tbody id="agency-body" class="divide-y divide-slate-100 text-sm">
+                                <tr>
+                                    <td colspan="4" class="p-6 text-center text-slate-400">Loading agencies...</td>
                                 </tr>
                             </tbody>
                         </table>
+
+                        <div class="p-3 border-t border-slate-200 flex justify-between items-center bg-slate-50">
+                            <span class="text-xs text-slate-500">Page <span id="agency-page-current">1</span> of <span
+                                    id="agency-page-total">1</span></span>
+                            <div class="flex gap-2">
+                                <button id="agency-btn-prev" onclick="changeAgencyPage(-1)"
+                                    class="px-3 py-1 text-xs font-bold bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50">Prev</button>
+                                <button id="agency-btn-next" onclick="changeAgencyPage(1)"
+                                    class="px-3 py-1 text-xs font-bold bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50">Next</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div id="view-ledger" class="hidden space-y-6">
+            <div x-show="tab === 'ledger'" style="display: none;" class="space-y-6 animate-fade-in">
 
-                <div class="flex items-center justify-between">
-                    <div class="flex gap-4">
-                        <input type="date" class="border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white">
-                        <select class="border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white">
-                            <option>All Transaction Types</option>
-                            <option>Deposit (Credit)</option>
-                            <option>Purchase (Debit)</option>
-                            <option>Refund</option>
+                <div
+                    class="flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="flex gap-4 w-full md:w-auto">
+                        <div class="relative w-full md:w-64">
+                            <i class="ph-bold ph-magnifying-glass absolute left-3 top-2.5 text-slate-400"></i>
+                            <input type="text" id="ledger-search" oninput="triggerLedgerSearch()"
+                                placeholder="Search agency, amount, description..."
+                                class="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg outline-none focus:ring-1 focus:ring-brand-500">
+                        </div>
+                        <select id="ledger-type" onchange="triggerLedgerSearch()"
+                            class="border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white outline-none">
+                            <option value="">All Types</option>
+                            <option value="deposit">Deposit (+)</option>
+                            <option value="payment">Payment (-)</option>
+                            <option value="refund">Refund (+)</option>
+                            <option value="adjustment_credit">Manual Credit</option>
+                            <option value="adjustment_debit">Manual Debit</option>
                         </select>
                     </div>
-                    <button class="text-brand-600 font-bold text-sm flex items-center gap-2"><i
-                            class="ph-bold ph-download-simple"></i> Export CSV</button>
+                    <div id="ledger-loading" class="hidden text-brand-600 text-sm font-bold flex items-center gap-2">
+                        <i class="ph-bold ph-spinner animate-spin"></i> Loading...
+                    </div>
                 </div>
 
                 <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
@@ -165,65 +194,136 @@
                             class="bg-slate-50 text-xs uppercase text-slate-500 font-semibold border-b border-slate-200">
                             <tr>
                                 <th class="px-6 py-4">ID</th>
-                                <th class="px-6 py-4">Date/Time</th>
+                                <th class="px-6 py-4">Date</th>
                                 <th class="px-6 py-4">Agency</th>
                                 <th class="px-6 py-4">Description</th>
                                 <th class="px-6 py-4 text-right">Amount</th>
                                 <th class="px-6 py-4 text-right">Balance After</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-100 text-sm">
-                            <tr class="hover:bg-slate-50 transition-colors">
-                                <td class="px-6 py-4 font-mono text-xs text-slate-500">#TRX-9901</td>
-                                <td class="px-6 py-4 text-slate-600">Oct 24, 14:20</td>
-                                <td class="px-6 py-4 font-bold">Global Travel</td>
-                                <td class="px-6 py-4">Ferry Booking #REQ-88290</td>
-                                <td class="px-6 py-4 text-right font-bold text-red-600">- € 320.00</td>
-                                <td class="px-6 py-4 text-right font-mono text-slate-500">2,450.00</td>
+                        <tbody id="ledger-body" class="divide-y divide-slate-100 text-sm">
+                        </tbody>
+                    </table>
+
+                    <div class="p-4 border-t border-slate-200 flex justify-between items-center bg-slate-50">
+                        <span class="text-xs text-slate-500">Page <span id="page-current">1</span> of <span
+                                id="page-total">1</span></span>
+                        <div class="flex gap-2">
+                            <button id="btn-prev" onclick="changePage(-1)"
+                                class="px-3 py-1 text-xs font-bold bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50">Prev</button>
+                            <button id="btn-next" onclick="changePage(1)"
+                                class="px-3 py-1 text-xs font-bold bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50">Next</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div x-show="tab === 'invoices'" style="display: none;" class="space-y-6 animate-fade-in">
+
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+
+                    <div class="flex flex-wrap gap-4">
+                        <div class="flex-1 relative">
+                            <i class="ph-bold ph-magnifying-glass absolute left-3 top-2.5 text-slate-400"></i>
+                            <input type="text" id="inv-search" oninput="triggerInvoiceSearch()"
+                                placeholder="Search Invoice #, Agency Name, or Description..."
+                                class="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg outline-none focus:ring-1 focus:ring-brand-500">
+                        </div>
+                        <select id="inv-status" onchange="triggerInvoiceSearch()"
+                            class="w-40 border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white outline-none">
+                            <option value="">All Statuses</option>
+                            <option value="unpaid">Unpaid</option>
+                            <option value="paid">Paid</option>
+                            <option value="refunded">Refunded</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-4 border-t border-slate-100 pt-4">
+                        <span class="text-xs font-bold text-slate-500 uppercase">Filters:</span>
+
+                        <div class="flex items-center gap-2">
+                            <input type="date" id="inv-date-from" onchange="triggerInvoiceSearch()"
+                                class="border border-slate-300 rounded px-2 py-1 text-xs">
+                            <span class="text-slate-400">-</span>
+                            <input type="date" id="inv-date-to" onchange="triggerInvoiceSearch()"
+                                class="border border-slate-300 rounded px-2 py-1 text-xs">
+                        </div>
+
+                        <div class="h-4 w-px bg-slate-300 mx-2"></div>
+
+                        <div class="flex items-center gap-2">
+                            <input type="number" id="inv-amt-min" oninput="triggerInvoiceSearch()"
+                                placeholder="Min Amount" class="w-24 border border-slate-300 rounded px-2 py-1 text-xs">
+                            <span class="text-slate-400">-</span>
+                            <input type="number" id="inv-amt-max" oninput="triggerInvoiceSearch()"
+                                placeholder="Max Amount" class="w-24 border border-slate-300 rounded px-2 py-1 text-xs">
+                        </div>
+
+                        <div class="ml-auto">
+                            <button onclick="resetInvFilters()"
+                                class="text-xs text-red-500 hover:text-red-700 font-bold">Reset Filters</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-slate-50 text-xs uppercase text-slate-500 font-bold border-b border-slate-200">
+                            <tr>
+                                <th class="px-6 py-4">Invoice #</th>
+                                <th class="px-6 py-4">Created</th>
+                                <th class="px-6 py-4">Agency</th>
+                                <th class="px-6 py-4 text-right">Amount</th>
+                                <th class="px-6 py-4 text-center">Status</th>
+                                <th class="px-6 py-4 text-right">Actions</th>
                             </tr>
-                            <tr class="hover:bg-slate-50 transition-colors">
-                                <td class="px-6 py-4 font-mono text-xs text-slate-500">#TRX-9900</td>
-                                <td class="px-6 py-4 text-slate-600">Oct 24, 10:00</td>
-                                <td class="px-6 py-4 font-bold">Sunshine Voyages</td>
-                                <td class="px-6 py-4">Deposit Approved (Bank Transfer)</td>
-                                <td class="px-6 py-4 text-right font-bold text-green-600">+ € 1,000.00</td>
-                                <td class="px-6 py-4 text-right font-mono text-slate-500">1,500.00</td>
-                            </tr>
-                            <tr class="hover:bg-slate-50 transition-colors bg-yellow-50/20">
-                                <td class="px-6 py-4 font-mono text-xs text-slate-500">#TRX-9899</td>
-                                <td class="px-6 py-4 text-slate-600">Oct 23, 18:00</td>
-                                <td class="px-6 py-4 font-bold">Elite Tours</td>
-                                <td class="px-6 py-4">Manual Adjustment (Cash in Office)</td>
-                                <td class="px-6 py-4 text-right font-bold text-green-600">+ € 500.00</td>
-                                <td class="px-6 py-4 text-right font-mono text-slate-500">-1,200.00</td>
+                        </thead>
+                        <tbody id="inv-body" class="divide-y divide-slate-100 text-sm">
+                            <tr>
+                                <td colspan="6" class="p-6 text-center text-slate-400">Loading...</td>
                             </tr>
                         </tbody>
                     </table>
+
+                    <div class="p-4 border-t border-slate-200 flex justify-between items-center bg-slate-50">
+                        <span class="text-xs text-slate-500">Page <span id="inv-page-current">1</span> of <span
+                                id="inv-page-total">1</span></span>
+                        <div class="flex gap-2">
+                            <button id="inv-btn-prev" onclick="changeInvoicePage(-1)"
+                                class="px-3 py-1 text-xs font-bold bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50">Prev</button>
+                            <button id="inv-btn-next" onclick="changeInvoicePage(1)"
+                                class="px-3 py-1 text-xs font-bold bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50">Next</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
         </div>
     </div>
-
 </main>
 
 <div id="receipt-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm transition-opacity" onclick="closeReceiptModal()">
     </div>
-    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden modal-enter">
+    <div
+        class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden modal-enter transform scale-100 transition-all">
         <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
             <h3 class="font-bold text-slate-900">Proof of Payment</h3>
-            <button onclick="closeReceiptModal()"><i class="ph-bold ph-x text-slate-500"></i></button>
+            <button onclick="closeReceiptModal()"><i
+                    class="ph-bold ph-x text-slate-500 hover:text-red-500"></i></button>
         </div>
         <div class="p-6 flex flex-col items-center">
             <div
-                class="w-full h-64 bg-slate-100 border border-slate-200 rounded-lg flex items-center justify-center mb-4 overflow-hidden">
-                <img src="https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?q=80&w=600"
-                    class="object-cover w-full h-full opacity-80" alt="Receipt">
+                class="w-full h-64 bg-slate-100 border border-slate-200 rounded-lg flex items-center justify-center mb-4 overflow-hidden relative">
+                <img id="receipt-img" src="" class="object-contain w-full h-full" alt="Receipt">
+                <a id="receipt-download" href="#" target="_blank"
+                    class="absolute bottom-2 right-2 bg-white/90 p-2 rounded shadow hover:text-brand-600"><i
+                        class="ph-bold ph-download-simple"></i></a>
             </div>
             <div class="text-center">
-                <p class="text-sm font-bold text-slate-900">Amount: € 1,000.00</p>
-                <p class="text-xs text-slate-500">Ref: BNA-99821102</p>
+                <p id="receipt-amount" class="text-xl font-bold text-slate-900"></p>
+                <p id="receipt-ref" class="text-sm text-slate-500 font-mono mt-1"></p>
             </div>
         </div>
     </div>
@@ -233,32 +333,33 @@
     <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"
         onclick="closeManualTransactionModal()"></div>
     <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden modal-enter">
-        <div class="bg-slate-900 p-4 flex justify-between items-center text-white">
-            <h3 class="font-bold flex items-center gap-2"><i class="ph-bold ph-arrows-left-right"></i> Manual
-                Transaction</h3>
-            <button onclick="closeManualTransactionModal()"><i class="ph-bold ph-x"></i></button>
+        <div class="bg-slate-900 p-5 flex justify-between items-center text-white">
+            <h3 class="font-bold flex items-center gap-2"><i class="ph-bold ph-faders"></i> Manual Adjustment</h3>
+            <button onclick="closeManualTransactionModal()"><i class="ph-bold ph-x hover:text-slate-300"></i></button>
         </div>
-        <div class="p-6 space-y-4">
 
+        <div class="p-6 space-y-5">
             <div>
                 <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Select Agency</label>
-                <select class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white">
-                    <option>Global Travel</option>
-                    <option>Sunshine Voyages</option>
-                    <option>Elite Tours</option>
+                <select id="manual-agency"
+                    class="w-full border border-slate-300 rounded-xl p-3 text-sm bg-white outline-none focus:ring-2 focus:ring-slate-500">
+                    {% for agency in agencies %}
+                    <option value="{{ agency.id }}">{{ agency.company_name }}
+                        (Bal: {{ agency.account.balance|intcomma}})</option>
+                    {% endfor %}
                 </select>
             </div>
 
             <div class="grid grid-cols-2 gap-4">
                 <label
-                    class="border border-slate-200 rounded-lg p-3 cursor-pointer hover:bg-green-50 hover:border-green-300 flex flex-col items-center gap-1 transition-colors">
-                    <input type="radio" name="trx_type" class="accent-green-600" checked>
+                    class="border border-slate-200 rounded-xl p-3 cursor-pointer hover:bg-green-50 hover:border-green-300 flex flex-col items-center gap-1 transition-all has-[:checked]:bg-green-50 has-[:checked]:border-green-500 has-[:checked]:ring-1 has-[:checked]:ring-green-500">
+                    <input type="radio" name="trx_type" value="credit" class="hidden" checked>
                     <span class="text-sm font-bold text-green-700">Credit (+)</span>
                     <span class="text-[10px] text-slate-400">Add Money</span>
                 </label>
                 <label
-                    class="border border-slate-200 rounded-lg p-3 cursor-pointer hover:bg-red-50 hover:border-red-300 flex flex-col items-center gap-1 transition-colors">
-                    <input type="radio" name="trx_type" class="accent-red-600">
+                    class="border border-slate-200 rounded-xl p-3 cursor-pointer hover:bg-red-50 hover:border-red-300 flex flex-col items-center gap-1 transition-all has-[:checked]:bg-red-50 has-[:checked]:border-red-500 has-[:checked]:ring-1 has-[:checked]:ring-red-500">
+                    <input type="radio" name="trx_type" value="debit" class="hidden">
                     <span class="text-sm font-bold text-red-700">Debit (-)</span>
                     <span class="text-[10px] text-slate-400">Remove Money</span>
                 </label>
@@ -267,61 +368,614 @@
             <div>
                 <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Amount</label>
                 <div class="relative">
-                    <span class="absolute left-3 top-2.5 text-slate-400 font-bold">€</span>
-                    <input type="number"
-                        class="w-full border border-slate-300 rounded-lg py-2 pl-8 pr-4 text-slate-900 font-bold focus:ring-2 focus:ring-slate-500 outline-none">
+                    <span class="absolute left-3 top-3 text-slate-400 font-bold">DZD</span>
+                    <input id="manual-amount" type="number" step="0.01"
+                        class="w-full border border-slate-300 rounded-xl py-3 pl-12 pr-4 text-slate-900 font-bold text-lg outline-none focus:ring-2 focus:ring-slate-500"
+                        placeholder="0.00">
                 </div>
             </div>
 
             <div>
-                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Description / Reason</label>
-                <input type="text" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm"
-                    placeholder="e.g. Cash payment in office">
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Reason (Required)</label>
+                <input id="manual-reason" type="text"
+                    class="w-full border border-slate-300 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-slate-500"
+                    placeholder="e.g. Cash payment received at office">
             </div>
 
             <button onclick="submitManualTrx()"
-                class="w-full bg-slate-900 text-white font-bold py-3 rounded-lg shadow hover:bg-slate-800 transition-all">Process
-                Transaction</button>
+                class="w-full bg-slate-900 text-white font-bold py-3.5 rounded-xl shadow-lg hover:bg-slate-800 transition-all transform hover:-translate-y-0.5">
+                Process Transaction
+            </button>
         </div>
     </div>
 </div>
 
-<script>
-    // --- TABS ---
-    function switchTab(tabId) {
-        document.getElementById('view-overview').classList.add('hidden');
-        document.getElementById('view-ledger').classList.add('hidden');
-        document.getElementById('tab-overview').classList.remove('border-brand-600', 'text-brand-600');
-        document.getElementById('tab-ledger').classList.remove('border-brand-600', 'text-brand-600');
+<div id="limit-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeLimitModal()"></div>
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden modal-enter">
+        <div class="bg-slate-900 p-5 flex justify-between items-center text-white">
+            <h3 class="font-bold flex items-center gap-2"><i class="ph-bold ph-shield-check"></i> Credit Settings</h3>
+            <button onclick="closeLimitModal()"><i class="ph-bold ph-x hover:text-slate-300"></i></button>
+        </div>
 
-        document.getElementById('view-' + tabId).classList.remove('hidden');
-        document.getElementById('tab-' + tabId).classList.add('border-brand-600', 'text-brand-600');
+        <div class="p-6 space-y-5">
+            <div class="text-center">
+                <h4 id="limit-agency-name" class="font-bold text-lg text-slate-900">Agency Name</h4>
+                <p class="text-xs text-slate-500">Manage overdraft protection</p>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Credit Limit (Negative)</label>
+                <div class="relative">
+                    <span class="absolute left-3 top-3 text-slate-400 font-bold">-</span>
+                    <input id="limit-input" type="number"
+                        class="w-full border border-slate-300 rounded-xl py-3 pl-8 pr-4 text-slate-900 font-bold text-lg outline-none focus:ring-2 focus:ring-slate-500"
+                        placeholder="2000">
+                    <span class="absolute right-12 top-4 text-xs text-slate-400 font-bold">DZD</span>
+                </div>
+                <p class="text-[10px] text-slate-400 mt-2 leading-tight">
+                    * This is the maximum <strong>debt</strong> allowed. <br>
+                    Example: If set to <strong>2,000</strong>, the balance can go down to <strong>-2,000 DZD</strong>
+                    before services are blocked.
+                </p>
+            </div>
+
+            <input type="hidden" id="limit-agency-id">
+
+            <button onclick="submitLimitUpdate()"
+                class="w-full bg-slate-900 text-white font-bold py-3.5 rounded-xl shadow-lg hover:bg-slate-800 transition-all">
+                Save New Limit
+            </button>
+        </div>
+    </div>
+</div>
+
+
+
+
+<script src="//unpkg.com/alpinejs" defer></script>
+<script>
+    // ==========================================
+    // 1. TOP-UP ACTIONS (APPROVE / REJECT)
+    // ==========================================
+    function processTopUp(id, action) {
+        if (!confirm(`Are you sure you want to ${action.toUpperCase()} this request?`)) return;
+
+        const row = document.getElementById(`row-topup-${id}`);
+        row.style.opacity = '0.5';
+
+        fetch(`/admin_panel/api/topup/${id}/process/`, {
+            method: 'POST',
+            body: JSON.stringify({ action: action }),
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Remove Row
+                    row.remove();
+
+                    // Update Live Stats
+                    document.getElementById('stat-pending').innerText = Number(data.stats.pending).toLocaleString();
+                    document.getElementById('stat-balance').innerText = Number(data.stats.balance).toLocaleString();
+
+                    // Check if list empty
+                    const tbody = document.getElementById('pending-list');
+                    if (tbody.children.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-12 text-center text-slate-400">All caught up!</td></tr>`;
+                        document.getElementById('pending-badge').classList.add('hidden');
+                    } else {
+                        document.getElementById('pending-badge').innerText = tbody.children.length;
+                    }
+                } else {
+                    alert("Error: " + data.msg);
+                    row.style.opacity = '1';
+                }
+            })
+            .catch(err => { alert("Server Error"); row.style.opacity = '1'; });
     }
 
-    // --- RECEIPT ---
+    // ==========================================
+    // 2. RECEIPT MODAL
+    // ==========================================
     const receiptModal = document.getElementById('receipt-modal');
-    function openReceiptModal() { receiptModal.classList.remove('hidden'); }
+    function openReceiptModal(url, amount, ref) {
+        document.getElementById('receipt-img').src = url;
+        document.getElementById('receipt-download').href = url;
+        document.getElementById('receipt-amount').innerText = amount + ' DZD';
+        document.getElementById('receipt-ref').innerText = 'Ref: ' + ref;
+        receiptModal.classList.remove('hidden');
+    }
     function closeReceiptModal() { receiptModal.classList.add('hidden'); }
 
-    // --- MANUAL TRX ---
+    // ==========================================
+    // 3. MANUAL TRANSACTION MODAL
+    // ==========================================
     const trxModal = document.getElementById('manual-trx-modal');
-    function openManualTransactionModal() { trxModal.classList.remove('hidden'); }
+    function openManualTransactionModal(agencyId = null) {
+        if (agencyId) document.getElementById('manual-agency').value = agencyId;
+        trxModal.classList.remove('hidden');
+    }
     function closeManualTransactionModal() { trxModal.classList.add('hidden'); }
 
     function submitManualTrx() {
+        const agencyId = document.getElementById('manual-agency').value;
+        const type = document.querySelector('input[name="trx_type"]:checked').value;
+        const amount = document.getElementById('manual-amount').value;
+        const reason = document.getElementById('manual-reason').value;
+
+        if (!amount || !reason) { alert("Amount and Reason are required."); return; }
+
         const btn = document.querySelector('#manual-trx-modal button');
+        const originalText = btn.innerText;
         btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Processing...';
-        setTimeout(() => {
-            alert("Transaction Processed Successfully.");
-            closeManualTransactionModal();
-            btn.innerHTML = 'Process Transaction';
-        }, 1000);
+        btn.disabled = true;
+
+        fetch('{% url "admin_manual_trx" %}', {
+            method: 'POST',
+            body: JSON.stringify({ agency_id: agencyId, type: type, amount: amount, reason: reason }),
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' }
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert("Success: " + data.msg);
+                    // Update Balance Stat
+                    document.getElementById('stat-balance').innerText = Number(data.stats.balance).toLocaleString();
+                    closeManualTransactionModal();
+                    // Optional: Reload to update agency list numbers
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    alert("Error: " + data.msg);
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                }
+            });
     }
 
-    // --- EDIT AGENCY (Placeholder for the button in table) ---
-    function openEditAgency(name, balance) {
-        alert(`Edit settings for ${name} (Balance: €${balance})`);
-        // You can reuse the manual modal or create a specific one for limits
+    // ==========================================
+    // 4. LEDGER (SEARCH & PAGINATION)
+    // ==========================================
+    let currentLedgerPage = 1;
+    let ledgerSearchTimeout;
+
+    function triggerLedgerSearch() {
+        clearTimeout(ledgerSearchTimeout);
+        currentLedgerPage = 1;
+        ledgerSearchTimeout = setTimeout(() => loadLedger(1), 400);
+    }
+
+    function changePage(delta) {
+        currentLedgerPage += delta;
+        loadLedger(currentLedgerPage);
+    }
+
+    function loadLedger(page) {
+        const query = document.getElementById('ledger-search').value;
+        const type = document.getElementById('ledger-type').value;
+        const loader = document.getElementById('ledger-loading');
+        loader.classList.remove('hidden');
+
+        fetch(`{% url "admin_ledger_api" %}?page=${page}&q=${query}&type=${type}`, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const tbody = document.getElementById('ledger-body');
+                    tbody.innerHTML = '';
+
+                    if (data.transactions.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-12 text-center text-slate-400">No transactions found.</td></tr>`;
+                    } else {
+                        data.transactions.forEach(t => {
+                            let amountClass = t.type === 'deposit' || t.type === 'adjustment_credit' || t.type === 'refund' ? 'text-green-600' : 'text-red-600';
+                            let sign = t.type === 'deposit' || t.type === 'adjustment_credit' || t.type === 'refund' ? '+' : '';
+
+                            tbody.innerHTML += `
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="px-6 py-4 font-mono text-xs text-slate-500">#${t.id}</td>
+                                <td class="px-6 py-4 text-slate-600">${t.date}</td>
+                                <td class="px-6 py-4 font-bold text-slate-900">${t.agency}</td>
+                                <td class="px-6 py-4">${t.description}</td>
+                                <td class="px-6 py-4 text-right font-bold ${amountClass}">${sign}${t.amount.toLocaleString()}</td>
+                                <td class="px-6 py-4 text-right font-mono text-slate-500">${t.balance_after.toLocaleString()}</td>
+                            </tr>
+                        `;
+                        });
+                    }
+
+                    // Update Pagination Controls
+                    document.getElementById('page-current').innerText = data.pagination.current;
+                    document.getElementById('page-total').innerText = data.pagination.total;
+                    document.getElementById('btn-prev').disabled = !data.pagination.has_prev;
+                    document.getElementById('btn-next').disabled = !data.pagination.has_next;
+                    document.getElementById('btn-prev').style.opacity = data.pagination.has_prev ? 1 : 0.5;
+                    document.getElementById('btn-next').style.opacity = data.pagination.has_next ? 1 : 0.5;
+                }
+            })
+            .finally(() => loader.classList.add('hidden'));
+    }
+    // ==========================================
+    // 5. CREDIT LIMIT MODAL
+    // ==========================================
+    const limitModal = document.getElementById('limit-modal');
+
+    function openLimitModal(id, name, currentLimit) {
+        document.getElementById('limit-agency-id').value = id;
+        document.getElementById('limit-agency-name').innerText = name;
+
+        // Convert "2000.00" to "2000" (parse float)
+        document.getElementById('limit-input').value = parseFloat(currentLimit);
+
+        limitModal.classList.remove('hidden');
+    }
+
+    function closeLimitModal() {
+        limitModal.classList.add('hidden');
+    }
+
+    function submitLimitUpdate() {
+        const id = document.getElementById('limit-agency-id').value;
+        const limit = document.getElementById('limit-input').value;
+        const btn = document.querySelector('#limit-modal button');
+        const originalText = btn.innerText;
+
+        if (!limit) { alert("Please enter a limit"); return; }
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Saving...';
+
+        fetch('{% url "admin_update_limit" %}', {
+            method: 'POST',
+            body: JSON.stringify({ agency_id: id, limit: limit }),
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' }
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    closeLimitModal();
+                    // Reload to reflect changes in the table UI
+                    window.location.reload();
+                } else {
+                    alert("Error: " + data.msg);
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                }
+            });
+    }
+
+    // ==========================================
+    // 6. AGENCY LIST ENGINE (AJAX)
+    // ==========================================
+    let currentAgencyPage = 1;
+    let agencySearchTimeout;
+
+    // Load initial list on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        loadAgencies(1);
+    });
+
+    function triggerAgencySearch() {
+        clearTimeout(agencySearchTimeout);
+        currentAgencyPage = 1;
+        agencySearchTimeout = setTimeout(() => loadAgencies(1), 400);
+    }
+
+    function changeAgencyPage(delta) {
+        currentAgencyPage += delta;
+        loadAgencies(currentAgencyPage);
+    }
+
+    function loadAgencies(page) {
+        const query = document.getElementById('agency-search').value;
+        const tbody = document.getElementById('agency-body');
+
+        // Optional: Show loading spinner if it takes time
+        // tbody.innerHTML = '<tr><td colspan="4" class="p-6 text-center">Loading...</td></tr>';
+
+        fetch(`{% url "admin_agency_api" %}?page=${page}&q=${query}`, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    tbody.innerHTML = '';
+
+                    if (data.agencies.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-slate-400">No agencies found.</td></tr>`;
+                    } else {
+                        data.agencies.forEach(agency => {
+                            // Formatting Numbers
+                            const bal = agency.balance.toLocaleString();
+                            const limit = agency.credit_limit.toLocaleString();
+
+                            // Status Badge Logic
+                            let statusBadge = '';
+                            if (agency.is_solvent) {
+                                statusBadge = `<span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold">Good</span>`;
+                            } else {
+                                statusBadge = `<span class="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-bold">Limit Reached</span>`;
+                            }
+
+                            tbody.innerHTML += `
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="px-6 py-4 font-bold text-slate-900">${agency.name}</td>
+                                <td class="px-6 py-4 font-mono font-bold text-slate-900">${bal} DZD</td>
+                                <td class="px-6 py-4">
+                                    ${statusBadge}
+                                    <span class="text-xs text-slate-400 ml-2">Limit: ${limit}</span>
+                                </td>
+                                <td class="px-6 py-4 text-right flex justify-end gap-2">
+                                    <button onclick="openLimitModal('${agency.id}', '${agency.name.replace(/'/g, "\\'")}', '${agency.credit_limit}')" 
+                                        class="text-slate-600 border border-slate-200 px-3 py-1.5 rounded text-xs font-bold hover:bg-slate-50 transition-colors flex items-center gap-1">
+                                        <i class="ph-bold ph-shield"></i> Limit
+                                    </button>
+                                    <button onclick="openManualTransactionModal('${agency.id}')" 
+                                        class="text-brand-600 bg-brand-50 border border-brand-100 px-3 py-1.5 rounded text-xs font-bold hover:bg-brand-100 transition-colors">
+                                        Adjust
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                        });
+                    }
+
+                    // Update Pagination Controls
+                    document.getElementById('agency-page-current').innerText = data.pagination.current;
+                    document.getElementById('agency-page-total').innerText = data.pagination.total;
+                    document.getElementById('agency-btn-prev').disabled = !data.pagination.has_prev;
+                    document.getElementById('agency-btn-next').disabled = !data.pagination.has_next;
+                    document.getElementById('agency-btn-prev').style.opacity = data.pagination.has_prev ? 1 : 0.5;
+                    document.getElementById('agency-btn-next').style.opacity = data.pagination.has_next ? 1 : 0.5;
+                }
+            });
+    }
+
+    // ==========================================
+    // 7. PENDING TOP-UPS ENGINE (AJAX)
+    // ==========================================
+    let currentTopupPage = 1;
+
+    // Load on startup
+    document.addEventListener('DOMContentLoaded', () => {
+        loadTopups(1);
+    });
+
+    function changeTopupPage(delta) {
+        currentTopupPage += delta;
+        loadTopups(currentTopupPage);
+    }
+
+    function loadTopups(page) {
+        const tbody = document.getElementById('topup-body');
+
+        fetch(`{% url "admin_topups_api" %}?page=${page}`, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    tbody.innerHTML = '';
+
+                    // 1. Handle Empty State
+                    if (data.topups.length === 0) {
+                        tbody.innerHTML = `
+                        <tr>
+                            <td colspan="6" class="px-6 py-12 text-center text-slate-400">
+                                <div class="flex flex-col items-center">
+                                    <i class="ph-duotone ph-check-circle text-3xl mb-2 text-green-400"></i>
+                                    <p>All caught up!</p>
+                                </div>
+                            </td>
+                        </tr>`;
+                        document.getElementById('topup-pagination').classList.add('hidden');
+                        document.getElementById('topup-pulse').classList.add('hidden');
+                        // Also hide the red badge in tabs if needed
+                        document.getElementById('pending-badge').classList.add('hidden');
+                    } else {
+                        // 2. Render Rows
+                        document.getElementById('topup-pagination').classList.remove('hidden');
+                        document.getElementById('topup-pulse').classList.remove('hidden');
+                        document.getElementById('pending-badge').classList.remove('hidden');
+                        document.getElementById('pending-badge').innerText = data.pagination.total * 5; // Approx count or pass real count from backend
+
+                        data.topups.forEach(t => {
+                            // Logic for Receipt Button
+                            let receiptBtn = `<span class="text-slate-400 text-xs italic">No Receipt</span>`;
+                            if (t.receipt_url) {
+                                receiptBtn = `
+                                <button onclick="openReceiptModal('${t.receipt_url}', '${t.amount.toLocaleString()}', '${t.reference}')" 
+                                    class="text-brand-600 hover:text-brand-800 text-xs font-bold flex items-center justify-center gap-1 mx-auto">
+                                    <i class="ph-bold ph-eye"></i> View
+                                </button>`;
+                            }
+
+                            tbody.innerHTML += `
+                            <tr class="hover:bg-slate-50 transition-colors group" id="row-topup-${t.id}">
+                                <td class="px-6 py-4 text-slate-500 text-xs">${t.created_at}</td>
+                                <td class="px-6 py-4 font-bold text-slate-900">${t.agency_name}</td>
+                                <td class="px-6 py-4 text-xs text-slate-600">
+                                    <span class="bg-slate-100 px-2 py-1 rounded border border-slate-200 font-mono">${t.reference}</span>
+                                </td>
+                                <td class="px-6 py-4 text-right font-bold text-green-600">+ ${t.amount.toLocaleString()}</td>
+                                <td class="px-6 py-4 text-center">${receiptBtn}</td>
+                                <td class="px-6 py-4 text-right">
+                                    <div class="flex justify-end gap-2">
+                                        <button onclick="processTopUp(${t.id}, 'reject')" class="text-red-600 bg-white border border-red-200 hover:bg-red-50 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors">Reject</button>
+                                        <button onclick="processTopUp(${t.id}, 'approve')" class="bg-green-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-sm hover:bg-green-700 transition-colors">Approve</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                        });
+                    }
+
+                    // 3. Update Pagination Controls
+                    document.getElementById('topup-page-current').innerText = data.pagination.current;
+                    document.getElementById('topup-page-total').innerText = data.pagination.total;
+                    document.getElementById('topup-btn-prev').disabled = !data.pagination.has_prev;
+                    document.getElementById('topup-btn-next').disabled = !data.pagination.has_next;
+                    document.getElementById('topup-btn-prev').style.opacity = data.pagination.has_prev ? 1 : 0.5;
+                    document.getElementById('topup-btn-next').style.opacity = data.pagination.has_next ? 1 : 0.5;
+                }
+            });
+    }
+
+
+
+    // ==========================================
+    // 8. INVOICE MANAGER ENGINE (UPDATED)
+    // ==========================================
+    let currentInvPage = 1;
+    let invSearchTimeout;
+
+    function triggerInvoiceSearch() {
+        clearTimeout(invSearchTimeout);
+        currentInvPage = 1;
+        invSearchTimeout = setTimeout(() => loadInvoices(1), 500);
+    }
+
+    function resetInvFilters() {
+        document.getElementById('inv-search').value = '';
+        document.getElementById('inv-status').value = '';
+        document.getElementById('inv-date-from').value = '';
+        document.getElementById('inv-date-to').value = '';
+        document.getElementById('inv-amt-min').value = '';
+        document.getElementById('inv-amt-max').value = '';
+        loadInvoices(1);
+    }
+
+    function changeInvoicePage(delta) {
+        currentInvPage += delta;
+        loadInvoices(currentInvPage);
+    }
+
+    function loadInvoices(page) {
+        // Collect Params
+        const params = new URLSearchParams({
+            page: page,
+            q: document.getElementById('inv-search').value,
+            status: document.getElementById('inv-status').value,
+            date_from: document.getElementById('inv-date-from').value,
+            date_to: document.getElementById('inv-date-to').value,
+            amount_min: document.getElementById('inv-amt-min').value,
+            amount_max: document.getElementById('inv-amt-max').value,
+        });
+
+        const tbody = document.getElementById('inv-body');
+
+        fetch(`{% url "admin_invoices_api" %}?` + params.toString(), {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    tbody.innerHTML = '';
+
+                    if (data.invoices.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-12 text-center text-slate-400">No invoices match your filters.</td></tr>`;
+                    } else {
+                        data.invoices.forEach(inv => {
+                            // 1. Badge Styles
+                            let badgeClass = 'bg-slate-100 text-slate-600';
+                            if (inv.status === 'paid') badgeClass = 'bg-green-100 text-green-700';
+                            if (inv.status === 'unpaid') badgeClass = 'bg-red-100 text-red-700 animate-pulse';
+                            if (inv.status === 'refunded') badgeClass = 'bg-purple-100 text-purple-700';
+                            if (inv.status === 'cancelled') badgeClass = 'bg-gray-100 text-gray-400 line-through';
+
+                            // 2. Action Buttons Logic
+                            let actions = ``;
+
+                            // PDF Button (Always there unless cancelled/draft)
+                            actions += `<button class="text-slate-400 hover:text-brand-600 mr-2"><i class="ph-bold ph-download-simple"></i></button>`;
+
+                            // Cancel Button (Only if Unpaid)
+                            if (inv.is_cancellable) {
+                                actions += `<button onclick="cancelInvoice(${inv.id})" class="text-red-500 hover:text-red-700 text-xs font-bold border border-red-200 px-2 py-1 rounded hover:bg-red-50">Cancel</button>`;
+                            }
+
+                            // Refund Button (Only if Paid)
+                            if (inv.is_refundable) {
+                                actions += `<button onclick="refundInvoice(${inv.id})" class="text-purple-600 hover:text-purple-800 text-xs font-bold border border-purple-200 px-2 py-1 rounded hover:bg-purple-50">Refund</button>`;
+                            }
+
+                            tbody.innerHTML += `
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="px-6 py-4 font-mono font-bold text-slate-700">${inv.number}</td>
+                                <td class="px-6 py-4 text-slate-500 text-xs">${inv.date}</td>
+                                <td class="px-6 py-4 font-bold text-slate-900">${inv.agency}</td>
+                                <td class="px-6 py-4 text-right font-bold text-slate-900">${inv.amount.toLocaleString()}</td>
+                                <td class="px-6 py-4 text-center">
+                                    <span class="${badgeClass} px-2 py-1 rounded text-xs font-bold uppercase tracking-wide">${inv.status}</span>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    ${actions}
+                                </td>
+                            </tr>
+                        `;
+                        });
+                    }
+                    // Update Paginator
+                    document.getElementById('inv-page-current').innerText = data.pagination.current;
+                    document.getElementById('inv-page-total').innerText = data.pagination.total;
+                    document.getElementById('inv-btn-prev').disabled = !data.pagination.has_prev;
+                    document.getElementById('inv-btn-next').disabled = !data.pagination.has_next;
+                    document.getElementById('inv-btn-prev').style.opacity = data.pagination.has_prev ? 1 : 0.5;
+                    document.getElementById('inv-btn-next').style.opacity = data.pagination.has_next ? 1 : 0.5;
+                }
+            });
+    }
+
+    // REFUND LOGIC
+    function refundInvoice(id) {
+        if (!confirm("⚠️ CONFIRM REFUND\n\nThis will reverse the payment and return funds to the agency wallet.\n\nAre you sure?")) return;
+
+        fetch(`/admin_panel/api/invoices/${id}/refund/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert("Success: " + data.msg);
+                    loadInvoices(currentInvPage); // Refresh list
+                } else {
+                    alert("Error: " + data.msg);
+                }
+            }).catch(error => {
+                // Network error, timeout, server down, CORS, etc.
+                console.error(error);
+                alert("❌ Connection failed. Please check your internet connection and try again.");
+            });;
+    }
+
+    // CANCEL LOGIC (Re-included for completeness)
+    function cancelInvoice(id) {
+        if (!confirm("Are you sure you want to cancel this unpaid invoice?")) return;
+        fetch(`/admin_panel/api/invoices/${id}/cancel/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' }
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert(data.msg);
+                    loadInvoices(currentInvPage);
+                } else {
+                    alert(data.msg);
+                }
+            }).catch(error => {
+                // Network error, timeout, server down, CORS, etc.
+                console.error(error);
+                alert("❌ Connection failed. Please check your internet connection and try again.");
+            });;
     }
 </script>
 

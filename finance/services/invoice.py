@@ -4,8 +4,7 @@ from django.db.models import Q
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from ..models import Invoice, InvoiceItem, Transaction, Account
-from .wallet import get_account_balance
-
+from .account import get_account
 
 # =========================================================
 # 1. CREATION LOGIC (GATE 1: CREDIT & RESERVATION)
@@ -28,8 +27,10 @@ def create_invoice(agency, items_data, user=None, due_date=None):
 
     with transaction.atomic():
         # 1. GET & LOCK ACCOUNT
-        account = get_account_balance(agency)
-        acc_locked = Account.objects.select_for_update().get(id=account.id)
+        try:
+            acc_locked = Account.objects.select_for_update().get(agency=agency)
+        except Account.DoesNotExist:
+            return False, "Agency Account not found."
 
         # 2. GATE 1: CHECK OPERATIONAL VOLUME (Credit Limit)
         # Formula: Available Volume = Credit Limit - Unpaid Hold
@@ -162,10 +163,11 @@ def cancel_invoice(invoice_id, user):
             raise ValidationError("Can only cancel unpaid invoices.")
 
         # Release the Hold so they get their Buying Power back
-        account = get_account_balance(invoice.agency)
+        account = get_account(invoice.agency)
         acc_locked = Account.objects.select_for_update().get(id=account.id)
 
         acc_locked.unpaid_hold -= invoice.total_amount
+        acc_locked.credit_limit += invoice.total_amount
         acc_locked.save()
 
         invoice.status = 'cancelled'
@@ -293,3 +295,48 @@ def search_invoices(agency=None, user=None, search_term=None, status=None, min_a
         ).distinct()
 
     return queryset.order_by('-created_at')
+
+
+# finance/services/invoice.py
+
+def refund_invoice(invoice_id, user=None, reason=None):
+    """
+    Refunds a PAID invoice.
+    1. Checks if Paid.
+    2. Credits the money back to the Agency Balance.
+    3. Updates Status to 'refunded'.
+    """
+    with transaction.atomic():
+        # 1. Lock Invoice
+        invoice = Invoice.objects.select_for_update().get(id=invoice_id)
+
+        if invoice.status != 'paid':
+            raise ValidationError(
+                f"Cannot refund. Status is '{invoice.status}' (must be 'paid').")
+
+        # 2. Lock Account
+        # Use your wallet helper or direct query
+        acc_locked = Account.objects.select_for_update().get(agency=invoice.agency)
+
+        # 3. EXECUTE REFUND (Money Back)
+        # We add the total_amount back to the Balance
+        refund_amount = invoice.total_amount
+        acc_locked.balance += refund_amount
+        acc_locked.save()
+
+        # 4. LOG TRANSACTION
+        Transaction.objects.create(
+            account=acc_locked,
+            transaction_type='refund',  # Ensure this choice exists in your model
+            amount=refund_amount,      # Positive (Money In)
+            balance_after=acc_locked.balance,
+            description=f"Refund: {invoice.invoice_number} - {reason or 'Admin Action'}",
+            created_by=user,
+            invoice=invoice
+        )
+
+        # 5. UPDATE INVOICE
+        invoice.status = 'refunded'
+        invoice.save()
+
+        return True

@@ -1,5 +1,8 @@
 # Assuming you have a basic ProviderForm
 # Ensure you have this from previous steps
+from .models import FerryRequest  # Ensure this is imported
+from finance.services.invoice import create_single_service_invoice
+from django.core.exceptions import ValidationError
 from django.db.models import Sum, Count, Q
 from .models import FerryRequest
 from django.db.models import Q
@@ -506,13 +509,18 @@ def get_ferry_request_detail_api(request, reference):
         return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
 
 
+# Import the Finance Service
+
+
 @login_required
 @require_POST
 def respond_to_offer_api(request, reference):
     """
     Handles Client response to an offer (Accept or Reject).
+    If Accepted, it triggers Gate 1 (Credit Check) and Generates an Invoice.
     """
     try:
+        # 1. Parse Data
         req = get_object_or_404(
             FerryRequest, reference=reference, agency=request.user.agency)
         data = json.loads(request.body)
@@ -522,24 +530,59 @@ def respond_to_offer_api(request, reference):
         if req.status != 'offer_sent':
             return JsonResponse({'status': 'error', 'message': 'No pending offer to respond to.'}, status=400)
 
-        if action == 'accept':
-            req.status = 'confirmed'
-            # Logic hook: Here you might trigger an email or generate PDF invoice
-        elif action == 'reject':
-            req.status = 'rejected'
-        else:
-            return JsonResponse({'status': 'error', 'message': 'Invalid action.'}, status=400)
+        with transaction.atomic():
+            if action == 'accept':
+                # ====================================================
+                # GENERATE INVOICE & CHECK CREDIT (GATE 1)
+                # ====================================================
 
-        req.save()
+                # Ensure the offer has a valid price
+                # (Assuming your model has a field like 'offer_price' or 'total_price')
+                price = req.selling_price
+
+                if not price or price <= 0:
+                    raise ValidationError(
+                        "Invalid offer price. Cannot generate invoice.")
+
+                # Call the Finance Service
+                # This AUTOMATICALLY checks Credit Limit and Reserves Funds
+                invoice = create_single_service_invoice(
+                    service_object=req,
+                    amount=price,
+                    description=f"Ferry Booking: {req.route} ({req.departure_date})",
+                    user=request.user
+                )
+
+                # Link Invoice & Update Status
+                req.invoice = invoice
+                req.status = 'confirmed'
+                req.save()
+
+                msg = "Offer accepted and Invoice generated."
+
+            elif action == 'reject':
+                req.status = 'rejected'
+                req.save()
+                msg = "Offer rejected."
+
+            else:
+                return JsonResponse({'status': 'error', 'message': 'Invalid action.'}, status=400)
 
         return JsonResponse({
             'status': 'success',
+            'message': msg,
             'new_status': req.status,
-            'new_label': req.client_status_label
+            'new_label': req.get_status_display()  # Helper to show nice text
         })
 
+    except ValidationError as ve:
+        # This catches "Credit Limit Reached" from the finance service
+        # Sends a clear error message to the frontend so they know why they can't accept
+        error_msg = ve.message if hasattr(ve, 'message') else str(ve)
+        return JsonResponse({'status': 'error', 'message': error_msg}, status=400)
+
     except Exception as e:
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+        return JsonResponse({'status': 'error', 'message': f"System Error: {str(e)}"}, status=500)
 
 
 # ------------------------------------------------------------------------------------------
