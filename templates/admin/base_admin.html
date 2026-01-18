@@ -76,14 +76,19 @@
         <!-- User Info -->
         <div class="p-4 border-b border-slate-800 flex items-center gap-3">
             <div
-                class="w-10 h-10 rounded-full bg-gradient-to-tr from-brand-500 to-purple-500 flex items-center justify-center font-bold text-sm shadow-lg">
-                KH
+                class="w-10 h-10 rounded-full bg-gradient-to-tr from-brand-600 to-brand-700 flex items-center justify-center font-bold text-sm shadow-lg uppercase">
+                {{ request.user.first_name|default:request.user.username|slice:":2" }}
             </div>
             <div>
-                <div class="text-sm font-semibold">Houssem K.</div>
-                <div class="text-[10px] text-slate-400 uppercase tracking-wider">Super Admin</div>
+                <div class="text-sm font-semibold">
+                    {{ request.user.get_full_name|default:request.user.username }}
+                </div>
+                <div class="text-[10px] text-slate-400 uppercase tracking-wider">
+                    {{ request.user.role.name|default:"Admin" }}
+                </div>
             </div>
         </div>
+
 
         <!-- Navigation -->
         <nav class="flex-1 py-6 space-y-1 px-3" id="sidebar-nav">

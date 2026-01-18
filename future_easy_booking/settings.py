@@ -153,3 +153,19 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'login_success'  # Points to the router view above
 LOGOUT_REDIRECT_URL = 'login'
+
+
+# settings.py
+# Email notification setting
+# settings.py
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+EMAIL_HOST = 'mail.easybooking.pro'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False
+
+EMAIL_HOST_USER = 'crm@easybooking.pro'
+EMAIL_HOST_PASSWORD = 'Alger2025@'
+
+DEFAULT_FROM_EMAIL = 'Easy Booking <crm@easybooking.pro>'

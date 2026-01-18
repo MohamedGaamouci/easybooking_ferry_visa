@@ -1,3 +1,4 @@
+from .notifications import send_booking_notification
 from ..models import Invoice, Account, Transaction  # Ensure these are imported
 from django.db.models import Sum
 from ..models import Invoice
@@ -7,6 +8,50 @@ from django.utils import timezone
 from django.core.exceptions import ValidationError
 from ..models import Invoice, InvoiceItem, Transaction, Account
 from .account import get_account
+
+
+import io
+from django.template.loader import get_template
+from xhtml2pdf import pisa  # type: ignore
+from django.shortcuts import get_object_or_404
+from ..models import Invoice
+
+
+def generate_invoice_pdf_binary(invoice_id, user=None):
+    """
+    Generates a PDF and returns the raw binary content for email attachments.
+    """
+    # 1. Fetch Data
+    invoice = get_object_or_404(Invoice, id=invoice_id)
+
+    # 2. Prepare Context
+    context = {
+        'invoice': invoice,
+        'agency': invoice.agency,
+        'items': invoice.items.all(),
+        'date': invoice.created_at,
+        'user': user,  # The admin or system user who triggered it
+    }
+
+    # 3. Render HTML to String
+    template_path = 'client/pdf/invoice.html'
+    template = get_template(template_path)
+    html = template.render(context)
+
+    # 4. Create a bytes buffer (virtual file)
+    result = io.BytesIO()
+
+    # 5. Generate PDF into the buffer
+    pisa_status = pisa.CreatePDF(
+        io.BytesIO(html.encode("utf-8")),
+        dest=result
+    )
+
+    # 6. Return binary content if successful
+    if not pisa_status.err:
+        return result.getvalue()  # This is the "raw" PDF data
+
+    return None
 
 # =========================================================
 # 1. CREATION LOGIC (GATE 1: CREDIT & RESERVATION)
@@ -67,8 +112,30 @@ def create_invoice(agency, items_data, user=None, due_date=None):
                 amount=item.get('amount', 0),
                 service_object=item.get('service_object')  # Generic Link
             )
+    # === SEND NOTIFICATION (OUTSIDE ATOMIC BLOCK) ===
+    # OUTSIDE the atomic block
+    invoice_id = invoice.id  # 'invoice' was created inside the transaction
 
-        return invoice
+    # Generate the binary data
+    pdf_content = generate_invoice_pdf_binary(invoice_id, user=user)
+
+    if pdf_content:
+        try:
+            # Use the first item description as the service name
+            main_service = items_data[0].get(
+                'description', 'Easy Booking Service')
+
+            send_booking_notification(
+                agency_name=agency.company_name,
+                manager_email=agency.manager.email,
+                booking_ref=invoice.invoice_number,
+                service_name=main_service,
+                amount=invoice.total_amount,
+                invoice_pdf=pdf_content  # Send the binary here!
+            )
+        except Exception as e:
+            print(f"Failed to send email: {e}")
+    return invoice
 
 
 def create_single_service_invoice(service_object, amount, description, user):

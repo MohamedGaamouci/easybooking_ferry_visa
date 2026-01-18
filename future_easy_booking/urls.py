@@ -16,10 +16,6 @@ def home(request):
     return render(request, 'admin/dashboard.html')
 
 
-def admin_dashboard_view(request):
-    return render(request, 'admin/dashboard.html')
-
-
 def admin_setting_view(request):
     return render(request, 'admin/setting.html')
 
@@ -60,8 +56,7 @@ urlpatterns = [
 
 admin_urls = [
     # Custom Admin Panel
-    path("admin_panel/", home, name="admin_dashboard"),
-    path("admin_panel/dashboard/", admin_dashboard_view, name="admin_dashboard"),
+    path("admin_panel/", include('core.urls')),
     path("admin_panel/settings/", admin_setting_view, name="admin_setting"),
 
 

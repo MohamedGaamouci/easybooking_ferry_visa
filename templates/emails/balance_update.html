@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        .wrapper {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f8fafc;
+            padding: 40px 10px;
+        }
+
+        .card {
+            max-width: 500px;
+            margin: auto;
+            background: white;
+            border-radius: 20px;
+            border-top: 4px solid #0f172a;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        .amount-circle {
+            width: 120px;
+            height: 120px;
+            background: #f1f5f9;
+            border-radius: 50%;
+            line-height: 120px;
+            margin: 20px auto;
+            font-size: 20px;
+            font-weight: bold;
+            color: #0f172a;
+            border: 2px dashed #cbd5e1;
+        }
+
+        .balance-text {
+            font-size: 14px;
+            color: #64748b;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrapper">
+        <div class="card">
+            <div style="font-weight: bold; color: #0f172a; margin-bottom: 20px;">EASY BOOKING</div>
+            <div class="icon">💰</div>
+            <h2 style="margin: 0;">Wallet Updated</h2>
+            <p style="color: #64748b; font-size: 14px;">A new transaction has been recorded for {{ agency_name }}.</p>
+
+            <div class="amount-circle">
+                {% if type == 'credit' %}+{% else %}-{% endif %}{{ amount }}
+            </div>
+
+            <p style="font-size: 15px; font-weight: bold; color: #334155;">{{ reason }}</p>
+
+            <div class="balance-text">
+                Current Wallet Balance:<br>
+                <strong style="font-size: 18px; color: #0f172a;">{{ new_balance }} DZD</strong>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

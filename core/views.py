@@ -1,3 +1,6 @@
+from agencies.models import Agency
+from .services import DashboardService
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db.models import Q
 from django.shortcuts import render
@@ -59,3 +62,30 @@ def cms_dashboard_view(request):
     }
 
     return render(request, 'admin/cms.html', context)
+
+
+def is_admin(user):
+    if getattr(user, "agency"):
+        return False
+    else:
+        return True
+
+
+@login_required
+@user_passes_test(is_admin)
+def admin_dashboard(request):
+    service = DashboardService()
+
+    kpis = service.get_kpis()
+    tasks = service.get_urgent_tasks()
+
+    # Update the KPI pending count based on real tasks found
+    kpis['pending_count'] = len(tasks)
+
+    context = {
+        'kpis': kpis,
+        'tasks': tasks,
+        'chart_data': service.get_chart_data(),
+        'low_balance_agencies': service.get_at_risk_agencies(),
+    }
+    return render(request, 'admin/dashboard.html', context)

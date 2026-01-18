@@ -1,6 +1,8 @@
 from django.db import transaction
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+
+from .notifications import notify_balance_change
 from ..models import Account, Transaction
 
 # =========================================================
@@ -58,8 +60,21 @@ def execute_transaction(
             invoice=related_invoice,
             top_up=related_topup
         )
+    # === NOTIFY OUTSIDE THE TRANSACTION ===
+    try:
+        notify_balance_change(
+            account=acc_locked,
+            # Use absolute value for the email (e.g., 5000 DZD)
+            amount=abs(amount),
+            change_type=new_transaction.transaction_type,
+            reason=description
+        )
+        print('email norification secceed.')
+    except Exception as e:
+        # Log the error but don't stop the system
+        print(f"Email Notification Failed: {e}")
 
-        return new_transaction
+    return new_transaction
 
 
 # =========================================================

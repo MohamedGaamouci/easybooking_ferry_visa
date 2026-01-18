@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        .wrapper {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f1f5f9;
+            padding: 40px 10px;
+        }
+
+        .card {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+
+        .header {
+            background-color: #0f172a;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .body {
+            padding: 40px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .footer {
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .h1 {
+            color: #0f172a;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .details-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .label {
+            color: #64748b;
+        }
+
+        .value {
+            color: #0f172a;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrapper">
+        <div class="card">
+            <div class="header">
+                <h2 style="color: white; margin: 0; letter-spacing: 2px;">EASY BOOKING</h2>
+            </div>
+            <div class="body">
+                <span class="badge">Confirmed</span>
+                <h1 class="h1">Booking Successful</h1>
+                <p style="color: #475569; line-height: 1.6;">Hello <strong>{{ agency_name }}</strong>, your request has
+                    been confirmed. Please find the details of your {{ service_name }} below.</p>
+
+                <div class="details-box">
+                    <div class="row">
+                        <span class="label">Reference:</span>
+                        <span class="value">#{{ booking_ref }}</span>
+                    </div>
+                    <div class="row">
+                        <span class="label">Service:</span>
+                        <span class="value">{{ service_name }}</span>
+                    </div>
+                    <div class="row">
+                        <span class="label">Total Paid:</span>
+                        <span class="value" style="color: #16a34a;">{{ amount }} DZD</span>
+                    </div>
+                </div>
+
+                <p style="font-size: 13px; color: #64748b;">An invoice has been attached to this email for your
+                    accounting records.</p>
+            </div>
+            <div class="footer">
+                &copy; 2026 Easy Booking Platform. All rights reserved.
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

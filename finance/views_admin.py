@@ -4,16 +4,16 @@ from finance.services.invoice import bulk_pay_invoices
 from django.template.loader import get_template
 from finance.services.invoice import pay_invoice
 from django.http import HttpResponse
-from xhtml2pdf import pisa
+from xhtml2pdf import pisa  # type: ignore
 from django.template.loader import render_to_string
 from finance.services.invoice import search_invoices, cancel_invoice, refund_invoice
 from finance.services.invoice import search_invoices, cancel_invoice
 from django.shortcuts import render
 from finance.services.invoice import cancel_invoice
 from finance.models import Invoice
-from decimal import Decimal  # <--- 1. ADD THIS IMPORT
 from decimal import Decimal
-from django.db import transaction  # <--- Make sure this is imported
+from decimal import Decimal
+from django.db import transaction
 import json
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
