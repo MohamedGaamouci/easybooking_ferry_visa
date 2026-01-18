@@ -21,5 +21,17 @@ urlpatterns = [
     path('api/invoices/<int:invoice_id>/refund/',
          views_admin.admin_invoice_refund, name='admin_invoice_refund'),
 
+    path('api/invoices/<int:invoice_id>/details/',
+         views_admin.admin_invoice_detail_api, name='admin_invoice_detail'),
+    path('api/invoices/<int:invoice_id>/pay/',
+         views_admin.admin_invoice_pay, name='admin_invoice_pay'),
+    path('invoices/<int:invoice_id>/pdf/',
+         views_admin.admin_invoice_pdf, name='admin_invoice_pdf'),
+
+    path('api/agencies/simple/', views_admin.admin_agencies_simple_api,
+         name='admin_agencies_simple'),
+    path('api/invoices/bulk-pay/',
+         views_admin.admin_bulk_pay, name='admin_bulk_pay'),
+
 
 ]

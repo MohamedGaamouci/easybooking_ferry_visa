@@ -217,7 +217,10 @@
                     </div>
                 </div>
             </div>
-
+            <button onclick="openBulkPayModal()"
+                class="text-brand-600 bg-brand-50 hover:bg-brand-100 font-bold text-sm px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+                <i class="ph-bold ph-stack"></i> Bulk Pay
+            </button>
             <div x-show="tab === 'invoices'" style="display: none;" class="space-y-6 animate-fade-in">
 
                 <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
@@ -430,7 +433,155 @@
     </div>
 </div>
 
+<!-- modal -->
+<div id="invoice-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeInvoiceModal()">
+    </div>
 
+    <div
+        class="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden fade-in transform transition-all scale-100 flex flex-col max-h-[90vh]">
+
+        <div class="bg-slate-50 border-b border-slate-100 p-6 flex justify-between items-start">
+            <div>
+                <p class="text-xs font-bold text-slate-500 uppercase mb-1">Invoice Details</p>
+                <h3 class="text-2xl font-bold text-slate-900 flex items-center gap-3">
+                    <span id="modal-inv-number">Loading...</span>
+                    <span id="modal-inv-status"
+                        class="text-xs px-2 py-1 rounded-full bg-slate-200 text-slate-600 uppercase tracking-wide">...</span>
+                </h3>
+            </div>
+            <button onclick="closeInvoiceModal()"
+                class="w-8 h-8 rounded-full bg-white border border-slate-200 hover:bg-slate-50 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-colors">
+                <i class="ph-bold ph-x"></i>
+            </button>
+        </div>
+
+        <div class="p-6 overflow-y-auto">
+            <div class="flex gap-8 mb-8 text-sm">
+                <div>
+                    <span class="block text-slate-400 text-xs font-medium">Issue Date</span>
+                    <span class="font-bold text-slate-700" id="modal-inv-date">-</span>
+                </div>
+                <div>
+                    <span class="block text-slate-400 text-xs font-medium">Due Date</span>
+                    <span class="font-bold text-slate-700" id="modal-inv-due">-</span>
+                </div>
+            </div>
+
+            <table class="w-full text-left text-sm border-collapse mb-6">
+                <thead class="bg-slate-50 text-xs uppercase text-slate-500 font-semibold">
+                    <tr>
+                        <th class="px-4 py-3 rounded-l-lg">Description</th>
+                        <th class="px-4 py-3 text-right rounded-r-lg">Amount</th>
+                    </tr>
+                </thead>
+                <tbody id="modal-items-list" class="divide-y divide-slate-100">
+                </tbody>
+                <tfoot class="border-t-2 border-slate-100">
+                    <tr>
+                        <td class="px-4 py-4 text-right font-bold text-slate-500 uppercase text-xs">Total</td>
+                        <td class="px-4 py-4 text-right text-xl font-bold text-slate-900" id="modal-inv-total">0.00 DZD
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <div class="p-4 border-t border-slate-100 bg-slate-50 flex justify-between items-center">
+
+            <div id="modal-payment-section">
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="printInvoiceFromModal()"
+                    class="px-4 py-2 text-sm font-bold text-slate-600 hover:text-slate-900 flex items-center gap-2">
+                    <i class="ph-bold ph-printer"></i> Print
+                </button>
+                <a id="modal-download-btn" href="#" target="_blank"
+                    class="px-4 py-2 text-sm font-bold text-brand-600 hover:text-brand-700 bg-brand-50 hover:bg-brand-100 rounded-lg flex items-center gap-2 transition-colors">
+                    <i class="ph-bold ph-download-simple"></i> Download PDF
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- bulk payment -->
+<div id="bulk-pay-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeBulkPayModal()">
+    </div>
+
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
+
+        <div class="bg-slate-50 border-b border-slate-100 p-5 flex justify-between items-center">
+            <div>
+                <h3 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                    <i class="ph-bold ph-stack text-brand-600"></i> Bulk Payment
+                </h3>
+                <p class="text-xs text-slate-500">Select an agency and pay multiple invoices at once.</p>
+            </div>
+            <button onclick="closeBulkPayModal()" class="text-slate-400 hover:text-slate-600">
+                <i class="ph-bold ph-x text-xl"></i>
+            </button>
+        </div>
+
+        <div class="p-6 overflow-y-auto space-y-6">
+
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-2">1. Select Agency</label>
+                <select id="bulk-agency-select" onchange="loadBulkInvoices(this.value)"
+                    class="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand-500 bg-white">
+                    <option value="">-- Choose Agency --</option>
+                </select>
+            </div>
+
+            <div id="bulk-step-2" class="hidden">
+                <div class="flex justify-between items-end mb-2">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase">2. Select Invoices</label>
+                        <span class="text-xs text-slate-400">
+                            Wallet Balance: <span id="bulk-wallet-display" class="font-bold text-slate-700">0.00</span>
+                            DZD
+                        </span>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-xs text-slate-400">Total Selected:</span>
+                        <div class="text-xl font-bold text-brand-600" id="bulk-total-amount">0.00 DZD</div>
+                    </div>
+                </div>
+
+                <div class="border border-slate-200 rounded-xl overflow-hidden max-h-60 overflow-y-auto">
+                    <table class="w-full text-left text-sm border-collapse">
+                        <thead class="bg-slate-50 text-xs uppercase text-slate-500 font-bold sticky top-0">
+                            <tr>
+                                <th class="px-4 py-3 border-b border-slate-200 w-10">
+                                    <input type="checkbox" onchange="toggleBulkAll(this)"
+                                        class="rounded border-slate-300 text-brand-600 focus:ring-brand-500">
+                                </th>
+                                <th class="px-4 py-3 border-b border-slate-200">Invoice #</th>
+                                <th class="px-4 py-3 border-b border-slate-200">Date</th>
+                                <th class="px-4 py-3 border-b border-slate-200 text-right">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bulk-invoice-list" class="divide-y divide-slate-100">
+                        </tbody>
+                    </table>
+                </div>
+                <p id="bulk-empty-msg" class="hidden text-center text-slate-400 text-sm py-4">No unpaid invoices found
+                    for this agency.</p>
+            </div>
+        </div>
+
+        <div class="p-5 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
+            <button onclick="closeBulkPayModal()"
+                class="px-4 py-2 text-sm font-bold text-slate-500 hover:text-slate-700">Cancel</button>
+            <button id="btn-pay-bulk" onclick="submitBulkPay()" disabled
+                class="px-6 py-2 text-sm font-bold text-white bg-brand-600 hover:bg-brand-700 rounded-xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                <i class="ph-bold ph-check-circle"></i> Pay Selected
+            </button>
+        </div>
+    </div>
+</div>
 
 
 <script src="//unpkg.com/alpinejs" defer></script>
@@ -712,11 +863,11 @@
                                 <td class="px-6 py-4 text-right flex justify-end gap-2">
                                     <button onclick="openLimitModal('${agency.id}', '${agency.name.replace(/'/g, "\\'")}', '${agency.credit_limit}')" 
                                         class="text-slate-600 border border-slate-200 px-3 py-1.5 rounded text-xs font-bold hover:bg-slate-50 transition-colors flex items-center gap-1">
-                                        <i class="ph-bold ph-shield"></i> Limit
+                                        <i class="ph-bold ph-shield"></i> Credit Limit
                                     </button>
                                     <button onclick="openManualTransactionModal('${agency.id}')" 
                                         class="text-brand-600 bg-brand-50 border border-brand-100 px-3 py-1.5 rounded text-xs font-bold hover:bg-brand-100 transition-colors">
-                                        Adjust
+                                        Adjust Balance
                                     </button>
                                 </td>
                             </tr>
@@ -866,6 +1017,8 @@
             amount_max: document.getElementById('inv-amt-max').value,
         });
 
+        const invoicePdfUrlTemplate = "{% url 'admin_invoice_pdf' 0 %}";
+
         const tbody = document.getElementById('inv-body');
 
         fetch(`{% url "admin_invoices_api" %}?` + params.toString(), {
@@ -891,8 +1044,17 @@
                             let actions = ``;
 
                             // PDF Button (Always there unless cancelled/draft)
-                            actions += `<button class="text-slate-400 hover:text-brand-600 mr-2"><i class="ph-bold ph-download-simple"></i></button>`;
+                            actions += `<a href="${invoicePdfUrlTemplate.replace('0', inv.id)}" class="text-slate-400 hover:text-brand-600 mr-2"><i class="ph-bold ph-download-simple"></i></a>`;
 
+                            // === NEW: PAY BUTTON (Only if Unpaid) ===
+                            if (inv.status === 'unpaid') {
+                                actions += `
+                                <button onclick="payInvoice(${inv.id})" 
+                                    class="text-green-600 hover:text-green-800 text-xs font-bold border border-green-200 px-2 py-1 rounded hover:bg-green-50 mr-2">
+                                    Pay
+                                </button>
+                            `;
+                            }
                             // Cancel Button (Only if Unpaid)
                             if (inv.is_cancellable) {
                                 actions += `<button onclick="cancelInvoice(${inv.id})" class="text-red-500 hover:text-red-700 text-xs font-bold border border-red-200 px-2 py-1 rounded hover:bg-red-50">Cancel</button>`;
@@ -904,8 +1066,12 @@
                             }
 
                             tbody.innerHTML += `
-                            <tr class="hover:bg-slate-50 transition-colors">
-                                <td class="px-6 py-4 font-mono font-bold text-slate-700">${inv.number}</td>
+                            <tr class="hover:bg-slate-50 transition-colors" >
+                                <td class="px-6 py-4">
+                                <button onclick="openInvoiceModal(${inv.id})" class="font-mono font-bold text-brand-600 hover:underline hover:text-brand-800 text-left">
+                                    ${inv.number}
+                                </button>
+                            </td>
                                 <td class="px-6 py-4 text-slate-500 text-xs">${inv.date}</td>
                                 <td class="px-6 py-4 font-bold text-slate-900">${inv.agency}</td>
                                 <td class="px-6 py-4 text-right font-bold text-slate-900">${inv.amount.toLocaleString()}</td>
@@ -977,6 +1143,355 @@
                 alert("❌ Connection failed. Please check your internet connection and try again.");
             });;
     }
+
+
+    // ==========================================
+    // 9. INVOICE DETAIL MODAL
+    // ==========================================s
+    const invoiceModal = document.getElementById('invoice-modal');
+
+    function openInvoiceModal(id) {
+        // 1. Reset UI State
+        document.getElementById('modal-items-list').innerHTML = '<tr><td colspan="2" class="px-4 py-4 text-center text-slate-400">Loading details...</td></tr>';
+        document.getElementById('modal-inv-number').innerText = 'Loading...';
+        document.getElementById('modal-payment-section').innerHTML = '';
+
+        invoiceModal.classList.remove('hidden');
+
+        // 2. Fetch Data
+        fetch(`/admin_panel/api/invoices/${id}/details/`) // Ensure this matches your URL conf
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const inv = data.invoice;
+
+                    // Header Info
+                    document.getElementById('modal-inv-number').innerText = inv.number;
+                    document.getElementById('modal-inv-date').innerText = inv.created_at;
+                    document.getElementById('modal-inv-due').innerText = inv.due_date;
+                    document.getElementById('modal-inv-total').innerText = inv.total.toLocaleString() + ' DZD';
+
+                    // Status Badge
+                    const statusEl = document.getElementById('modal-inv-status');
+                    statusEl.innerText = inv.status;
+                    statusEl.className = `text-xs px-2 py-1 rounded-full uppercase tracking-wide font-bold`;
+
+                    if (inv.status === 'paid') statusEl.classList.add('bg-green-100', 'text-green-700');
+                    else if (inv.status === 'unpaid') statusEl.classList.add('bg-red-100', 'text-red-700');
+                    else if (inv.status === 'refunded') statusEl.classList.add('bg-purple-100', 'text-purple-700');
+                    else statusEl.classList.add('bg-slate-100', 'text-slate-500');
+
+                    // Items List
+                    const tbody = document.getElementById('modal-items-list');
+                    tbody.innerHTML = '';
+                    inv.items.forEach(item => {
+                        tbody.innerHTML += `
+                        <tr>
+                            <td class="px-4 py-3 text-slate-600 font-medium">${item.description}</td>
+                            <td class="px-4 py-3 text-right font-bold text-slate-900">${item.amount.toLocaleString()}</td>
+                        </tr>
+                    `;
+                    });
+
+                    // Download Link
+                    const invoicePdfUrlTemplate = "{% url 'admin_invoice_pdf' 0 %}";
+                    document.getElementById('modal-download-btn').href = invoicePdfUrlTemplate.replace('0', inv.id);
+
+                    // === DYNAMIC ACTIONS SECTION (SIMPLIFIED) ===
+                    const actionSection = document.getElementById('modal-payment-section');
+                    actionSection.innerHTML = '';
+
+                    // 1. IF UNPAID: Show "Pay" AND "Cancel"
+                    if (inv.status === 'unpaid') {
+                        actionSection.innerHTML += `
+                            <button onclick="payInvoice(${inv.id}); closeInvoiceModal();" 
+                                class="text-green-600 hover:text-green-800 text-xs font-bold border border-green-200 px-3 py-1.5 rounded bg-green-50 transition-colors mr-2">
+                                <i class="ph-bold ph-check-circle"></i> Pay Now
+                            </button>
+                            
+                            <button onclick="cancelInvoice(${inv.id}); closeInvoiceModal();" class="text-red-600 hover:text-red-800 text-xs font-bold border border-red-200 px-3 py-1.5 rounded bg-red-50 transition-colors">
+                                <i class="ph-bold ph-trash"></i> Cancel Invoice
+                            </button>
+                        `;
+                    }
+
+                    // 2. IF PAID: Show "Refund"
+                    else if (inv.status === 'paid') {
+                        actionSection.innerHTML += `
+                            <button onclick="refundInvoice(${inv.id}); closeInvoiceModal();" class="text-purple-600 hover:text-purple-800 text-xs font-bold border border-purple-200 px-3 py-1.5 rounded bg-purple-50 transition-colors">
+                                <i class="ph-bold ph-arrow-u-up-left"></i> Refund Invoice
+                            </button>
+                        `;
+                    }
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                document.getElementById('modal-inv-number').innerText = 'Error loading';
+            });
+    }
+
+    function closeInvoiceModal() {
+        invoiceModal.classList.add('hidden');
+    }
+
+    function printInvoiceFromModal() {
+        window.print();
+    }
+
+    // ==========================================
+    // 10. PAY INVOICE LOGIC
+    // ==========================================
+    function payInvoice(id) {
+        if (!confirm("⚠️ CONFIRM PAYMENT\n\nThis will deduct the amount from the Agency's Wallet Balance.\n\nAre you sure?")) return;
+
+        // Visual feedback (optional)
+        // document.body.style.cursor = 'wait';
+
+        fetch(`/admin_panel/api/invoices/${id}/pay/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        })
+            .then(res => res.json())
+            .then(data => {
+                // document.body.style.cursor = 'default';
+
+                if (data.status === 'success') {
+                    alert("Success: " + data.msg);
+
+                    // Refresh the table if it's open
+                    if (document.getElementById('view-invoices') && !document.getElementById('view-invoices').classList.contains('hidden')) {
+                        loadInvoices(currentInvPage);
+                    }
+                    // Or just reload the page/view broadly
+                    window.location.reload();
+                } else {
+                    alert("Payment Failed: " + data.msg); // e.g. "Insufficient Balance"
+                }
+            })
+            .catch(err => {
+                alert("System Error: Could not process payment.");
+            });
+    }
+
+    // ==========================================
+    // 11. BULK PAY ENGINE
+    // ==========================================
+    const bulkModal = document.getElementById('bulk-pay-modal');
+    let bulkSelectedAmount = 0;
+
+    function openBulkPayModal() {
+        bulkModal.classList.remove('hidden');
+
+        const select = document.getElementById('bulk-agency-select');
+        select.innerHTML = '<option>Loading...</option>';
+
+        // Fetch Agencies + Balances
+        fetch('{% url "admin_agencies_simple" %}')
+            .then(response => {
+                // 1. Check if the response is actually valid
+                if (!response.ok) {
+                    throw new Error("Network response was not ok " + response.statusText);
+                }
+                // 2. Check content type (Detect HTML login page disguised as JSON)
+                const contentType = response.headers.get("content-type");
+                if (!contentType || !contentType.includes("application/json")) {
+                    // If we got HTML, log it to see if it's a login page/error page
+                    return response.text().then(text => {
+                        console.error("Received HTML instead of JSON:", text);
+                        throw new Error("Server returned HTML (likely login page or error) instead of JSON");
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+
+                // Reset the dropdown
+                select.innerHTML = '<option value="" data-balance="0">-- Choose Agency --</option>';
+
+                if (!data.agencies) {
+                    throw new Error("API response is missing 'agencies'.");
+                }
+
+                // Create a temporary string to store options (Faster than updating DOM 50 times)
+                let optionsHtml = '';
+
+                data.agencies.forEach(ag => {
+                    // 1. SAFE NAME DETECTION (The Fix)
+                    // We check if 'name' exists, if not we try 'company_name', otherwise 'Unknown'
+                    const agencyName = ag.name || ag.company_name || "Unknown Agency";
+
+                    // 2. SAFE BALANCE DETECTION
+                    const balance = ag.balance !== undefined ? ag.balance : 0;
+
+                    optionsHtml += `
+                        <option value="${ag.id}" data-balance="${balance}">
+                            ${agencyName} (Bal: ${balance.toLocaleString()})
+                        </option>`;
+                });
+
+                // Update the select list only once
+                select.innerHTML += optionsHtml;
+            })
+            .catch(error => {
+                console.error("Fetch error details:", error);
+                // Fix: Alert needs string concatenation to show the error object
+                alert('System Error: ' + error.message);
+            });
+
+        document.getElementById('bulk-step-2').classList.add('hidden');
+        document.getElementById('btn-pay-bulk').disabled = true;
+    }
+
+    function closeBulkPayModal() {
+        bulkModal.classList.add('hidden');
+    }
+
+    function loadBulkInvoices(agencyId) {
+        if (!agencyId) {
+            document.getElementById('bulk-step-2').classList.add('hidden');
+            return;
+        }
+
+        // --- FIX STARTS HERE ---
+        // 1. Get the Select Element and the chosen option
+        const select = document.getElementById('bulk-agency-select');
+        const selectedOption = select.options[select.selectedIndex];
+
+        // 2. Get the balance and update the "Wallet Balance" text in the modal
+        const currentBalance = parseFloat(selectedOption.getAttribute('data-balance')) || 0;
+        document.getElementById('bulk-wallet-display').innerText = currentBalance.toLocaleString(undefined, { minimumFractionDigits: 2 });
+        // --- FIX ENDS HERE ---
+
+        const tbody = document.getElementById('bulk-invoice-list');
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-slate-400">Loading unpaid invoices...</td></tr>';
+        document.getElementById('bulk-step-2').classList.remove('hidden');
+
+        fetch(`{% url "admin_invoices_api" %}?agency_id=${agencyId}&status=unpaid`)
+            .then(res => res.json())
+            .then(data => {
+                tbody.innerHTML = '';
+                if (data.invoices.length === 0) {
+                    document.getElementById('bulk-empty-msg').classList.remove('hidden');
+                } else {
+                    document.getElementById('bulk-empty-msg').classList.add('hidden');
+                    data.invoices.forEach(inv => {
+                        tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-4 py-3">
+                            <input type="checkbox" value="${inv.id}" data-amount="${inv.amount}" 
+                                onchange="calcBulkTotal()" 
+                                class="bulk-check rounded border-slate-300 text-brand-600 focus:ring-brand-500 w-4 h-4">
+                        </td>
+                        <td class="px-4 py-3 font-mono font-bold text-slate-700">${inv.number}</td>
+                        <td class="px-4 py-3 text-slate-500 text-xs">${inv.date}</td>
+                        <td class="px-4 py-3 text-right font-bold text-slate-900">${inv.amount.toLocaleString()}</td>
+                    </tr>`;
+                    });
+                }
+                calcBulkTotal();
+            }).catch(error => {
+                console.error(error);
+                alert("❌ Connection failed.");
+            });
+    }
+
+    function toggleBulkAll(source) {
+        const checkboxes = document.querySelectorAll('.bulk-check');
+        checkboxes.forEach(cb => {
+            cb.checked = source.checked;
+        });
+        calcBulkTotal();
+    }
+
+    function calcBulkTotal() {
+        // 1. Calculate Selected Total
+        const checkboxes = document.querySelectorAll('.bulk-check:checked');
+        let selectedTotal = 0;
+
+        checkboxes.forEach(cb => {
+            selectedTotal += parseFloat(cb.getAttribute('data-amount'));
+        });
+
+        // 2. Get Agency Balance from Dropdown
+        const select = document.getElementById('bulk-agency-select');
+        const currentBalance = parseFloat(select.options[select.selectedIndex].getAttribute('data-balance')) || 0;
+
+        // 3. Update UI Text
+        const totalEl = document.getElementById('bulk-total-amount');
+        totalEl.innerText = selectedTotal.toLocaleString(undefined, { minimumFractionDigits: 2 }) + ' DZD';
+
+        // 4. VALIDATION LOGIC
+        const btn = document.getElementById('btn-pay-bulk');
+        const msgContainer = document.getElementById('bulk-error-msg'); // Make sure to add this div in HTML if you want text feedback
+
+        // Reset Styles
+        totalEl.classList.remove('text-red-600', 'text-brand-600');
+
+        if (checkboxes.length === 0) {
+            btn.disabled = true;
+            btn.innerHTML = `Select Invoices`;
+            totalEl.classList.add('text-brand-600');
+        }
+        else if (selectedTotal > currentBalance) {
+            // FAIL: Not enough money
+            const missing = selectedTotal - currentBalance;
+            btn.disabled = true;
+            btn.innerHTML = `<i class="ph-bold ph-warning"></i> Insufficient Funds`;
+            totalEl.classList.add('text-red-600'); // Make text red
+
+            // Optional: Show alert text
+            // alert(`Insufficient Funds! Missing ${missing.toLocaleString()} DZD`);
+        }
+        else {
+            // SUCCESS: Good to go
+            btn.disabled = false;
+            btn.innerHTML = `<i class="ph-bold ph-check-circle"></i> Pay ${checkboxes.length} Invoices`;
+            totalEl.classList.add('text-brand-600');
+        }
+    }
+
+    function submitBulkPay() {
+        const checkboxes = document.querySelectorAll('.bulk-check:checked');
+        const ids = Array.from(checkboxes).map(cb => cb.value);
+
+        if (!confirm(`Are you sure you want to pay ${ids.length} invoices?`)) return;
+
+        const btn = document.getElementById('btn-pay-bulk');
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Processing...';
+
+        fetch('{% url "admin_bulk_pay" %}', {
+            method: 'POST',
+            body: JSON.stringify({ invoice_ids: ids }),
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' }
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const s = data.results.success;
+                    const f = data.results.failed;
+
+                    let msg = `Batch Complete!\n✅ Paid: ${s}`;
+                    if (f > 0) msg += `\n❌ Failed: ${f}\n(Check individual errors or balance)`;
+
+                    alert(msg);
+                    closeBulkPayModal();
+                    // Refresh main table
+                    loadInvoices(currentInvPage);
+                } else {
+                    alert("Error: " + data.msg);
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                }
+            });
+    }
+
+
 </script>
 
 {% endblock %}

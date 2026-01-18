@@ -1,4 +1,11 @@
 # <--- Make sure you import this
+from django.forms import ValidationError
+from finance.services.invoice import bulk_pay_invoices
+from django.template.loader import get_template
+from finance.services.invoice import pay_invoice
+from django.http import HttpResponse
+from xhtml2pdf import pisa
+from django.template.loader import render_to_string
 from finance.services.invoice import search_invoices, cancel_invoice, refund_invoice
 from finance.services.invoice import search_invoices, cancel_invoice
 from django.shortcuts import render
@@ -375,6 +382,8 @@ def admin_invoices_api(request):
     query = request.GET.get('q', '').strip()
     status = request.GET.get('status', '')
 
+    agency_id = request.GET.get('agency_id')
+
     amount_min = request.GET.get('amount_min')
     amount_max = request.GET.get('amount_max')
 
@@ -391,10 +400,15 @@ def admin_invoices_api(request):
     d_after = parse_date(date_from) if date_from else None
     d_before = parse_date(date_to) if date_to else None
 
+    target_agency = None
+    if agency_id:
+        target_agency = Agency.objects.get(id=agency_id)
+
     # 3. Call Service (WITHOUT search_term)
     # We pass 'None' for search_term so we can handle the complex OR logic here.
     qs = search_invoices(
         search_term=None,  # <--- Important: We handle text search below
+        agency=target_agency,
         status=status if status else None,
         min_amount=amount_min if amount_min else None,
         max_amount=amount_max if amount_max else None,
@@ -476,4 +490,172 @@ def admin_invoice_refund(request, invoice_id):
                        reason="Admin Dashboard Request")
         return JsonResponse({'status': 'success', 'msg': 'Invoice Refunded. Money returned to wallet.'})
     except Exception as e:
+        return JsonResponse({'status': 'error', 'msg': str(e)}, status=500)
+
+
+# finance/views_admin.py
+
+@login_required
+@user_passes_test(is_admin)
+def admin_invoice_detail_api(request, invoice_id):
+    """
+    Fetches details + line items for a specific invoice.
+    """
+    try:
+        inv = Invoice.objects.select_related(
+            'agency').prefetch_related('items').get(id=invoice_id)
+
+        # Build Item List
+        items_data = []
+        for item in inv.items.all():
+            items_data.append({
+                'description': item.description,
+                'amount': float(item.amount)
+            })
+
+        data = {
+            'id': inv.id,
+            'number': inv.invoice_number,
+            'status': inv.status,
+            'created_at': inv.created_at.strftime("%b %d, %Y"),
+            'due_date': inv.due_date.strftime("%b %d, %Y") if inv.due_date else "N/A",
+            'total': float(inv.total_amount),
+            'items': items_data,
+            # We will build this view later
+            'download_url': f"/finance/invoices/{inv.id}/pdf/",
+            'can_refund': inv.status == 'paid',
+            'can_cancel': inv.status == 'unpaid'
+        }
+        return JsonResponse({'status': 'success', 'invoice': data})
+
+    except Invoice.DoesNotExist:
+        return JsonResponse({'status': 'error', 'msg': 'Invoice not found'}, status=404)
+
+
+# finance/views_admin.py
+
+
+@login_required
+@user_passes_test(is_admin)
+@require_POST
+def admin_invoice_pay(request, invoice_id):
+    """
+    Admin Action: Manually trigger payment using Agency's Wallet.
+    """
+    try:
+        # Calls your existing service which checks Balance > Amount
+        success, msg = pay_invoice(invoice_id, user=request.user)
+
+        if success:
+            return JsonResponse({'status': 'success', 'msg': msg})
+        else:
+            # Returns error like "Insufficient Balance"
+            return JsonResponse({'status': 'error', 'msg': msg}, status=400)
+
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'msg': str(e)}, status=500)
+
+
+@login_required
+@user_passes_test(is_admin)
+def admin_invoice_pdf(request, invoice_id):
+    """
+    Generates a PDF for the specific invoice.
+    """
+    # 1. Fetch Data
+    invoice = get_object_or_404(Invoice, id=invoice_id)
+
+    # 2. Prepare Context (Variables used in your HTML)
+    context = {
+        'invoice': invoice,
+        'agency': invoice.agency,
+        'items': invoice.items.all(),
+        'date': invoice.created_at,
+        'user': request.user,  # Info about who printed it
+    }
+
+    # 3. Load Your Template
+    # Make sure this path matches exactly where your file is inside /templates/
+    template_path = 'client/pdf/invoice.html'
+    template = get_template(template_path)
+    html = template.render(context)
+
+    # 4. Create Response Object
+    response = HttpResponse(content_type='application/pdf')
+    # 'attachment' forces download. Change to 'inline' to view in browser.
+    filename = f"Invoice_{invoice.invoice_number}.pdf"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+    # 5. Generate PDF
+    pisa_status = pisa.CreatePDF(
+        html, dest=response
+    )
+
+    # 6. Error Handling
+    if pisa_status.err:
+        return HttpResponse(f'We had some errors <pre>{html}</pre>')
+
+    return response
+
+# simple agency retrieval method for drop down menu
+
+
+@login_required
+@user_passes_test(is_admin)
+def admin_agencies_simple_api(request):
+    """Returns a lightweight list of agencies with their CURRENT BALANCE."""
+
+    # 1. Query: Fetch ID, Company Name, and Account Balance
+    # We access the related account model using 'account__balance'
+    agencies_qs = Agency.objects.filter(status='active').values(
+        'id', 'company_name', 'account__balance'
+    ).order_by('company_name')
+
+    # 2. Formatting: Clean up the data
+    data = []
+    for ag in agencies_qs:
+        data.append({
+            'id': ag['id'],
+            # PRESERVE OLD KEY (Safety): Keeps 'company_name' so old JS doesn't break
+            'company_name': ag['company_name'],
+
+            # ADD NEW KEYS (Feature): Adds 'name' and 'balance' for the Bulk Pay Modal
+            'name': ag['company_name'],
+            # Converts None to 0.0
+            'balance': float(ag['account__balance'] or 0)
+        })
+
+    return JsonResponse({'status': 'success', 'agencies': data})
+
+
+# 4. ADD NEW VIEW: Bulk Pay Action
+# finance/views_admin.py
+
+
+@login_required
+@user_passes_test(is_admin)
+@require_POST
+def admin_bulk_pay(request):
+    """
+    Receives a list of Invoice IDs and pays them using the atomic service.
+    """
+    import json
+    try:
+        data = json.loads(request.body)
+        invoice_ids = data.get('invoice_ids', [])
+
+        # Call the Service
+        success, msg = bulk_pay_invoices(invoice_ids, user=request.user)
+
+        return JsonResponse({
+            'status': 'success',
+            'results': {'success': len(invoice_ids), 'msg': msg}
+        })
+
+    except ValidationError as e:
+        # Expected Logic Errors (Insufficient Funds, Mixed Agencies)
+        return JsonResponse({'status': 'error', 'msg': str(e.message)}, status=400)
+
+    except Exception as e:
+        # Unexpected System Errors
         return JsonResponse({'status': 'error', 'msg': str(e)}, status=500)

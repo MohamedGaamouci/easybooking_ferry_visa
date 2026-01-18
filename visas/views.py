@@ -646,19 +646,28 @@ def get_admin_visa_list_api(request):
 def search_agencies_api(request):
     """
     AJAX API to search for agencies by name.
-    Usage: /api/agencies/search/?q=travel
     """
     query = request.GET.get('q', '').strip()
 
-    # Base query (Active agencies only)
-    # Ensure you have an active flag, or remove this
+    # 1. Base query: select_related is not needed with .values(),
+    # but we use the relationship 'account__balance'
     agencies = Agency.objects.filter(status='active')
 
     if query:
         agencies = agencies.filter(company_name__icontains=query)
 
-    # Limit results to 20 to prevent huge payloads
-    results = list(agencies.values('id', 'company_name', 'balance')[:20])
+    # 2. Extract values using the database relationship field name
+    # We rename 'account__balance' to 'balance' in the dictionary for the frontend
+    results_qs = agencies.values('id', 'company_name', 'account__balance')[:20]
+
+    # 3. Format the results so the keys look clean for the JS
+    results = []
+    for ag in results_qs:
+        results.append({
+            'id': ag['id'],
+            'company_name': ag['company_name'],
+            'current_balance': float(ag['account__balance'] or 0.00)
+        })
 
     return JsonResponse({
         'status': 'success',

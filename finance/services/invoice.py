@@ -1,3 +1,5 @@
+from ..models import Invoice, Account, Transaction  # Ensure these are imported
+from django.db.models import Sum
 from ..models import Invoice
 from django.db import transaction
 from django.db.models import Q
@@ -45,6 +47,7 @@ def create_invoice(agency, items_data, user=None, due_date=None):
 
         # 3. RESERVE THE FUNDS (Increase Hold)
         acc_locked.unpaid_hold += total_cost
+        acc_locked.credit_limit -= total_cost
         acc_locked.save()
 
         # 4. CREATE INVOICE RECORD
@@ -340,3 +343,98 @@ def refund_invoice(invoice_id, user=None, reason=None):
         invoice.save()
 
         return True
+
+
+# finance/services/invoice.py
+
+
+def bulk_pay_invoices(invoice_ids, user=None):
+    """
+    Pays multiple invoices in ONE atomic transaction.
+
+    Checks:
+    1. Are all invoices 'unpaid'?
+    2. Do they all belong to the SAME agency?
+    3. Does the agency have enough Balance for the TOTAL sum?
+
+    Optimizations:
+    - Uses bulk_update (1 Query)
+    - Uses bulk_create (1 Query)
+    - Locks the account once.
+    """
+    if not invoice_ids:
+        raise ValidationError("No invoices provided.")
+
+    with transaction.atomic():
+        # 1. Fetch Invoices (Lock them to prevent race conditions)
+        invoices = Invoice.objects.filter(
+            id__in=invoice_ids,
+            status='unpaid'
+        ).select_for_update()
+
+        if not invoices.exists():
+            raise ValidationError("No valid unpaid invoices found.")
+
+        if len(invoices) != len(invoice_ids):
+            raise ValidationError("Some invoices are already paid or invalid.")
+
+        # 2. Validate Agency Consistency
+        # All invoices must belong to the same agency for a bulk wallet deduction
+        agency_id = invoices[0].agency_id
+        if any(inv.agency_id != agency_id for inv in invoices):
+            raise ValidationError("Bulk payment must be for a single agency.")
+
+        # 3. Calculate Total Required
+        total_amount = invoices.aggregate(
+            total=Sum('total_amount'))['total'] or 0
+
+        # 4. Lock Account & Check Solvency (THE VALIDATOR)
+        try:
+            account = Account.objects.select_for_update().get(agency_id=agency_id)
+        except Account.DoesNotExist:
+            raise ValidationError("Agency account not found.")
+
+        if account.balance < total_amount:
+            missing = total_amount - account.balance
+            raise ValidationError(
+                f"Insufficient Funds. "
+                f"Total Required: {total_amount:,.2f} | "
+                f"Current Balance: {account.balance:,.2f} | "
+                f"Missing: {missing:,.2f}"
+            )
+
+        # =========================================================
+        # EXECUTION PHASE (ALL OR NOTHING)
+        # =========================================================
+
+        # A. Deduct Money & Release Holds (One Update)
+        account.balance -= total_amount
+        account.unpaid_hold -= total_amount
+        account.save()
+
+        # B. Prepare Ledger Entries (In Memory)
+        transaction_list = []
+        now = timezone.now()
+
+        # We need to iterate to create specific ledger descriptions,
+        # but we don't save yet.
+        for inv in invoices:
+            transaction_list.append(Transaction(
+                account=account,
+                transaction_type='payment',
+                amount=-inv.total_amount,
+                # Note: This might show the final balance for all rows, which is acceptable for bulk
+                balance_after=account.balance,
+                description=f"Bulk Payment: Invoice #{inv.invoice_number}",
+                created_by=user,
+                invoice=inv,
+                created_at=now
+            ))
+
+        # C. Bulk Write to DB (Efficient)
+        Transaction.objects.bulk_create(transaction_list)
+
+        # D. Bulk Update Invoices (Efficient)
+        invoices.update(status='paid', paid_at=now)
+
+        return True, f"Successfully paid {len(invoices)} invoices totaling {total_amount:,.2f} DZD."
