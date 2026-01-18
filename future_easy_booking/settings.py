@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+from decouple import config  # type: ignore
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -23,7 +24,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-9vy^ovo=nx4q1@ua7b6=5y4(7hd-x)=x698jm)l7=w!d2t!lq0"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 
 ALLOWED_HOSTS = []
 
@@ -81,18 +81,17 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "future_easy_booking.wsgi.application"
 
-
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": "future_easy_booking",
-        'USER': "root",
-        'PASSWORD': 'Gmci@2001',
-        'HOST': 'localhost',
-        'PORT': '3306',
+        "NAME": config("DB_NAME"),
+        "USER": config("DB_USER"),
+        "PASSWORD": config("DB_PASSWORD"),
+        "HOST": config("DB_HOST"),
+        "PORT": config("DB_PORT"),
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
         },
@@ -160,12 +159,17 @@ LOGOUT_REDIRECT_URL = 'login'
 # settings.py
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
-EMAIL_HOST = 'mail.easybooking.pro'
-EMAIL_PORT = 587
+EMAIL_HOST = config("EMAIL_HOST")
+EMAIL_PORT = config("EMAIL_PORT", cast=int)
 EMAIL_USE_TLS = True
-EMAIL_USE_SSL = False
+EMAIL_HOST_USER = config("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")
+DEFAULT_FROM_EMAIL = config("EMAIL_HOST_USER")
 
-EMAIL_HOST_USER = 'crm@easybooking.pro'
-EMAIL_HOST_PASSWORD = 'Alger2025@'
+SECRET_KEY = config("SECRET_KEY")
 
-DEFAULT_FROM_EMAIL = 'Easy Booking <crm@easybooking.pro>'
+DEBUG = config("DEBUG", default=False, cast=bool)
+
+# Read ALLOWED_HOSTS from .env and convert comma-separated string to list
+ALLOWED_HOSTS = config(
+    "ALLOWED_HOSTS", default="127.0.0.1,localhost").split(",")
