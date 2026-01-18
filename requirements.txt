@@ -1,0 +1,9 @@
+brotli==1.2.0
+Django==5.2.9
+fonttools==4.61.1
+mysqlclient==2.2.7
+pydyf==0.12.1
+pyphen==0.17.2
+tinyhtml5==2.0.0
+xhtml2pdf==0.2.17
+zopfli==0.4.0
