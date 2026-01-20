@@ -1,38 +1,44 @@
 {% extends 'admin/base_admin.html' %}
-
+{% load humanize %}
 {% block content %}
 <main class="flex-1 flex flex-col h-screen overflow-hidden bg-slate-50/50">
     <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0 z-20">
         <div>
             <h1 class="text-xl font-bold text-slate-900">Platform Analytics</h1>
-            <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Admin Command Center</p>
+            <p id="date-range-label" class="text-[10px] text-brand-600 uppercase tracking-widest font-bold font-mono">
+                Initializing...</p>
         </div>
 
         <div class="flex items-center gap-6">
-            <div class="relative hidden lg:block">
-                <i class="ph ph-magnifying-glass absolute left-3 top-2.5 text-slate-400"></i>
-                <input type="text" placeholder="Search Invoices, Agencies, Bookings..."
-                    class="pl-10 pr-4 py-2 bg-slate-100 border-none rounded-xl text-sm focus:ring-2 focus:ring-brand-500 w-64 transition-all focus:w-80">
+            <div class="flex items-center gap-3 bg-slate-50 p-1 rounded-xl border border-slate-200">
+                <div class="flex items-center gap-2 px-2 border-r border-slate-200">
+                    <i class="ph-bold ph-calendar-blank text-slate-400"></i>
+                    <input type="date" id="start_date"
+                        class="bg-transparent border-none text-[11px] font-bold text-slate-700 focus:ring-0 p-0 w-28">
+                    <span class="text-slate-300">—</span>
+                    <input type="date" id="end_date"
+                        class="bg-transparent border-none text-[11px] font-bold text-slate-700 focus:ring-0 p-0 w-28">
+                </div>
+                <button onclick="refreshKPIs()"
+                    class="bg-white text-brand-600 px-3 py-1 rounded-lg text-[11px] font-black shadow-sm hover:bg-brand-50 transition-all border border-brand-100">
+                    Apply Filter
+                </button>
             </div>
 
             <div class="flex items-center gap-2 border-l pl-6 border-slate-200">
                 <button class="p-2 text-slate-400 hover:bg-slate-100 rounded-full relative">
                     <i class="ph ph-bell text-xl"></i>
-                    {% if kpis.pending_count > 0 %}
-                    <span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-                    {% endif %}
+                    <span id="notif-dot"
+                        class="hidden absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>
                 </button>
                 <div class="flex items-center gap-3 ml-2">
                     <div class="text-right">
-                        <p class="text-xs font-bold text-slate-700">
-                            {{request.user.get_full_name|default_if_none:"Unkown" }}
-
-                        </p>
+                        <p class="text-xs font-bold text-slate-700">{{ request.user.get_full_name|default:"Admin" }}</p>
                         <p class="text-[10px] text-brand-600 font-bold">Master Admin</p>
                     </div>
                     <div
                         class="w-10 h-10 rounded-xl bg-brand-600 flex items-center justify-center text-white font-bold shadow-lg shadow-brand-200">
-                        {{ request.user.first_name|slice:":1"|default:"H" }}
+                        {{ request.user.first_name|slice:":1"|default:"A" }}
                     </div>
                 </div>
             </div>
@@ -42,226 +48,524 @@
     <div class="flex-1 overflow-y-auto p-6 lg:p-8">
         <div class="max-w-[1600px] mx-auto space-y-8">
 
+            <!-- kpis -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+
                 <div
-                    class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                    class="group bg-white p-6 rounded-2xl border border-slate-200 shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-emerald-200 cursor-default">
                     <div class="flex justify-between items-start mb-4">
                         <div
-                            class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-2xl">
+                            class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-2xl transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110">
                             <i class="ph-fill ph-trend-up"></i>
                         </div>
-                        <span
-                            class="text-[10px] font-bold {% if kpis.revenue_growth >= 0 %}bg-emerald-100 text-emerald-700{% else %}bg-red-100 text-red-700{% endif %} px-2 py-1 rounded-lg">
-                            {% if kpis.revenue_growth >= 0 %}+{% endif %}{{ kpis.revenue_growth }}%
-                        </span>
+                        <div class="text-right">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase">Monthly Revenue</p>
+                            <p class="text-xs font-black text-slate-900"><span id="kpi-revenue">0</span> <span
+                                    class="text-[10px] font-medium text-slate-400">DZD</span></p>
+                        </div>
                     </div>
-                    <p class="text-xs font-bold text-slate-400 uppercase">Monthly Revenue</p>
-                    <h3 class="text-2xl font-black text-slate-900 mt-1">{{ kpis.revenue|floatformat:0 }} <span
-                            class="text-sm font-medium text-slate-400">DZD</span></h3>
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-tight">Collection Status</p>
+                    <div class="flex items-center gap-4 mt-2">
+                        <div>
+                            <span class="text-lg font-bold text-emerald-600" id="kpi-paid">0</span>
+                            <span class="text-[10px] text-emerald-500 font-bold block uppercase">Paid</span>
+                        </div>
+                        <div class="h-8 w-px bg-slate-100"></div>
+                        <div>
+                            <span class="text-lg font-bold text-rose-500" id="kpi-unpaid">0</span>
+                            <span class="text-[10px] text-rose-400 font-bold block uppercase">Unpaid</span>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <div
+                    class="group bg-white p-6 rounded-2xl border border-slate-200 shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-blue-200">
                     <div class="flex justify-between items-start mb-4">
                         <div
-                            class="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-2xl">
+                            class="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-2xl transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110">
                             <i class="ph-fill ph-shopping-cart-simple"></i>
                         </div>
                         <div class="text-right">
                             <p class="text-[10px] font-bold text-slate-400 uppercase">Total Sales</p>
-                            <p class="text-xs font-bold text-slate-900">{{ kpis.sales_total }} Bookings</p>
+                            <p class="text-xs font-bold text-slate-900"><span id="kpi-sales-total">0</span> Bookings</p>
                         </div>
                     </div>
                     <p class="text-xs font-bold text-slate-400 uppercase">Monthly Split</p>
                     <div class="flex items-center gap-4 mt-2">
                         <div>
-                            <span class="text-lg font-bold text-slate-800">{{ kpis.ferry_count }}</span>
+                            <span class="text-lg font-bold text-slate-800" id="kpi-ferry">0</span>
                             <span class="text-[10px] text-blue-500 font-bold block uppercase">Ferry</span>
                         </div>
                         <div class="h-8 w-px bg-slate-100"></div>
                         <div>
-                            <span class="text-lg font-bold text-slate-800">{{ kpis.visa_count }}</span>
+                            <span class="text-lg font-bold text-slate-800" id="kpi-visa">0</span>
                             <span class="text-[10px] text-purple-500 font-bold block uppercase">Visa</span>
                         </div>
                     </div>
                 </div>
 
                 <div
-                    class="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-xl shadow-slate-200 relative overflow-hidden">
-                    <div class="relative z-10">
-                        <div class="flex justify-between items-start mb-4">
-                            <div
-                                class="w-12 h-12 bg-white/10 text-amber-400 rounded-2xl flex items-center justify-center text-2xl">
-                                <i class="ph-fill ph-lightning"></i>
-                            </div>
-                            {% if kpis.pending_count > 0 %}
-                            <span class="animate-pulse flex h-3 w-3 rounded-full bg-red-500"></span>
-                            {% endif %}
-                        </div>
-                        <p class="text-xs font-bold text-slate-400 uppercase">Action Required</p>
-                        <h3 class="text-2xl font-bold text-white mt-1">{{ kpis.pending_count }} Pending</h3>
-                        <p class="text-[10px] text-slate-400 mt-2 italic font-medium">Immediate processing required</p>
-                    </div>
-                    <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-brand-500/10 rounded-full blur-2xl"></div>
-                </div>
-
-                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                    class="group bg-white p-6 rounded-2xl border border-slate-200 shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-rose-200">
                     <div class="flex justify-between items-start mb-4">
                         <div
-                            class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center text-2xl">
+                            class="w-12 h-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center text-2xl transition-all duration-500 group-hover:bg-rose-600 group-hover:text-white">
+                            <i class="ph-fill ph-lightning"></i>
+                        </div>
+                        <span class="flex h-2 w-2 rounded-full bg-rose-500 group-hover:animate-ping mt-2"></span>
+                    </div>
+
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-tight">Action Required</p>
+                    <h3 class="text-2xl font-black text-slate-900 mt-1">
+                        <span id="kpi-pending">0</span>
+                        <span class="text-sm font-medium text-slate-400">Items</span>
+                    </h3>
+
+                    <div class="mt-4 pt-4 border-t border-slate-50 flex items-center justify-between">
+                        <div class="flex gap-3">
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                                <a href="{% url 'ferries_requests' %}"
+                                    class="text-xs text-brand-600 font-bold hover:underline">
+                                    <span class="text-[10px] font-bold text-slate-600 uppercase">Ferry: <span
+                                            id="kpi-ferry-pending">0</span></span> </a>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
+                                <a href="{% url 'admin_visa_app' %}"
+                                    class="text-xs text-brand-600 font-bold hover:underline">
+                                    <span class="text-[10px] font-bold text-slate-600 uppercase">Visa: <span
+                                            id="kpi-visa-pending">0</span></span></a>
+                            </div>
+                        </div>
+                        <i class="ph ph-arrow-right text-slate-300 group-hover:text-rose-500 transition-colors"></i>
+                    </div>
+                </div>
+
+                <div
+                    class="group bg-white p-6 rounded-2xl border border-slate-200 shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-indigo-200">
+                    <div class="flex justify-between items-start mb-4">
+                        <div
+                            class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center text-2xl transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110">
                             <i class="ph-fill ph-users-four"></i>
                         </div>
                         <a href="{% url 'agency_management' %}"
                             class="text-xs text-brand-600 font-bold hover:underline">Manage</a>
                     </div>
-                    <p class="text-xs font-bold text-slate-400 uppercase">Active Agencies</p>
-                    <h3 class="text-2xl font-bold text-slate-900 mt-1">{{ kpis.active_agencies }} <span
-                            class="text-xs text-green-500 font-bold">(+{{ kpis.new_agencies_week }} New)</span></h3>
-                    <p class="text-[10px] text-slate-500 mt-1">Growth this week</p>
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-tight">Active Agencies</p>
+                    <h3 class="text-2xl font-black text-slate-900 mt-1" id="kpi-active-agencies">0</h3>
+                    <div class="mt-4 pt-4 border-t border-slate-50">
+                        <p class="text-[10px] text-slate-400 italic">Distict customers this period</p>
+                    </div>
                 </div>
+
             </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div class="lg:col-span-2 bg-white border border-slate-200 rounded-3xl shadow-sm p-8">
-                    <div class="flex justify-between items-center mb-8">
-                        <div>
-                            <h3 class="text-lg font-bold text-slate-800">Performance (Last 7 Days)</h3>
-                            <p class="text-xs text-slate-400">Revenue split comparison</p>
-                        </div>
-                        <div class="flex gap-2 bg-slate-100 p-1 rounded-xl">
-                            <button
-                                class="px-3 py-1.5 text-[10px] font-bold bg-white text-slate-800 rounded-lg shadow-sm">Daily</button>
-                        </div>
-                    </div>
-
-                    <div class="h-72 w-full flex items-end justify-around gap-4 pt-4">
-                        {% for day in chart_data %}
-                        <div class="flex-1 flex flex-col items-center gap-3 group relative">
-                            <div class="w-full flex justify-center gap-1.5 h-full items-end">
-                                <div class="w-3 bg-blue-500 rounded-full transition-all duration-700 hover:w-5"
-                                    style="height: {{ day.ferry_pct|default:5 }}%"></div>
-                                <div class="w-3 bg-purple-500 rounded-full transition-all duration-700 hover:w-5"
-                                    style="height: {{ day.visa_pct|default:5 }}%"></div>
-                            </div>
-                            <span class="text-[10px] font-bold text-slate-400 uppercase">{{ day.name }}</span>
-                        </div>
-                        {% endfor %}
-                    </div>
-
-                    <div class="flex gap-6 mt-8 pt-6 border-t border-slate-50">
-                        <div class="flex items-center gap-2">
-                            <span class="w-3 h-3 rounded-full bg-blue-500"></span>
-                            <span class="text-xs font-bold text-slate-600">Ferry</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="w-3 h-3 rounded-full bg-purple-500"></span>
-                            <span class="text-xs font-bold text-slate-600">Visa</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden flex flex-col">
-                    <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                        <h3 class="font-bold text-slate-800">Urgent Tasks</h3>
-                        <span
-                            class="px-2.5 py-1 rounded-lg bg-red-50 text-red-600 text-[10px] font-black uppercase">Live</span>
-                    </div>
-
-                    <div class="flex-1 overflow-y-auto divide-y divide-slate-50">
-                        {% for task in tasks %}
-                        <div class="p-5 hover:bg-slate-50 transition-all cursor-pointer group">
-                            <div class="flex gap-4">
-                                <div
-                                    class="w-10 h-10 rounded-xl bg-{{ task.color }}-50 text-{{ task.color }}-600 flex items-center justify-center shrink-0">
-                                    <i class="ph-bold {{ task.icon }}"></i>
-                                </div>
-                                <div class="flex-1">
-                                    <div class="flex justify-between">
-                                        <p class="text-sm font-bold text-slate-800">{{ task.title }}</p>
-                                        <span class="text-[10px] text-slate-400 font-medium">{{
-                                            task.created_at|timesince }} ago</span>
-                                    </div>
-                                    <p class="text-xs text-slate-500 mt-0.5">{{ task.meta }}</p>
-                                    <div class="flex gap-2 mt-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button
-                                            class="flex-1 py-1.5 bg-brand-600 text-white text-[10px] font-bold rounded-lg hover:bg-brand-700">Process</button>
-                                        <button
-                                            class="flex-1 py-1.5 border border-slate-200 text-slate-600 text-[10px] font-bold rounded-lg hover:bg-slate-50">Details</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        {% empty %}
-                        <div class="p-10 text-center text-slate-400 text-sm italic">
-                            No urgent tasks found.
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
+            <!-- end kpis -->
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div class="bg-white border border-slate-200 rounded-3xl p-8">
-                    <h3 class="font-bold text-slate-800 mb-6 flex items-center gap-2">
-                        <i class="ph-bold ph-warning-circle text-red-500"></i> Agency Wallet Health
+                    <h3 class="font-bold text-slate-800 mb-6 flex items-center gap-2 shrink-0">
+                        <i class="ph-bold ph-warning-circle text-rose-500"></i> Agency Wallet Health
                     </h3>
-                    <div class="space-y-4">
-                        {% for account in low_balance_agencies %}
-                        <div
-                            class="flex items-center justify-between p-4 bg-red-50/30 rounded-2xl border border-red-100">
-                            <div class="flex items-center gap-4">
-                                <div
-                                    class="w-10 h-10 rounded-full bg-white flex items-center justify-center font-bold text-red-600 border border-red-100 uppercase">
-                                    {{ account.agency.company_name|slice:":2" }}
-                                </div>
-                                <div>
-                                    <p class="text-sm font-bold text-slate-800">{{ account.agency.company_name }}</p>
-                                    <p class="text-[10px] text-red-500 font-bold uppercase">Balance:
-                                        {{account.balance|floatformat:0 }} DZD</p>
+
+                    <div id="wallet-health-container"
+                        class="space-y-4 max-h-[480px] overflow-y-auto pr-2 custom-scrollbar">
+                        <p class="text-slate-400 text-xs italic">Scanning agency accounts for low balances...</p>
+                    </div>
+                </div>
+                <div class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden flex flex-col">
+                    <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                        <h3 class="font-bold text-slate-800">Urgent Tasks</h3>
+                        <span id="task-count-badge"
+                            class="px-2 py-1 bg-slate-100 text-slate-400 text-[10px] font-bold rounded-lg uppercase">Waiting</span>
+                    </div>
+
+                    <div id="task-list-container" class="flex-1 overflow-y-auto max-h-[400px]">
+                        <div class="p-8 text-center flex flex-col items-center justify-center space-y-3">
+                            <i class="ph ph-circle-notch animate-spin text-4xl text-slate-200"></i>
+                            <p class="text-slate-400 text-xs italic">Syncing task queue...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- performance chart -->
+            <div
+                class="lg:col-span-2 bg-white border border-slate-200 rounded-3xl shadow-sm flex flex-col overflow-hidden">
+                <div class="p-6 border-b border-slate-100 space-y-4">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-800">Performance Analytics</h3>
+                            <p id="chart-type-label"
+                                class="text-[10px] text-brand-600 uppercase font-bold tracking-wider">Revenue
+                                Breakdown
+                                (DZD)</p>
+                        </div>
+
+                        <div class="flex bg-slate-100 p-1 rounded-xl">
+                            <button onclick="updateChartMode('revenue')" id="btn-mode-rev"
+                                class="px-3 py-1.5 rounded-lg text-[10px] font-black transition-all bg-white shadow-sm text-brand-600">REVENUE</button>
+                            <button onclick="updateChartMode('volume')" id="btn-mode-vol"
+                                class="px-3 py-1.5 rounded-lg text-[10px] font-black transition-all text-slate-400">VOLUME</button>
+                        </div>
+                    </div>
+
+                    <div
+                        class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                        <div class="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-slate-200">
+                            <i class="ph ph-calendar text-slate-400"></i>
+                            <input type="date" id="chart_start_date"
+                                class="border-none text-[11px] font-bold text-slate-700 focus:ring-0 p-0 w-full bg-transparent">
+                            <span class="text-slate-300">-</span>
+                            <input type="date" id="chart_end_date"
+                                class="border-none text-[11px] font-bold text-slate-700 focus:ring-0 p-0 w-full bg-transparent">
+                        </div>
+
+                        <div class="relative group">
+                            <input type="hidden" id="real-agency-id" value="">
+                            <div class="relative">
+                                <i class="ph ph-magnifying-glass absolute left-3 top-2.5 text-slate-400"></i>
+                                <input type="text" id="agency-search-input" placeholder="Search Agency..."
+                                    oninput="fetchAgenciesLive()" onfocus="showAgencyDropdown()"
+                                    class="w-full pl-9 pr-8 py-2 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-brand-500 outline-none bg-white transition-all">
+                                <button onclick="selectAgency('', 'All Agencies')"
+                                    class="absolute right-2 top-2 text-slate-300 hover:text-rose-500">
+                                    <i class="ph ph-x-circle text-lg"></i>
+                                </button>
+                            </div>
+                            <div id="agency-dropdown"
+                                class="hidden absolute z-50 w-full mt-2 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden">
+                                <div id="agency-results-container" class="max-h-48 overflow-y-auto custom-scrollbar">
+                                    <div class="p-4 text-center text-xs text-slate-400 italic">Start typing to
+                                        search...
+                                    </div>
                                 </div>
                             </div>
-                            <button
-                                class="px-4 py-2 bg-white border border-red-200 text-red-600 text-xs font-bold rounded-xl hover:bg-red-50">Notify</button>
                         </div>
-                        {% empty %}
-                        <p class="text-center text-slate-400 text-sm italic py-4">All agency balances are healthy.</p>
-                        {% endfor %}
+
+                        <div class="flex gap-2">
+                            <select id="chart-style"
+                                class="flex-1 bg-white border border-slate-200 rounded-xl text-xs font-bold px-3 focus:ring-0 outline-none cursor-pointer">
+                                <option value="bar">Bar Chart</option>
+                                <option value="line">Line Chart</option>
+                            </select>
+                            <button onclick="refreshAnalytics()"
+                                class="bg-brand-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-brand-700 transition-all shadow-sm active:scale-95">
+                                Apply
+                            </button>
+                        </div>
                     </div>
                 </div>
 
+                <div class="p-8 flex-1 relative min-h-[350px]">
+                    <canvas id="performanceChart"></canvas>
+                </div>
+            </div>
+            <!-- performance chart end -->
+
+            <div class="grid grid-cols-1 lg:grid-cols-1 gap-8">
                 <div class="bg-white border border-slate-200 rounded-3xl p-8">
                     <div class="flex justify-between items-center mb-6">
-                        <h3 class="font-bold text-slate-800">System Heartbeat</h3>
-                        <i class="ph ph-activity text-brand-600"></i>
+                        <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                            <i class="ph ph-activity text-brand-600"></i> System Heartbeat
+                        </h3>
                     </div>
-                    <div class="relative border-l-2 border-slate-100 ml-4 pl-8 space-y-8">
-                        {% for item in activity %}
-                        <div class="relative">
-                            <span
-                                class="absolute -left-[41px] top-0 w-4 h-4 rounded-full bg-{{ item.color|default:'brand-500' }} border-4 border-white"></span>
-                            <p class="text-sm font-bold text-slate-800">{{ item.message }}</p>
-                            <p class="text-xs text-slate-400 mt-1">{{ item.timestamp|timesince }} ago</p>
-                        </div>
-                        {% empty %}
-                        <p class="text-slate-400 text-sm italic">No recent activity recorded.</p>
-                        {% endfor %}
-                    </div>
+                    <p class="text-slate-400 text-xs italic">Awaiting connection to activity logs...</p>
                 </div>
             </div>
         </div>
     </div>
 </main>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-    // Animation for bars on load
-    document.addEventListener('DOMContentLoaded', () => {
-        const bars = document.querySelectorAll('.group div[style]');
-        bars.forEach(bar => {
-            const height = bar.style.height;
-            bar.style.height = '0';
-            setTimeout(() => {
-                bar.style.height = height;
-            }, 100);
+    function formatValue(val, isCurrency = false) {
+        const num = Number(val) || 0;
+        if (isCurrency) {
+            return num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+        return num.toLocaleString();
+    }
+
+    async function refreshKPIs() {
+        const start = document.getElementById('start_date').value;
+        const end = document.getElementById('end_date').value;
+        document.getElementById('date-range-label').innerText = "SYNCHRONIZING...";
+
+        try {
+            const response = await fetch(`/admin_panel/api/kpis/?start_date=${start}&end_date=${end}`);
+            if (!response.ok) throw new Error('API Response Error');
+            const data = await response.json();
+
+            // 1. KPI Injections
+            document.getElementById('kpi-revenue').innerText = formatValue(data.revenue, true);
+            document.getElementById('kpi-paid').innerText = formatValue(data.paid, true);
+            document.getElementById('kpi-unpaid').innerText = formatValue(data.unpaid, true);
+            document.getElementById('kpi-sales-total').innerText = formatValue(data.sales_total);
+            document.getElementById('kpi-ferry').innerText = formatValue(data.ferry_count);
+            document.getElementById('kpi-visa').innerText = formatValue(data.visa_count);
+            document.getElementById('kpi-pending').innerText = formatValue(data.pending_total);
+            document.getElementById('kpi-ferry-pending').innerText = formatValue(data.ferry_pending);
+            document.getElementById('kpi-visa-pending').innerText = formatValue(data.visa_pending);
+            document.getElementById('kpi-active-agencies').innerText = formatValue(data.active_agencies);
+            document.getElementById('date-range-label').innerText = data.label || "LATEST DATA";
+
+            // 2. Urgent Tasks Injection
+            const taskContainer = document.getElementById('task-list-container');
+            const taskBadge = document.getElementById('task-count-badge');
+            taskContainer.innerHTML = '';
+
+            if (!data.tasks || data.tasks.length === 0) {
+                taskBadge.innerText = "CLEARED";
+                taskBadge.className = "px-2 py-1 bg-emerald-100 text-emerald-600 text-[10px] font-bold rounded-lg uppercase";
+                taskContainer.innerHTML = `<div class="p-10 text-center text-slate-400 text-sm italic">No urgent tasks found.</div>`;
+            } else {
+                taskBadge.innerText = `${data.tasks.length} ACTIVE`;
+                taskBadge.className = "px-2 py-1 bg-rose-100 text-rose-600 text-[10px] font-bold rounded-lg uppercase";
+                data.tasks.forEach(task => {
+                    taskContainer.innerHTML += `
+                        <div class="p-5 cursor-pointer group border-b border-slate-100 transition-all hover:bg-blue-50/60">
+                            <a href="${task.action_url || '#'}" class="block">
+                                <div class="flex gap-4">
+                                    <div class="w-10 h-10 rounded-xl bg-${task.color}-50 text-${task.color}-600 group-hover:bg-blue-100 group-hover:text-blue-600 transition-colors shrink-0 flex items-center justify-center">
+                                        <i class="${task.icon}"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="flex justify-between items-center">
+                                            <p class="text-sm font-bold text-slate-800 group-hover:text-blue-700 transition-colors">${task.title}</p>
+                                            <span class="text-[10px] font-medium text-slate-400">New</span>
+                                        </div>
+                                        <p class="text-xs text-slate-500 mt-0.5 group-hover:text-blue-600 transition-colors">${task.meta}</p>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>`;
+                });
+            }
+
+            // 3. Wallet Health Injection (New)
+            const healthContainer = document.getElementById('wallet-health-container');
+            healthContainer.innerHTML = '';
+
+            if (!data.wallet_health || data.wallet_health.length === 0) {
+                healthContainer.innerHTML = `<p class="text-center text-slate-400 text-sm italic py-4">All agency balances are healthy.</p>`;
+            } else {
+                data.wallet_health.forEach(agency => {
+                    healthContainer.innerHTML += `
+                        <div class="flex items-center justify-between p-4 bg-${agency.status_color}-50/30 rounded-2xl border border-${agency.status_color}-100">
+                            <div class="flex items-center gap-4">
+                                <!-- Avatar -->
+                                <div
+                                    class="w-10 h-10 rounded-full bg-white flex items-center justify-center font-bold text-${agency.status_color}-600 border border-${agency.status_color}-100 uppercase text-xs">
+                                    ${agency.agency_name.slice(0, 2)}
+                                </div>
+                                <!-- Agency info -->
+                                <div>
+                                    <p class="text-sm font-bold text-slate-800">
+                                        ${agency.agency_name}
+                                    </p>
+                                    <!-- Inline financial info -->
+                                    <div class="flex flex-wrap gap-x-4 gap-y-1 text-[10px] font-bold uppercase">
+                                        <span class="text-${agency.status_color}-500">
+                                            Credit: ${formatValue(agency.credit_limit, true)} DZD
+                                        </span>
+                                        <span class="text-emerald-600">
+                                            Balance: ${formatValue(agency.balance, true)} DZD
+                                        </span>
+                                        <span class="text-amber-600">
+                                            Hold: ${formatValue(agency.unpaid_hold, true)} DZD
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>`;
+                });
+            }
+
+            // 4. Notification dot logic
+            const notifDot = document.getElementById('notif-dot');
+            if (Number(data.pending_total) > 0) {
+                notifDot.classList.remove('hidden');
+            } else {
+                notifDot.classList.add('hidden');
+            }
+
+        } catch (error) {
+            console.error('Ajax Error:', error);
+            document.getElementById('date-range-label').innerText = "OFFLINE - RETRYING";
+        }
+    }
+
+    window.onload = refreshKPIs;
+</script>
+<!-- chart script -->
+<script>
+    let myChart = null;
+    let currentDataMode = 'revenue'; // Default mode
+    let searchTimer;
+
+    // --- Agency Search Functionality ---
+    function showAgencyDropdown() {
+        document.getElementById('agency-dropdown').classList.remove('hidden');
+    }
+
+    async function fetchAgenciesLive() {
+        const query = document.getElementById('agency-search-input').value;
+        const container = document.getElementById('agency-results-container');
+
+        if (query.length < 2) {
+            container.innerHTML = '<div class="p-4 text-center text-xs text-slate-400 italic">Type at least 2 characters...</div>';
+            return;
+        }
+
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(async () => {
+            container.innerHTML = '<div class="p-4 text-center"><i class="ph ph-circle-notch animate-spin text-brand-600 text-xl"></i></div>';
+
+            try {
+                const response = await fetch(`/admin_panel/api/agencies/search/?q=${query}`);
+                const data = await response.json();
+
+                container.innerHTML = '';
+                // Note: Changed from 'data' to 'data.agencies' to match your Python method
+                if (!data.agencies || data.agencies.length === 0) {
+                    container.innerHTML = '<div class="p-4 text-center text-xs text-slate-400">No agency found</div>';
+                } else {
+                    data.agencies.forEach(agency => {
+                        const div = document.createElement('div');
+                        div.className = "p-3 flex justify-between items-center hover:bg-brand-50 cursor-pointer border-b border-slate-50 transition-colors group";
+
+                        // Show Company Name and Balance in the dropdown
+                        div.innerHTML = `
+                        <div>
+                            <p class="text-xs font-bold text-slate-700 group-hover:text-brand-700">${agency.company_name}</p>
+                            <p class="text-[9px] text-slate-400 font-medium">ID: #${agency.id}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-[10px] font-black text-emerald-600">${agency.current_balance.toLocaleString()} DZD</p>
+                        </div>
+                    `;
+
+                        div.onclick = () => selectAgency(agency.id, agency.company_name);
+                        container.appendChild(div);
+                    });
+                }
+            } catch (err) {
+                container.innerHTML = '<div class="p-4 text-center text-rose-500 text-xs font-bold">Error loading data</div>';
+            }
+        }, 300);
+    }
+
+    function selectAgency(id, name) {
+        document.getElementById('real-agency-id').value = id;
+        document.getElementById('agency-search-input').value = name;
+        document.getElementById('agency-dropdown').classList.add('hidden');
+        refreshAnalytics(); // Auto-refresh when agency is picked
+    }
+
+    // --- Chart Logic ---
+    function updateChartMode(mode) {
+        currentDataMode = mode;
+        const isRev = mode === 'revenue';
+
+        // UI Button Styling
+        document.getElementById('btn-mode-rev').className = isRev ? "px-3 py-1.5 rounded-lg text-[10px] font-black bg-white shadow-sm text-brand-600" : "px-3 py-1.5 rounded-lg text-[10px] font-black text-slate-400";
+        document.getElementById('btn-mode-vol').className = !isRev ? "px-3 py-1.5 rounded-lg text-[10px] font-black bg-white shadow-sm text-brand-600" : "px-3 py-1.5 rounded-lg text-[10px] font-black text-slate-400";
+        document.getElementById('chart-type-label').innerText = isRev ? "Revenue Breakdown (DZD)" : "Booking Volume (Count)";
+
+        refreshAnalytics();
+    }
+
+    async function refreshAnalytics() {
+        const start = document.getElementById('chart_start_date').value;
+        const end = document.getElementById('chart_end_date').value;
+        const agencyId = document.getElementById('real-agency-id').value;
+        const style = document.getElementById('chart-style').value;
+
+        try {
+            const response = await fetch(`/admin_panel/api/dashboard/analytics/?start_date=${start}&end_date=${end}&agency_id=${agencyId}`);
+            const data = await response.json();
+
+            const chartData = currentDataMode === 'revenue' ? data.revenue_chart : data.volume_chart;
+            renderChartUI(chartData, style);
+        } catch (error) {
+            console.error("Chart Fetch Error:", error);
+        }
+    }
+
+    function renderChartUI(chartData, style) {
+        const ctx = document.getElementById('performanceChart').getContext('2d');
+
+        if (myChart) myChart.destroy();
+
+        const isLine = style === 'line';
+
+        myChart = new Chart(ctx, {
+            type: style,
+            data: {
+                labels: chartData.map(d => d.day),
+                datasets: [
+                    {
+                        label: 'Ferry',
+                        data: chartData.map(d => d.ferry),
+                        backgroundColor: isLine ? 'rgba(59, 130, 246, 0.1)' : '#3b82f6',
+                        borderColor: '#3b82f6',
+                        borderWidth: 3,
+                        fill: isLine,
+                        tension: 0.4,
+                        borderRadius: 6
+                    },
+                    {
+                        label: 'Visa',
+                        data: chartData.map(d => d.visa),
+                        backgroundColor: isLine ? 'rgba(168, 85, 247, 0.1)' : '#a855f7',
+                        borderColor: '#a855f7',
+                        borderWidth: 3,
+                        fill: isLine,
+                        tension: 0.4,
+                        borderRadius: 6
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: { usePointStyle: true, boxWidth: 6, font: { size: 10, weight: 'bold' } }
+                    },
+                    tooltip: {
+                        backgroundColor: '#1e293b',
+                        padding: 12,
+                        titleFont: { size: 12, weight: 'bold' },
+                        bodyFont: { size: 11 },
+                        cornerRadius: 8,
+                        displayColors: true
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: '#f1f5f9' },
+                        ticks: { font: { size: 10, weight: 'bold' }, color: '#94a3b8' }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { size: 10, weight: 'bold' }, color: '#94a3b8' }
+                    }
+                }
+            }
         });
+    }
+
+    // Close Dropdown on outside click
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.group')) {
+            document.getElementById('agency-dropdown').classList.add('hidden');
+        }
     });
+
+    // Initial Load
+    window.addEventListener('load', () => refreshAnalytics());
 </script>
 {% endblock %}

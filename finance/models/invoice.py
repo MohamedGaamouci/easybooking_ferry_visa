@@ -30,7 +30,7 @@ class Invoice(models.Model):
 
     # We store the TOTAL of all items here for fast access
     total_amount = models.DecimalField(
-        max_digits=12, decimal_places=2, default=0.00)
+        max_digits=15, decimal_places=2, default=0.00)
 
     status = models.CharField(
         max_length=20, choices=STATUS_CHOICES, default='unpaid')
@@ -69,7 +69,7 @@ class InvoiceItem(models.Model):
 
     description = models.CharField(
         max_length=255, help_text="e.g. Ferry Ticket ALG-MRS")
-    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    amount = models.DecimalField(max_digits=15, decimal_places=2)
 
     # =========================================================
     # DYNAMIC SERVICE LINK (Generic Foreign Key)

@@ -4,7 +4,7 @@ from finance.services.invoice import bulk_pay_invoices
 from django.template.loader import get_template
 from finance.services.invoice import pay_invoice
 from django.http import HttpResponse
-from finance.services.topup import approve_topup_request
+from finance.services.topup import approve_topup_request, reject_topup_request
 from xhtml2pdf import pisa  # type: ignore
 from finance.services.invoice import search_invoices, cancel_invoice, refund_invoice
 from finance.services.invoice import search_invoices, cancel_invoice
@@ -136,12 +136,8 @@ def admin_process_topup(request, topup_id):
             msg = "Top-Up Approved successfully."
 
         elif action == 'reject':
-            # You can build a small service function for this too
-            top_up = get_object_or_404(
-                TopUpRequest, id=topup_id, status='pending')
-            top_up.status = 'rejected'
-            top_up.reviewed_by = request.user
-            top_up.save()
+            reject_topup_request(request_id=topup_id,
+                                 admin_user=request.user, reason="")
             msg = "Top-Up Rejected."
         else:
             return JsonResponse({'status': 'error', 'msg': 'Invalid action'}, status=400)

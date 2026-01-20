@@ -217,12 +217,12 @@
                     </div>
                 </div>
             </div>
-            <button onclick="openBulkPayModal()"
-                class="text-brand-600 bg-brand-50 hover:bg-brand-100 font-bold text-sm px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
-                <i class="ph-bold ph-stack"></i> Bulk Pay
-            </button>
-            <div x-show="tab === 'invoices'" style="display: none;" class="space-y-6 animate-fade-in">
 
+            <div x-show="tab === 'invoices'" style="display: none;" class="space-y-6 animate-fade-in">
+                <button onclick="openBulkPayModal()"
+                    class="text-brand-600 bg-brand-50 hover:bg-brand-100 font-bold text-sm px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+                    <i class="ph-bold ph-stack"></i> Bulk Pay
+                </button>
                 <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
 
                     <div class="flex flex-wrap gap-4">

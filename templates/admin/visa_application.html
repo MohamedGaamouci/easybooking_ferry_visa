@@ -646,7 +646,15 @@
 
                     const row = `
                         <tr class="hover:bg-slate-50 transition-colors">
-                            <td class="px-6 py-4 font-mono font-bold text-brand-600">#${app.reference}</td>
+                            <td class="px-6 py-4">
+                                <div class="font-mono font-bold text-brand-600">
+                                    #${app.reference}
+                                </div>
+                                <div class="text-xs text-slate-500">
+                                    ${new Date(app.created_at).toLocaleString('en-GB')}
+                                </div>
+                            </td>
+
                             <td class="px-6 py-4">
                                 <div class="font-medium text-slate-900">${app.applicant}</div>
                                 <div class="text-xs text-slate-500 font-mono">${app.passport}</div>
