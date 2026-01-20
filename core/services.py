@@ -1,3 +1,5 @@
+from ferries.models.ferry_request import FerryRequest  # Use your real model name
+from visas.models.visa_application import VisaApplication  # Use your real model name
 from django.utils import timezone
 from django.db.models import Sum, Count, Q
 from datetime import timedelta
@@ -113,3 +115,75 @@ class DashboardService:
     @staticmethod
     def get_at_risk_agencies():
         return Account.objects.filter(balance__lt=10000).select_related('agency')[:5]
+# core/services.py (Update)
+
+    @staticmethod
+    def get_recent_activity(limit=8):
+        activity = []
+
+        # 1. Recent Transactions (Top-ups, Payments)
+        trans = Transaction.objects.all().select_related(
+            'account__agency').order_by('-created_at')[:limit]
+        for t in trans:
+            activity.append({
+                'message': f"{t.account.agency.company_name}: {t.description}",
+                'timestamp': t.created_at,
+                'color': 'emerald' if t.amount > 0 else 'blue'
+            })
+
+        # 2. Recent Agency Signups
+        new_agencies = Agency.objects.order_by('-created_at')[:5]
+        for a in new_agencies:
+            activity.append({
+                'message': f"New Agency Registered: {a.company_name}",
+                'timestamp': a.created_at,
+                'color': 'brand-500'
+            })
+
+        # Sort combined activity by time
+        return sorted(activity, key=lambda x: x['timestamp'], reverse=True)[:limit]
+
+# core/services.py (Update inside get_urgent_tasks)
+
+    @staticmethod
+    def get_urgent_tasks():
+        tasks = []
+
+        # 1. Pending Deposits (Your existing logic)
+        topups = TopUpRequest.objects.filter(
+            status='pending').select_related('account__agency')
+        for t in topups:
+            tasks.append({
+                'type': 'deposit',
+                'title': 'Approve Deposit',
+                'meta': f"{t.account.agency.company_name} • {t.amount} DZD",
+                'created_at': t.created_at,
+                'icon': 'ph-fill ph-wallet',
+                'color': 'amber'
+            })
+
+        # 2. Pending Visa Demands
+        visas = VisaApplication.objects.filter(status='pending')[:5]
+        for v in visas:
+            tasks.append({
+                'type': 'visa',
+                'title': 'New Visa Demand',
+                'meta': f"{v.agency.company_name} • {v.destination.country}",
+                'created_at': v.created_at,
+                'icon': 'ph-fill ph-passport',
+                'color': 'purple'
+            })
+
+        # 3. Pending Ferry Demands
+        ferries = FerryRequest.objects.filter(status='pending')[:5]
+        for f in ferries:
+            tasks.append({
+                'type': 'ferry',
+                'title': 'New Ferry Request',
+                'meta': f"{f.agency.company_name} • {f.route}",
+                'created_at': f.created_at,
+                'icon': 'ph-fill ph-boat',
+                'color': 'blue'
+            })
+
+        return sorted(tasks, key=lambda x: x['created_at'], reverse=True)

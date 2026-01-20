@@ -71,6 +71,8 @@ def is_admin(user):
         return True
 
 
+# core/views.py (Update)
+
 @login_required
 @user_passes_test(is_admin)
 def admin_dashboard(request):
@@ -79,7 +81,7 @@ def admin_dashboard(request):
     kpis = service.get_kpis()
     tasks = service.get_urgent_tasks()
 
-    # Update the KPI pending count based on real tasks found
+    # KPIs for the Bento cards
     kpis['pending_count'] = len(tasks)
 
     context = {
@@ -87,5 +89,6 @@ def admin_dashboard(request):
         'tasks': tasks,
         'chart_data': service.get_chart_data(),
         'low_balance_agencies': service.get_at_risk_agencies(),
+        'activity': service.get_recent_activity(),  # Added this line
     }
     return render(request, 'admin/dashboard.html', context)

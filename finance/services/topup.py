@@ -1,3 +1,4 @@
+from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from ..models import TopUpRequest, Account
@@ -36,35 +37,42 @@ def create_topup_request(agency, amount, receipt_image, reference_number=''):
 # 2. ADMIN ACTIONS
 # =========================================================
 
+
 def approve_topup_request(request_id, admin_user):
     """
     Approves a request and moves money into the wallet.
-    Does NOT auto-pay invoices (Admin decides that separately).
     """
     with transaction.atomic():
-        # 1. Lock Request
+        # 1. Lock Request to prevent double-processing
         try:
             topup = TopUpRequest.objects.select_for_update().get(id=request_id)
         except TopUpRequest.DoesNotExist:
             raise ValidationError("TopUp Request not found.")
 
+        # 2. State Guard: Critical to prevent double deposit
+        if topup.status == 'approved':
+            raise ValidationError("This request has already been approved.")
+
         if topup.status != 'pending':
             raise ValidationError(
-                f"Cannot approve. Status is '{topup.status}'.")
+                f"Cannot approve. Request is currently '{topup.status}'."
+            )
 
-        # 2. Add Money (Deposit)
+        # 3. Add Money (Deposit)
+        # execute_transaction ensures the balance increases (+)
         execute_transaction(
             account_id=topup.account.id,
-            amount=topup.amount,  # Positive
+            amount=topup.amount,
             trans_type='deposit',
             description=f"TopUp Approved (Ref: {topup.reference_number})",
             user=admin_user,
             related_topup=topup
         )
 
-        # 3. Update Status
+        # 4. Finalize TopUp Request
         topup.status = 'approved'
         topup.reviewed_by = admin_user
+        topup.reviewed_at = timezone.now()  # Good for audit logs
         topup.save()
 
         return topup

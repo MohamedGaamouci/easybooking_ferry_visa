@@ -1,7 +1,7 @@
 from django.forms import ValidationError
 from django.urls import reverse
 from agencies.models import Agency
-from .models import VisaApplication, VisaForm
+from .models import VisaApplication, VisaForm, VisaDestination
 from .forms import (
     VisaApplicationForm,
     VisaApplicationAnswerForm,
@@ -15,7 +15,6 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_GET, require_POST
 from django.db import transaction
 from django.shortcuts import render
-from .models import VisaApplication, VisaDestination
 
 from django.shortcuts import render
 from django.core.paginator import Paginator

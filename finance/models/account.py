@@ -11,7 +11,7 @@ class Account(models.Model):
     # GATE 2: SETTLEMENT FUNDS (Real Cash)
     # Used ONLY to pay invoices. Cannot go negative.
     balance = models.DecimalField(
-        max_digits=12,
+        max_digits=15,
         decimal_places=2,
         default=0.00,
         verbose_name="Cash Balance"
@@ -20,7 +20,7 @@ class Account(models.Model):
     # GATE 1: PURCHASING LIMITS
     # The maximum volume of unpaid invoices allowed at once.
     credit_limit = models.DecimalField(
-        max_digits=12,
+        max_digits=15,
         decimal_places=2,
         default=0.00,
         verbose_name="Credit Line"
@@ -29,7 +29,7 @@ class Account(models.Model):
     # CONSUMED VOLUME
     # Sum of all currently UNPAID invoices.
     unpaid_hold = models.DecimalField(
-        max_digits=12,
+        max_digits=15,
         decimal_places=2,
         default=0.00
     )

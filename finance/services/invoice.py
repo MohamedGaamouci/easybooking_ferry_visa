@@ -1,3 +1,4 @@
+from finance.services.wallet import execute_transaction
 from .notifications import send_booking_notification
 from ..models import Invoice, Account, Transaction  # Ensure these are imported
 from django.db.models import Sum
@@ -162,55 +163,42 @@ def create_single_service_invoice(service_object, amount, description, user):
 def pay_invoice(invoice_id, user=None):
     """
     Settles an Invoice using Real Cash (Balance).
-
-    1. Checks if Agency has enough CASH Balance.
-    2. Deducts Cash.
-    3. Releases the Credit Hold.
+    Uses execute_transaction for the heavy lifting.
     """
     with transaction.atomic():
         # 1. Lock Invoice
         try:
             invoice = Invoice.objects.select_for_update().get(id=invoice_id)
         except Invoice.DoesNotExist:
-            raise ValidationError("Invoice not found.")
+            return False, "Invoice not found."
 
         if invoice.status != 'unpaid':
             return False, f"Invoice is {invoice.status}, cannot pay."
 
-        # 2. Lock Account
+        # 2. Execute the Financial Movement
+        # We use our helper because it handles locking, balance checks,
+        # and creating the Transaction history automatically.
         try:
-            acc_locked = Account.objects.select_for_update().get(agency=invoice.agency)
-        except Account.DoesNotExist:
-            return False, "Agency Account not found."
-        amount = invoice.total_amount
+            execute_transaction(
+                account_id=invoice.agency.account.id,  # Link through agency
+                amount=invoice.total_amount,          # Helper will flip to negative
+                trans_type='payment',
+                description=f"Settlement: Invoice {invoice.invoice_number}",
+                user=user,
+                related_invoice=invoice
+            )
+        except ValidationError as e:
+            # This catches "Insufficient Balance" errors from execute_transaction
+            return False, str(e)
 
-        # 3. GATE 2: CHECK REAL CASH BALANCE
-        # The client MUST have enough cash to cover this bill.
-        if acc_locked.balance < amount:
-            missing = amount - acc_locked.balance
-            return False, f"Insufficient Balance. Missing {missing} DZD."
-
-        # 4. EXECUTE SETTLEMENT
-        # A. Deduct Real Money
-        acc_locked.balance -= amount
-
-        # B. Release the Operational Hold (Restores Credit Limit)
-        acc_locked.unpaid_hold -= amount
-
+        # 3. Handle the Operational Hold (Credit Limit Logic)
+        # Since execute_transaction handles the 'Balance', we manually
+        # update the 'unpaid_hold' here as it's specific to your Credit system.
+        acc_locked = invoice.agency.account
+        acc_locked.unpaid_hold -= invoice.total_amount
         acc_locked.save()
 
-        # 5. LOG TRANSACTION (The Ledger)
-        Transaction.objects.create(
-            account=acc_locked,
-            transaction_type='payment',
-            amount=-amount,  # Money Leaving
-            balance_after=acc_locked.balance,
-            description=f"Settlement: Invoice {invoice.invoice_number}",
-            created_by=user,
-            invoice=invoice
-        )
-
-        # 6. UPDATE INVOICE STATUS
+        # 4. Finalize Invoice
         invoice.status = 'paid'
         invoice.paid_at = timezone.now()
         invoice.save()

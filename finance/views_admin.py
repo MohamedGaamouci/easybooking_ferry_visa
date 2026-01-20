@@ -4,8 +4,8 @@ from finance.services.invoice import bulk_pay_invoices
 from django.template.loader import get_template
 from finance.services.invoice import pay_invoice
 from django.http import HttpResponse
+from finance.services.topup import approve_topup_request
 from xhtml2pdf import pisa  # type: ignore
-from django.template.loader import render_to_string
 from finance.services.invoice import search_invoices, cancel_invoice, refund_invoice
 from finance.services.invoice import search_invoices, cancel_invoice
 from django.shortcuts import render
@@ -124,40 +124,29 @@ def admin_ledger_api(request):
 @user_passes_test(is_admin)
 @require_POST
 def admin_process_topup(request, topup_id):
-    """Approves or Rejects a Top-Up Request."""
-    data = json.loads(request.body)
-    action = data.get('action')
-
+    """View to handle Admin Approval/Rejection of Top-Ups."""
     try:
-        # Wrap the entire operation in a transaction
-        with transaction.atomic():
+        data = json.loads(request.body)
+        action = data.get('action')
+
+        if action == 'approve':
+            # Call the service function we already built!
+            # It handles the locking, transaction, and money movement.
+            approve_topup_request(topup_id, request.user)
+            msg = "Top-Up Approved successfully."
+
+        elif action == 'reject':
+            # You can build a small service function for this too
             top_up = get_object_or_404(
                 TopUpRequest, id=topup_id, status='pending')
+            top_up.status = 'rejected'
+            top_up.reviewed_by = request.user
+            top_up.save()
+            msg = "Top-Up Rejected."
+        else:
+            return JsonResponse({'status': 'error', 'msg': 'Invalid action'}, status=400)
 
-            if action == 'approve':
-                # 1. Move the Money (Wallet Engine)
-                # This already uses atomic, but now it acts as a savepoint within this parent transaction
-                execute_transaction(
-                    account_id=top_up.account.id,
-                    amount=top_up.amount,
-                    trans_type='deposit',
-                    description=f"TopUp Approved: {top_up.reference_number}",
-                    user=request.user,
-                    related_topup=top_up
-                )
-
-                # 2. Update the Request Status
-                # If this line fails, the money movement above will roll back!
-                top_up.status = 'approved'
-                top_up.save()
-                msg = "Top-Up Approved."
-
-            elif action == 'reject':
-                top_up.status = 'rejected'
-                top_up.save()
-                msg = "Top-Up Rejected."
-
-        # Fetch stats AFTER the transaction is successfully committed
+        # Fetch stats for the UI
         new_pending = TopUpRequest.objects.filter(
             status='pending').aggregate(s=Sum('amount'))['s'] or 0
         new_balance = Account.objects.aggregate(s=Sum('balance'))['s'] or 0
@@ -165,61 +154,77 @@ def admin_process_topup(request, topup_id):
         return JsonResponse({
             'status': 'success',
             'msg': msg,
-            'stats': {'pending': new_pending, 'balance': new_balance}
+            'stats': {'pending': float(new_pending), 'balance': float(new_balance)}
         })
 
+    except ValidationError as e:
+        return JsonResponse({'status': 'error', 'msg': str(e)}, status=400)
     except Exception as e:
-        return JsonResponse({'status': 'error', 'msg': str(e)}, status=500)
+        return JsonResponse({'status': 'error', 'msg': "An unexpected error occurred."}, status=500)
 
 
 # ... other imports ...
 
 
-@login_required
 @user_passes_test(is_admin)
 @require_POST
+@login_required
 def admin_manual_trx(request):
-    """Processes a Manual Credit or Debit using Wallet Engine."""
-    data = json.loads(request.body)
-    agency_id = data.get('agency_id')
-
-    # 2. FIX: Convert to string first, then to Decimal (Avoids float precision errors)
+    """
+    Processes a Manual Adjustment.
+    Credit = (+) Positive
+    Debit = (-) Negative
+    """
     try:
+        data = json.loads(request.body)
+        agency_id = data.get('agency_id')
         amount_val = data.get('amount', 0)
-        amount_raw = Decimal(str(amount_val))
-    except (ValueError, TypeError):
-        return JsonResponse({'status': 'error', 'msg': 'Invalid Amount format'}, status=400)
+        trx_type = data.get('type')  # 'credit' or 'debit'
+        reason = data.get('reason', 'Manual Adjustment')
 
-    trx_type = data.get('type')  # 'credit' or 'debit'
-    reason = data.get('reason')
+        # 1. Basic Validation
+        if not agency_id or not amount_val:
+            return JsonResponse({'status': 'error', 'msg': 'Agency and Amount are required'}, status=400)
 
-    try:
-        with transaction.atomic():
-            agency = Agency.objects.get(id=agency_id)
-            account = get_account(agency)
+        # 2. Get Account
+        agency = get_object_or_404(Agency, id=agency_id)
+        account = agency.account
 
-            # Determine signed amount
-            final_amount = amount_raw if trx_type == 'credit' else -amount_raw
+        # 3. Apply the Sign (+/-)
+        # Convert to Decimal immediately to avoid float issues
+        clean_amount = abs(Decimal(str(amount_val)))
 
-            # USE YOUR EXISTING ENGINE
-            execute_transaction(
-                account_id=account.id,
-                amount=final_amount,
-                trans_type='deposit' if trx_type == 'credit' else 'adjustment',
-                description=f"Manual: {reason}",
-                user=request.user
-            )
+        if trx_type == 'credit':
+            final_amount = clean_amount  # Positive (+)
+        elif trx_type == 'debit':
+            final_amount = -clean_amount  # Negative (-)
+        else:
+            return JsonResponse({'status': 'error', 'msg': 'Invalid transaction type'}, status=400)
 
-        new_balance = Account.objects.aggregate(s=Sum('balance'))['s'] or 0
+        # 4. EXECUTE USING ENGINE
+        # We use 'adjustment' as the type so the engine doesn't force its own signs
+        execute_transaction(
+            account_id=account.id,
+            amount=final_amount,
+            trans_type='adjustment',
+            description=f"Manual Adj ({trx_type.upper()}): {reason}",
+            user=request.user
+        )
+
+        # 5. Return Stats
+        new_total_balance = Account.objects.aggregate(s=Sum('balance'))[
+            's'] or 0
 
         return JsonResponse({
             'status': 'success',
-            'msg': 'Transaction Processed.',
-            'stats': {'balance': new_balance}
+            'msg': f'Successfully processed {trx_type} of {clean_amount} DZD.',
+            'stats': {'balance': float(new_total_balance)}
         })
 
+    except ValidationError as e:
+        return JsonResponse({'status': 'error', 'msg': str(e)}, status=400)
     except Exception as e:
-        return JsonResponse({'status': 'error', 'msg': str(e)}, status=500)
+        return JsonResponse({'status': 'error', 'msg': "System Error: " + str(e)}, status=500)
 
 
 @login_required

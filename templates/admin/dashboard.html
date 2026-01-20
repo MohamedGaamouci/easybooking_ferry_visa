@@ -215,8 +215,8 @@
                                 </div>
                                 <div>
                                     <p class="text-sm font-bold text-slate-800">{{ account.agency.company_name }}</p>
-                                    <p class="text-[10px] text-red-500 font-bold uppercase">Balance: {{
-                                        account.balance|floatformat:0 }} DZD</p>
+                                    <p class="text-[10px] text-red-500 font-bold uppercase">Balance:
+                                        {{account.balance|floatformat:0 }} DZD</p>
                                 </div>
                             </div>
                             <button
@@ -250,4 +250,18 @@
         </div>
     </div>
 </main>
+
+<script>
+    // Animation for bars on load
+    document.addEventListener('DOMContentLoaded', () => {
+        const bars = document.querySelectorAll('.group div[style]');
+        bars.forEach(bar => {
+            const height = bar.style.height;
+            bar.style.height = '0';
+            setTimeout(() => {
+                bar.style.height = height;
+            }, 100);
+        });
+    });
+</script>
 {% endblock %}

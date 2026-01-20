@@ -179,8 +179,7 @@
                             <option value="deposit">Deposit (+)</option>
                             <option value="payment">Payment (-)</option>
                             <option value="refund">Refund (+)</option>
-                            <option value="adjustment_credit">Manual Credit</option>
-                            <option value="adjustment_debit">Manual Debit</option>
+                            <option value="adjustment">Adjustment</option>
                         </select>
                     </div>
                     <div id="ledger-loading" class="hidden text-brand-600 text-sm font-bold flex items-center gap-2">
@@ -196,6 +195,7 @@
                                 <th class="px-6 py-4">ID</th>
                                 <th class="px-6 py-4">Date</th>
                                 <th class="px-6 py-4">Agency</th>
+                                <th class="px-6 py-4">Trx Type</th>
                                 <th class="px-6 py-4">Description</th>
                                 <th class="px-6 py-4 text-right">Amount</th>
                                 <th class="px-6 py-4 text-right">Balance After</th>
@@ -374,7 +374,7 @@
                     <span class="absolute left-3 top-3 text-slate-400 font-bold">DZD</span>
                     <input id="manual-amount" type="number" step="0.01"
                         class="w-full border border-slate-300 rounded-xl py-3 pl-12 pr-4 text-slate-900 font-bold text-lg outline-none focus:ring-2 focus:ring-slate-500"
-                        placeholder="0.00">
+                        placeholder="0.00" required>
                 </div>
             </div>
 
@@ -382,7 +382,7 @@
                 <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Reason (Required)</label>
                 <input id="manual-reason" type="text"
                     class="w-full border border-slate-300 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-slate-500"
-                    placeholder="e.g. Cash payment received at office">
+                    placeholder="e.g. Cash payment received at office" required>
             </div>
 
             <button onclick="submitManualTrx()"
@@ -723,19 +723,52 @@
                         tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-12 text-center text-slate-400">No transactions found.</td></tr>`;
                     } else {
                         data.transactions.forEach(t => {
-                            let amountClass = t.type === 'deposit' || t.type === 'adjustment_credit' || t.type === 'refund' ? 'text-green-600' : 'text-red-600';
-                            let sign = t.type === 'deposit' || t.type === 'adjustment_credit' || t.type === 'refund' ? '+' : '';
+                            // 1. Logic for the Amount Color (Red/Green)
+                            const val = parseFloat(t.amount);
+                            const amountClass = val > 0 ? 'text-green-600' : (val < 0 ? 'text-red-600' : 'text-slate-600');
+                            const sign = val > 0 ? '+' : '';
+
+                            // 2. Logic for the Transaction Type Badge
+                            // We map each type to a specific Tailwind CSS color scheme
+                            const badgeConfig = {
+                                'deposit': 'bg-blue-100 text-blue-700 border-blue-200',
+                                'payment': 'bg-amber-100 text-amber-700 border-amber-200',
+                                'refund': 'bg-purple-100 text-purple-700 border-purple-200',
+                                'adjustment': 'bg-slate-100 text-slate-700 border-slate-200'
+                            };
+
+                            // Fallback if type is unknown
+                            const badgeClass = badgeConfig[t.type] || 'bg-gray-100 text-gray-700 border-gray-200';
 
                             tbody.innerHTML += `
-                            <tr class="hover:bg-slate-50 transition-colors">
-                                <td class="px-6 py-4 font-mono text-xs text-slate-500">#${t.id}</td>
-                                <td class="px-6 py-4 text-slate-600">${t.date}</td>
-                                <td class="px-6 py-4 font-bold text-slate-900">${t.agency}</td>
-                                <td class="px-6 py-4">${t.description}</td>
-                                <td class="px-6 py-4 text-right font-bold ${amountClass}">${sign}${t.amount.toLocaleString()}</td>
-                                <td class="px-6 py-4 text-right font-mono text-slate-500">${t.balance_after.toLocaleString()}</td>
-                            </tr>
-                        `;
+                                <tr class="hover:bg-slate-50 transition-colors border-b border-slate-100">
+                                    <td class="px-6 py-4 font-mono text-xs text-slate-400">#${t.id}</td>
+                                    <td class="px-6 py-4 text-sm text-slate-600">${t.date}</td>
+                                    <td class="px-6 py-4">
+                                        <div class="text-sm font-bold text-slate-900">${t.agency}</div>
+                                        <div class="text-xs text-slate-400 font-mono">${t.account_id || ''}</div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center gap-2">
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${badgeClass} uppercase">
+                                                ${t.type}
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-sm text-slate-600">${t.description}</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-right">
+                                        <span class="font-bold ${amountClass}">${sign}${t.amount.toLocaleString()}</span>
+                                        <div class="text-[10px] text-slate-400 uppercase">DZD</div>
+                                    </td>
+                                    <td class="px-6 py-4 text-right">
+                                        <span class="font-mono text-sm text-slate-500">${t.balance_after.toLocaleString()}</span>
+                                    </td>
+                                </tr>
+                                `;
                         });
                     }
 
@@ -1492,6 +1525,28 @@
     }
 
 
+</script>
+
+<script>
+    const input = document.getElementById("manual-amount");
+
+    input.addEventListener("input", function () {
+        // 1️⃣ Remove everything except digits and dot
+        let value = this.value.replace(/[^0-9.]/g, "");
+
+        // 2️⃣ Allow only ONE decimal point
+        const parts = value.split(".");
+        if (parts.length > 2) {
+            value = parts[0] + "." + parts.slice(1).join("");
+        }
+
+        // 3️⃣ Convert to number and force ABS
+        if (value !== "") {
+            value = Math.abs(parseFloat(value) || 0).toString();
+        }
+
+        this.value = value;
+    });
 </script>
 
 {% endblock %}

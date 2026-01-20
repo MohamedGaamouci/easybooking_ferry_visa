@@ -54,7 +54,7 @@
             <p style="color: #64748b; font-size: 14px;">A new transaction has been recorded for {{ agency_name }}.</p>
 
             <div class="amount-circle">
-                {% if type == 'credit' %}+{% else %}-{% endif %}{{ amount }}
+                {{ amount }}
             </div>
 
             <p style="font-size: 15px; font-weight: bold; color: #334155;">{{ reason }}</p>
