@@ -10,241 +10,496 @@
             <p class="text-slate-500 text-sm">Track your bookings, expenses, and request status.</p>
         </div>
         <div class="flex gap-3">
-            <a href="client_create_demand.html"
+            <a href="{% url 'new_ferry' %}"
                 class="bg-brand-600 text-white px-4 py-2.5 rounded-lg text-sm font-bold shadow-md shadow-brand-200 hover:bg-brand-700 transition-all flex items-center gap-2">
                 <i class="ph-bold ph-plus"></i> New Request
             </a>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <!-- kpis -->
 
-        <div
-            class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden group hover:border-green-300 transition-colors">
-            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                <i class="ph-fill ph-wallet text-6xl text-green-600"></i>
-            </div>
-            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Available Credit</p>
-            <h3 class="text-2xl font-bold text-green-600 mt-1">€ 2,450.00</h3>
-            <a href="client_accounting.html"
-                class="text-xs font-bold text-slate-500 mt-3 inline-flex items-center gap-1 hover:text-green-600">
-                <i class="ph-bold ph-plus-circle"></i> Top-up Wallet
-            </a>
-        </div>
-
-        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-            <div class="flex justify-between items-start">
-                <div>
-                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Active Ferries</p>
-                    <h3 class="text-2xl font-bold text-slate-900 mt-1">5</h3>
-                    <p class="text-xs text-brand-600 font-medium mt-1">2 Pending Offer</p>
-                </div>
-                <div class="w-10 h-10 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center text-xl">
-                    <i class="ph-fill ph-boat"></i>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-            <div class="flex justify-between items-start">
-                <div>
-                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Visa Processing</p>
-                    <h3 class="text-2xl font-bold text-slate-900 mt-1">3</h3>
-                    <p class="text-xs text-purple-600 font-medium mt-1">1 Ready to Pickup</p>
-                </div>
-                <div class="w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center text-xl">
-                    <i class="ph-fill ph-passport"></i>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-            <div class="flex justify-between items-start">
-                <div>
-                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Spent (Oct)</p>
-                    <h3 class="text-2xl font-bold text-slate-900 mt-1">€ 12,800</h3>
-                    <p class="text-xs text-slate-400 font-medium mt-1">+15% vs last month</p>
-                </div>
-                <div class="w-10 h-10 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center text-xl">
-                    <i class="ph-fill ph-chart-bar"></i>
-                </div>
-            </div>
+    <div class="flex justify-end mb-4">
+        <div class="flex items-center gap-2 bg-white px-4 py-2 rounded-2xl border border-slate-200 shadow-sm">
+            <i class="ph-bold ph-calendar-blank text-slate-400"></i>
+            <input type="date" id="kpi_start_date"
+                class="border-none text-[11px] font-bold text-slate-700 focus:ring-0 p-0 bg-transparent">
+            <span class="text-slate-300 font-bold">-</span>
+            <input type="date" id="kpi_end_date"
+                class="border-none text-[11px] font-bold text-slate-700 focus:ring-0 p-0 bg-transparent">
+            <button onclick="refreshKPIs()"
+                class="ml-2 bg-brand-50 text-brand-600 p-1.5 rounded-lg hover:bg-brand-600 hover:text-white transition-all">
+                <i class="ph-bold ph-arrows-counter-clockwise"></i>
+            </button>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-
-        <div class="lg:col-span-2 bg-white border border-slate-200 rounded-xl shadow-sm p-6">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="font-bold text-slate-800">Monthly Expenses (Last 6 Months)</h3>
-                <select class="text-xs border border-slate-200 rounded-lg p-1 text-slate-500 bg-transparent">
-                    <option>2025</option>
-                    <option>2024</option>
-                </select>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 items-stretch">
+        <div
+            class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden group hover:border-green-300 transition-all flex flex-col justify-between">
+            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                <i class="ph-fill ph-wallet text-6xl text-green-600"></i>
             </div>
 
-            <div class="h-64 flex items-end justify-between gap-4 px-2 pb-2 border-b border-slate-100">
-                <div class="w-full flex flex-col items-center gap-2 group">
-                    <div class="w-full bg-brand-50 rounded-t-sm relative group-hover:bg-brand-100 transition-colors h-0 bar"
-                        style="--h: 40%">
-                        <div
-                            class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                            €2k</div>
-                    </div>
-                    <span class="text-xs text-slate-400 font-medium">May</span>
-                </div>
-                <div class="w-full flex flex-col items-center gap-2 group">
-                    <div class="w-full bg-brand-50 rounded-t-sm relative group-hover:bg-brand-100 transition-colors h-0 bar"
-                        style="--h: 55%">
-                        <div
-                            class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                            €3.5k</div>
-                    </div>
-                    <span class="text-xs text-slate-400 font-medium">Jun</span>
-                </div>
-                <div class="w-full flex flex-col items-center gap-2 group">
-                    <div class="w-full bg-brand-100 rounded-t-sm relative group-hover:bg-brand-200 transition-colors h-0 bar"
-                        style="--h: 80%">
-                        <div
-                            class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                            €8k</div>
-                    </div>
-                    <span class="text-xs text-slate-400 font-medium">Jul</span>
-                </div>
-                <div class="w-full flex flex-col items-center gap-2 group">
-                    <div class="w-full bg-brand-500 rounded-t-sm relative group-hover:bg-brand-600 transition-colors h-0 bar shadow-lg shadow-brand-200"
-                        style="--h: 95%">
-                        <div
-                            class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                            €12k</div>
-                    </div>
-                    <span class="text-xs text-slate-900 font-bold">Aug</span>
-                </div>
-                <div class="w-full flex flex-col items-center gap-2 group">
-                    <div class="w-full bg-brand-100 rounded-t-sm relative group-hover:bg-brand-200 transition-colors h-0 bar"
-                        style="--h: 60%">
-                        <div
-                            class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                            €5k</div>
-                    </div>
-                    <span class="text-xs text-slate-400 font-medium">Sep</span>
-                </div>
-                <div class="w-full flex flex-col items-center gap-2 group">
-                    <div class="w-full bg-brand-200 rounded-t-sm relative group-hover:bg-brand-300 transition-colors h-0 bar"
-                        style="--h: 75%">
-                        <div
-                            class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                            €7.5k</div>
-                    </div>
-                    <span class="text-xs text-slate-400 font-medium">Oct</span>
-                </div>
+            <div>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Available Balance</p>
+                <h3 id="wallet-balance" class="text-2xl font-bold text-green-600 mt-1">0.00 DZD</h3>
             </div>
+
+            <div class="mt-4 pt-3 border-t border-slate-50 space-y-2">
+                <div class="flex justify-between items-center text-[10px] font-bold uppercase text-slate-400">
+                    <span>Credit Limit</span>
+                    <span id="wallet-limit" class="text-slate-700">0.00 DZD</span>
+                </div>
+                <div class="flex justify-between items-center text-[10px] font-bold uppercase text-slate-400">
+                    <span>Unpaid Hold</span>
+                    <span id="wallet-hold" class="text-rose-500">0.00 DZD</span>
+                </div>
+                <div class="h-8"></div>
+            </div>
+            <a href="{% url 'finance:dashboard' %}"
+                class="text-[10px] font-bold text-slate-500 inline-flex items-center gap-1 hover:text-green-600 transition-colors">
+                <i class="ph-bold ph-plus-circle"></i> Top-up
+            </a>
         </div>
 
-        <div
-            class="bg-white border border-slate-200 rounded-xl shadow-sm p-6 flex flex-col items-center justify-center">
-            <h3 class="font-bold text-slate-800 mb-6 w-full text-left">Booking Volume</h3>
+        <a href="{% url 'ferries' %}">
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Ferry Requests</p>
+                        <h3 id="ferry-total" class="text-2xl font-bold text-slate-900 mt-1">0</h3>
+                    </div>
+                    <div
+                        class="w-10 h-10 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center text-xl">
+                        <i class="ph-fill ph-boat"></i>
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-50 space-y-1.5">
+                    <div class="flex justify-between text-[10px] font-bold uppercase">
+                        <span class="text-brand-600">Finished</span>
+                        <span id="ferry-finished" class="text-slate-700">0</span>
+                    </div>
+                    <div class="flex justify-between text-[10px] font-bold uppercase">
+                        <span class="text-amber-500">Processing</span>
+                        <span id="ferry-processing" class="text-slate-700">0</span>
+                    </div>
+                    <div class="flex justify-between text-[10px] font-bold uppercase">
+                        <span class="text-slate-400">Cancelled</span>
+                        <span id="ferry-cancelled" class="text-slate-700">0</span>
+                    </div>
+                    <div class="flex justify-between text-[10px] font-bold uppercase">
+                        <span class="text-rose-500">Rejected</span>
+                        <span id="ferry-rejected" class="text-slate-700">0</span>
+                    </div>
+                </div>
+                <span class="text-[10px] font-bold text-slate-300 mt-2 uppercase tracking-tighter">Activity
+                    Overview</span>
+            </div>
+        </a>
 
-            <div class="donut mb-6 shadow-sm"></div>
+        <a href="{% url 'visa_applications' %}">
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Visa Applications</p>
+                        <h3 id="visa-total" class="text-2xl font-bold text-slate-900 mt-1">0</h3>
+                    </div>
+                    <div
+                        class="w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center text-xl">
+                        <i class="ph-fill ph-passport"></i>
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-50 space-y-1.5">
+                    <div class="flex justify-between text-[10px] font-bold uppercase">
+                        <span class="text-purple-600">Completed</span>
+                        <span id="visa-finished" class="text-slate-700">0</span>
+                    </div>
+                    <div class="flex justify-between text-[10px] font-bold uppercase">
+                        <span class="text-amber-500">Processing</span>
+                        <span id="visa-processing" class="text-slate-700">0</span>
+                    </div>
+                    <div class="flex justify-between text-[10px] font-bold uppercase">
+                        <span class="text-slate-400">Cancelled</span>
+                        <span id="visa-cancelled" class="text-slate-700">0</span>
+                    </div>
+                    <div class="flex justify-between text-[10px] font-bold uppercase">
+                        <span class="text-rose-500">Rejected</span>
+                        <span id="visa-rejected" class="text-slate-700">0</span>
+                    </div>
+                </div>
+                <span class="text-[10px] font-bold text-slate-300 mt-2 uppercase tracking-tighter">Activity
+                    Overview</span>
+            </div>
+        </a>
+
+        <a href="{% url 'finance:dashboard' %}">
+            <div
+                class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between hover:border-slate-400 transition-colors">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Spending</p>
+                        <h3 id="spend-total" class="text-2xl font-bold text-slate-900 mt-1">0.00 DZD</h3>
+                    </div>
+                    <div
+                        class="w-10 h-10 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center text-xl">
+                        <i class="ph-fill ph-chart-bar"></i>
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-50 space-y-2">
+                    <div class="flex justify-between text-[10px] font-bold uppercase">
+                        <span class="text-green-600">Paid</span>
+                        <span id="spend-paid" class="text-slate-700">0.00 DZD</span>
+                    </div>
+                    <div class="flex justify-between text-[10px] font-bold uppercase">
+                        <span class="text-rose-600">Unpaid</span>
+                        <span id="spend-unpaid" class="text-slate-700">0.00 DZD</span>
+                    </div>
+                    <div class="flex justify-between text-[10px] font-bold uppercase">
+                        <span class="text-blue-500">Refunded</span>
+                        <span id="spend-refunded" class="text-slate-700">0.00 DZD</span>
+                    </div>
+                    <div class="flex justify-between text-[10px] font-bold uppercase text-slate-400">
+                        <span>Cancelled</span>
+                        <span id="spend-cancelled" class="text-slate-700">0.00 DZD</span>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <!-- end kpis -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+
+        <!-- chart begin -->
+        <div class="lg:col-span-2 bg-white border border-slate-200 rounded-3xl shadow-sm flex flex-col overflow-hidden">
+            <div class="p-6 border-b border-slate-100 space-y-4">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-800">Performance Analytics</h3>
+                        <p id="chart-type-label" class="text-[10px] text-brand-600 uppercase font-bold tracking-wider">
+                            Revenue Breakdown (DZD)
+                        </p>
+                    </div>
+
+                    <div class="flex bg-slate-100 p-1 rounded-xl">
+                        <button onclick="updateChartMode('revenue')" id="btn-mode-rev"
+                            class="px-4 py-1.5 rounded-lg text-[10px] font-black transition-all bg-white shadow-sm text-brand-600">REVENUE</button>
+                        <button onclick="updateChartMode('volume')" id="btn-mode-vol"
+                            class="px-4 py-1.5 rounded-lg text-[10px] font-black transition-all text-slate-400">VOLUME</button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <div
+                        class="md:col-span-2 flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-slate-200">
+                        <i class="ph ph-calendar text-slate-400"></i>
+                        <input type="date" id="chart_start_date"
+                            class="border-none text-[11px] font-bold text-slate-700 focus:ring-0 p-0 w-full bg-transparent">
+                        <span class="text-slate-300">-</span>
+                        <input type="date" id="chart_end_date"
+                            class="border-none text-[11px] font-bold text-slate-700 focus:ring-0 p-0 w-full bg-transparent">
+                    </div>
+
+                    <div class="relative">
+                        <select id="chart-style"
+                            class="w-full h-full bg-white border border-slate-200 rounded-xl text-[11px] font-bold px-3 focus:ring-0 outline-none cursor-pointer appearance-none">
+                            <option value="bar">Bar Chart</option>
+                            <option value="line">Line Chart</option>
+                        </select>
+                        <i class="ph ph-caret-down absolute right-3 top-3 text-slate-400 pointer-events-none"></i>
+                    </div>
+
+                    <button onclick="refreshAnalytics()"
+                        class="bg-brand-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-brand-700 transition-all shadow-sm active:scale-95 flex items-center justify-center gap-2">
+                        <i class="ph-bold ph-arrows-counter-clockwise"></i>
+                        Apply
+                    </button>
+                </div>
+            </div>
+
+            <div class="p-8 flex-1 relative min-h-[400px]">
+                <canvas id="performanceChart"></canvas>
+            </div>
+        </div>
+        <!-- chart end -->
+
+        <div
+            class="bg-white border border-slate-200 rounded-3xl shadow-sm p-6 flex flex-col items-center justify-center">
+            <div class="flex justify-between items-center w-full mb-6">
+                <h3 class="font-bold text-slate-800">Booking Volume</h3>
+                <span id="total-volume-badge"
+                    class="bg-slate-100 text-slate-600 text-[10px] px-2 py-1 rounded-lg font-black">0 TOTAL</span>
+            </div>
+
+            <div class="relative w-40 h-40 mb-6">
+                <canvas id="volumeDonutChart"></canvas>
+            </div>
 
             <div class="w-full space-y-3">
                 <div class="flex justify-between items-center text-sm">
                     <div class="flex items-center gap-2">
                         <span class="w-3 h-3 rounded-full bg-brand-600"></span>
-                        <span class="text-slate-600">Ferry Bookings</span>
+                        <span class="text-slate-600 text-xs font-semibold">Ferry Bookings</span>
                     </div>
-                    <span class="font-bold text-slate-900">65%</span>
+                    <span id="ferry-pct" class="font-bold text-slate-900">0%</span>
                 </div>
                 <div class="flex justify-between items-center text-sm">
                     <div class="flex items-center gap-2">
                         <span class="w-3 h-3 rounded-full bg-purple-500"></span>
-                        <span class="text-slate-600">Visa Applications</span>
+                        <span class="text-slate-600 text-xs font-semibold">Visa Applications</span>
                     </div>
-                    <span class="font-bold text-slate-900">35%</span>
+                    <span id="visa-pct" class="font-bold text-slate-900">0%</span>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="space-y-4">
-        <div class="flex items-center justify-between">
-            <h2 class="text-lg font-bold text-slate-900">Recent Activity</h2>
-            <a href="client_demands_list.html" class="text-sm font-bold text-brand-600 hover:text-brand-800">View
-                All History</a>
-        </div>
-
-        <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-            <table class="w-full text-left border-collapse">
-                <thead class="bg-slate-50 text-xs uppercase text-slate-500 font-semibold border-b border-slate-200">
-                    <tr>
-                        <th class="px-6 py-4">Service Type</th>
-                        <th class="px-6 py-4">Reference</th>
-                        <th class="px-6 py-4">Details</th>
-                        <th class="px-6 py-4">Status</th>
-                        <th class="px-6 py-4 text-right">Action</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100 text-sm">
-                    <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="px-6 py-4">
-                            <div class="flex items-center gap-2">
-                                <div
-                                    class="w-8 h-8 rounded bg-brand-50 text-brand-600 flex items-center justify-center">
-                                    <i class="ph-fill ph-boat"></i>
-                                </div>
-                                <span class="font-bold text-slate-700">Ferry</span>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 font-mono text-slate-600">#REQ-88295</td>
-                        <td class="px-6 py-4">
-                            <div class="font-medium text-slate-900">MRS <i
-                                    class="ph-bold ph-arrow-right text-[10px]"></i> ALG</div>
-                            <div class="text-xs text-slate-500">10 Nov • 2 Pax</div>
-                        </td>
-                        <td class="px-6 py-4"><span
-                                class="bg-blue-100 text-brand-700 px-2 py-0.5 rounded text-xs font-bold">Pending
-                                Offer</span></td>
-                        <td class="px-6 py-4 text-right"><a href="#" class="text-slate-400 hover:text-brand-600"><i
-                                    class="ph-bold ph-eye text-lg"></i></a></td>
-                    </tr>
-                    <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="px-6 py-4">
-                            <div class="flex items-center gap-2">
-                                <div
-                                    class="w-8 h-8 rounded bg-purple-50 text-purple-600 flex items-center justify-center">
-                                    <i class="ph-fill ph-passport"></i>
-                                </div>
-                                <span class="font-bold text-slate-700">Visa</span>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 font-mono text-slate-600">#VS-9921</td>
-                        <td class="px-6 py-4">
-                            <div class="font-medium text-slate-900">France (Schengen)</div>
-                            <div class="text-xs text-slate-500">Karim Benz</div>
-                        </td>
-                        <td class="px-6 py-4"><span
-                                class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-bold">Ready</span>
-                        </td>
-                        <td class="px-6 py-4 text-right"><a href="#" class="text-slate-400 hover:text-purple-600"><i
-                                    class="ph-bold ph-download-simple text-lg"></i></a></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
     </div>
 
 </main>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-    function animateCharts() {
-        setTimeout(() => {
-            const bars = document.querySelectorAll('.bar');
-            bars.forEach(bar => {
-                const h = bar.getAttribute('style').split(':')[1];
-                bar.style.height = h;
-            });
-        }, 300);
+    let myChart = null;
+    let myDonutChart = null;
+    let currentDataMode = 'revenue';
+
+    function initDefaultDates() {
+        const end = new Date();
+        const start = new Date();
+        start.setDate(start.getDate() - 7);
+
+        const sInput = document.getElementById('chart_start_date');
+        const eInput = document.getElementById('chart_end_date');
+
+        if (sInput && eInput) {
+            sInput.value = start.toISOString().split('T')[0];
+            eInput.value = end.toISOString().split('T')[0];
+        }
     }
+
+    async function refreshAnalytics() {
+        const start = document.getElementById('chart_start_date').value;
+        const end = document.getElementById('chart_end_date').value;
+        const style = document.getElementById('chart-style').value;
+
+        try {
+            const response = await fetch(`/dashboard/api/dashboard/analytics/?start_date=${start}&end_date=${end}`);
+            const data = await response.json();
+
+            // 1. Update the Main Performance Chart (Line/Bar)
+            const chartData = currentDataMode === 'revenue' ? data.revenue_chart : data.volume_chart;
+            renderChartUI(chartData, style);
+
+            // 2. Update the Booking Volume Summary (Donut)
+            renderDonutUI(data.volume_chart);
+
+        } catch (error) {
+            console.error("Dashboard Analytics Error:", error);
+        }
+    }
+
+    function renderChartUI(chartData, style) {
+        const ctx = document.getElementById('performanceChart').getContext('2d');
+        if (myChart) myChart.destroy();
+
+        const isLine = style === 'line';
+        const isRev = currentDataMode === 'revenue';
+
+        myChart = new Chart(ctx, {
+            type: style,
+            data: {
+                labels: chartData.map(d => d.day),
+                datasets: [
+                    {
+                        label: 'Ferry',
+                        data: chartData.map(d => d.ferry),
+                        backgroundColor: isLine ? 'rgba(59, 130, 246, 0.1)' : '#3b82f6',
+                        borderColor: '#3b82f6',
+                        borderWidth: 3,
+                        fill: isLine,
+                        tension: 0.4,
+                        borderRadius: 6
+                    },
+                    {
+                        label: 'Visa',
+                        data: chartData.map(d => d.visa),
+                        backgroundColor: isLine ? 'rgba(168, 85, 247, 0.1)' : '#a855f7',
+                        borderColor: '#a855f7',
+                        borderWidth: 3,
+                        fill: isLine,
+                        tension: 0.4,
+                        borderRadius: 6
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        align: 'end',
+                        labels: { usePointStyle: true, boxWidth: 6, font: { size: 11, weight: 'bold' } }
+                    },
+                    tooltip: {
+                        backgroundColor: '#1e293b',
+                        padding: 12,
+                        callbacks: {
+                            title: (context) => 'Date: ' + context[0].label,
+                            label: (context) => {
+                                let val = context.parsed.y;
+                                return context.dataset.label + ': ' + (isRev ? val.toLocaleString() + ' DZD' : val + ' Bookings');
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: '#f8fafc' },
+                        ticks: { font: { size: 10, weight: '600' }, color: '#94a3b8' }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { size: 10, weight: '700' }, color: '#64748b', autoSkip: true, maxTicksLimit: 10 }
+                    }
+                }
+            }
+        });
+    }
+
+    function renderDonutUI(volumeData) {
+        const ctx = document.getElementById('volumeDonutChart').getContext('2d');
+        if (myDonutChart) myDonutChart.destroy();
+
+        // Calculate Totals
+        let totalFerry = 0;
+        let totalVisa = 0;
+        volumeData.forEach(item => {
+            totalFerry += item.ferry;
+            totalVisa += item.visa;
+        });
+
+        const grandTotal = totalFerry + totalVisa;
+
+        // Update Text & Percentages in HTML
+        const ferryPct = grandTotal > 0 ? Math.round((totalFerry / grandTotal) * 100) : 0;
+        const visaPct = grandTotal > 0 ? Math.round((totalVisa / grandTotal) * 100) : 0;
+
+        document.getElementById('total-volume-badge').innerText = grandTotal + " TOTAL";
+        document.getElementById('ferry-pct').innerText = ferryPct + "%";
+        document.getElementById('visa-pct').innerText = visaPct + "%";
+
+        // Create Donut
+        myDonutChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Ferry', 'Visa'],
+                datasets: [{
+                    data: [totalFerry, totalVisa],
+                    backgroundColor: ['#3b82f6', '#a855f7'],
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                cutout: '75%',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#1e293b',
+                        padding: 10,
+                        bodyFont: { size: 11, weight: 'bold' }
+                    }
+                }
+            }
+        });
+    }
+
+    function updateChartMode(mode) {
+        currentDataMode = mode;
+        const isRev = mode === 'revenue';
+
+        document.getElementById('btn-mode-rev').className = isRev ? "px-4 py-1.5 rounded-lg text-[10px] font-black bg-white shadow-sm text-brand-600" : "px-4 py-1.5 rounded-lg text-[10px] font-black text-slate-400";
+        document.getElementById('btn-mode-vol').className = !isRev ? "px-4 py-1.5 rounded-lg text-[10px] font-black bg-white shadow-sm text-brand-600" : "px-4 py-1.5 rounded-lg text-[10px] font-black text-slate-400";
+        document.getElementById('chart-type-label').innerText = isRev ? "Revenue Breakdown (DZD)" : "Booking Volume (Count)";
+
+        refreshAnalytics();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        initDefaultDates();
+        refreshAnalytics();
+    });
+</script>
+
+<script>
+
+    async function refreshKPIs() {
+        const start = document.getElementById('kpi_start_date').value;
+        const end = document.getElementById('kpi_end_date').value;
+
+        try {
+            const response = await fetch(`/dashboard/api/agency/kpis/?start_date=${start}&end_date=${end}`);
+            const result = await response.json();
+
+            if (result.status === 'success') {
+                const d = result.data;
+
+                // --- Card 1: Wallet ---
+                document.getElementById('wallet-balance').innerText = formatCurrency(d.wallet.balance);
+                document.getElementById('wallet-limit').innerText = formatCurrency(d.wallet.credit_limit);
+                document.getElementById('wallet-hold').innerText = formatCurrency(d.wallet.unpaid_hold);
+
+                // --- Card 2: Ferry ---
+                const fTotal = d.ferry.finished + d.ferry.cancelled + d.ferry.rejected + d.ferry.processing;
+                document.getElementById('ferry-total').innerText = fTotal;
+                document.getElementById('ferry-finished').innerText = d.ferry.finished;
+                document.getElementById('ferry-processing').innerText = d.ferry.processing;
+                document.getElementById('ferry-cancelled').innerText = d.ferry.cancelled;
+                document.getElementById('ferry-rejected').innerText = d.ferry.rejected;
+
+                // --- Card 3: Visa ---
+                const vTotal = d.visa.finished + d.visa.cancelled + d.visa.rejected + d.visa.processing;
+                document.getElementById('visa-total').innerText = vTotal;
+                document.getElementById('visa-finished').innerText = d.visa.finished;
+                document.getElementById('visa-processing').innerText = d.visa.processing;
+                document.getElementById('visa-cancelled').innerText = d.visa.cancelled;
+                document.getElementById('visa-rejected').innerText = d.visa.rejected;
+
+                // --- Card 4: Spending ---
+                document.getElementById('spend-total').innerText = formatCurrency(d.spending.total_spend);
+                document.getElementById('spend-paid').innerText = formatCurrency(d.spending.paid);
+                document.getElementById('spend-unpaid').innerText = formatCurrency(d.spending.unpaid);
+                document.getElementById('spend-refunded').innerText = formatCurrency(d.spending.refunded);
+                document.getElementById('spend-cancelled').innerText = formatCurrency(d.spending.cancelled);
+            }
+        } catch (error) {
+            console.error("KPI Update Error:", error);
+        }
+    }
+
+
+    function formatCurrency(val) {
+        return new Number(val).toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' DZD';
+    }
+
+    // Set defaults on load
+    document.addEventListener('DOMContentLoaded', () => {
+        // Set default dates to current month
+        const now = new Date();
+        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+        const today = now.toISOString().split('T')[0];
+
+        document.getElementById('kpi_start_date').value = firstDay;
+        document.getElementById('kpi_end_date').value = today;
+
+        refreshKPIs();
+    });
 </script>
 
 {% endblock %}

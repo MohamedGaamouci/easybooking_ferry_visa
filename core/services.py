@@ -1,12 +1,16 @@
+from django.db.models import Sum, Q, Count
 from ferries.models.ferry_request import FerryRequest  # Use your real model name
 from visas.models.visa_application import VisaApplication  # Use your real model name
 from django.utils import timezone
 from finance.models import Account, TopUpRequest
-from django.db.models import Sum, Q
 from datetime import timedelta
 from decimal import Decimal
 from finance.models import Invoice
 from django.contrib.contenttypes.models import ContentType
+
+# -----------------------------------------------------------
+# --------------------- Admin kpis---------------------------
+# -----------------------------------------------------------
 
 
 class KPI:
@@ -148,6 +152,9 @@ class KPI:
         }
 
 
+# -----------------------------------------------------------
+# --------------------- commun statistics--------------------
+# -----------------------------------------------------------
 class DashboardService:
     @staticmethod
     def get_urgent_tasks():
@@ -243,7 +250,7 @@ class DashboardService:
             ).distinct().aggregate(total=Sum('total_amount'))['total'] or 0
 
             data.append({
-                'day': day.strftime('%a'),
+                'day': day.strftime('%d/%m'),
                 'ferry': float(ferry_rev),
                 'visa': float(visa_rev)
             })
@@ -263,8 +270,86 @@ class DashboardService:
                 v_filters &= Q(agency=agency)
 
             data.append({
-                'day': day.strftime('%a'),
+                'day': day.strftime('%d/%m'),
                 'ferry': FerryRequest.objects.filter(f_filters).count(),
                 'visa': VisaApplication.objects.filter(v_filters).count()
             })
         return data
+
+
+# -----------------------------------------------------------
+# --------------------- Client kpis---------------------------
+# -----------------------------------------------------------
+class ClientKPIService:
+    def _get_default_dates(self, start_date, end_date):
+        """Helper to default to the current month's range."""
+        if not start_date or not end_date:
+            end_date = timezone.now().date()
+            start_date = end_date.replace(day=1)
+        return start_date, end_date
+
+    def get_financial_summary(self, agency):
+        account = getattr(agency, 'account', None)
+        return {
+            'balance': float(account.balance) if account else 0.0,
+            'credit_limit': float(account.credit_limit) if account else 0.0,
+            'unpaid_hold': float(account.unpaid_hold) if account else 0.0,
+        }
+
+    def get_ferry_stats(self, agency, start_date=None, end_date=None):
+        """Ferry stats: Processing = NOT in (confirmed, cancelled, rejected)."""
+        start_date, end_date = self._get_default_dates(start_date, end_date)
+
+        stats = FerryRequest.objects.filter(
+            agency=agency,
+            created_at__date__range=[start_date, end_date]
+        ).aggregate(
+            finished=Count('id', filter=Q(status='confirmed')),
+            cancelled=Count('id', filter=Q(status='cancelled')),
+            rejected=Count('id', filter=Q(status='rejected')),
+            # Logic: Everything that isn't finished or terminal
+            processing=Count('id', filter=~Q(
+                status__in=['confirmed', 'cancelled', 'rejected']))
+        )
+        return stats
+
+    def get_visa_stats(self, agency, start_date=None, end_date=None):
+        """Visa stats: Processing = NOT in (completed, rejected, cancelled)."""
+        start_date, end_date = self._get_default_dates(start_date, end_date)
+
+        stats = VisaApplication.objects.filter(
+            agency=agency,
+            created_at__date__range=[start_date, end_date]
+        ).aggregate(
+            finished=Count('id', filter=Q(status='completed')),
+            cancelled=Count('id', filter=Q(status='cancelled')),
+            rejected=Count('id', filter=Q(status='rejected')),
+            # Logic: Everything that isn't completed or terminal
+            processing=Count('id', filter=~Q(
+                status__in=['completed', 'rejected', 'cancelled']))
+        )
+        return stats
+
+    def get_spending_stats(self, agency, start_date=None, end_date=None):
+        start_date, end_date = self._get_default_dates(start_date, end_date)
+
+        invoices = Invoice.objects.filter(
+            agency=agency,
+            created_at__date__range=[start_date, end_date]
+        )
+
+        stats = invoices.aggregate(
+            total_spend=Sum('total_amount'),
+            paid=Sum('total_amount', filter=Q(status='paid')),
+            unpaid=Sum('total_amount', filter=Q(status='unpaid')),
+            refunded=Sum('total_amount', filter=Q(status='refunded')),
+            cancelled=Sum('total_amount', filter=Q(status='cancelled'))
+        )
+
+        return {
+            'total_spend': float(stats['total_spend'] or 0.0),
+            'paid': float(stats['paid'] or 0.0),
+            'unpaid': float(stats['unpaid'] or 0.0),
+            'refunded': float(stats['refunded'] or 0.0),
+            'cancelled': float(stats['cancelled'] or 0.0)
+        }

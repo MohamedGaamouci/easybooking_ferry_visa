@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import *
+from core.views import cms_dashboard_view, admin_dashboard, api_dashboard_kpis, api_performance_chart
 
 
 urlpatterns = [
@@ -9,7 +9,4 @@ urlpatterns = [
     path('api/kpis/', api_dashboard_kpis, name='api_kpis'),
     path('api/dashboard/analytics/', api_performance_chart,
          name='api_performance_chart'),
-
-
-
 ]

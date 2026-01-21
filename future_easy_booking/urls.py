@@ -7,13 +7,10 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.shortcuts import render
+from django.views.generic import RedirectView
 # ======================
 # Admin Views
 # ======================
-
-
-def home(request):
-    return render(request, 'admin/dashboard.html')
 
 
 def admin_setting_view(request):
@@ -23,22 +20,6 @@ def admin_setting_view(request):
 # ======================
 # client Views
 # ======================
-
-def client_home(request):
-    return render(request, 'client/dashboard.html')
-
-
-def dashboard_view(request):
-    return render(request, 'client/dashboard.html')
-
-
-def new_ferry_view(request):
-    return render(request, 'client/new_ferry.html')
-
-
-def new_visa_view(request):
-    return render(request, 'client/new_visa.html')
-
 
 def setting_view(request):
     return render(request, 'client/setting.html')
@@ -51,12 +32,12 @@ def setting_view(request):
 urlpatterns = [
     # Django admin
     path("admin/", admin.site.urls),
-
+    path("", RedirectView.as_view(url='dashboard/', permanent=False)),
 ]
 
 admin_urls = [
     # Custom Admin Panel
-    path("admin_panel/", include('core.urls')),
+    path("admin_panel/", include('core.urls.urls')),
     path("admin_panel/settings/", admin_setting_view, name="admin_setting"),
 
 
@@ -69,9 +50,6 @@ admin_urls = [
     #   USERS
     path('admin_panel/', include('users.urls.urls')),
 
-    #   CMS
-    path('admin_panel/', include('core.urls')),
-
     #   FERRY URLS
     path('admin_panel/', include('ferries.urls.urls')),
 
@@ -82,11 +60,10 @@ admin_urls = [
 urlpatterns += admin_urls
 
 client_urls = [
-    path('', client_home, name='dashboard'),
+    path("dashboard/", include('core.urls.client_urls')),
     path('ferries/', include('ferries.urls.client_urls')),
     path('users/', include('users.urls.client_urls')),
     path('visas/', include('visas.urls.client_urls')),
-    path('dashboard/', dashboard_view, name='dashboard'),
     path('accounting/', include('finance.urls.client_urls')),
     path('setting/', setting_view, name='setting'),
 ]

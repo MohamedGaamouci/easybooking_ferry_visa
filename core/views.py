@@ -4,8 +4,8 @@ from django.http import JsonResponse
 
 from agencies.models.agency import Agency
 # Make sure KPI is imported from your services file
-from .services import KPI, DashboardService
-from django.contrib.auth.decorators import login_required, user_passes_test
+from .services import KPI, DashboardService, ClientKPIService
+from django.contrib.auth.decorators import user_passes_test
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db.models import Q
 from django.shortcuts import render
@@ -14,8 +14,40 @@ from ferries.models import Port, Provider
 from django.views.decorators.http import require_GET
 # Include your Ferry Provider model import here if needed
 
+# -------------------------------------------------------
+# ------------------- Admin Side ------------------------
+# -------------------------------------------------------
 
-@login_required
+
+# core/views.py
+
+def is_admin(user):
+    # Ensure user is authenticated first
+    if not user.is_authenticated:
+        return False
+
+    # In your logic, a Master Admin is a user WITHOUT an agency attached
+    # We use 'hasattr' to safely check if the agency relation exists
+    if hasattr(user, 'agency') and user.agency is not None:
+        return False  # They are an agency, not Master Admin
+
+    # If they are superuser or staff, they are definitely admin
+    # Or if they simply don't have an agency attribute
+    return user.is_staff or user.is_superuser or not hasattr(user, 'agency')
+
+
+def is_agency(user):
+    # Ensure user is authenticated first
+    if not user.is_authenticated:
+        return False
+
+    if hasattr(user, 'agency') and user.agency is not None:
+        return True
+    else:
+        return False
+
+
+@user_passes_test(is_admin)
 @require_GET
 def cms_dashboard_view(request):
     # --- 1. VISA DESTINATIONS QUERY ---
@@ -68,23 +100,6 @@ def cms_dashboard_view(request):
     return render(request, 'admin/cms.html', context)
 
 # Your existing admin check
-
-
-# core/views.py
-
-def is_admin(user):
-    # Ensure user is authenticated first
-    if not user.is_authenticated:
-        return False
-
-    # In your logic, a Master Admin is a user WITHOUT an agency attached
-    # We use 'hasattr' to safely check if the agency relation exists
-    if hasattr(user, 'agency') and user.agency is not None:
-        return False  # They are an agency, not Master Admin
-
-    # If they are superuser or staff, they are definitely admin
-    # Or if they simply don't have an agency attribute
-    return user.is_staff or user.is_superuser or not hasattr(user, 'agency')
 
 
 @user_passes_test(is_admin)
@@ -178,4 +193,93 @@ def api_performance_chart(request):
         'status': 'success',
         'revenue_chart': revenue_data,
         'volume_chart': volume_data,
+    })
+
+
+# -------------------------------------------------------
+# ------------------- client Side -----------------------
+# -------------------------------------------------------
+
+@user_passes_test(is_agency)
+def client_dashboard(request):
+    """Returns only the static HTML shell."""
+    return render(request, 'client/dashboard.html')
+
+
+@user_passes_test(is_agency)
+def api_agency_performance_chart(request):
+    """
+    Client-side endpoint: Strictly filtered to the logged-in agency.
+    """
+    # 1. Get current agency (Assuming CustomUser has an agency relation)
+    agency = getattr(request.user, 'agency', None)
+    if not agency:
+        return JsonResponse({'status': 'error', 'message': 'Agency not found'}, status=403)
+
+    # 2. Parse Date Params
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+
+    s_date = datetime.strptime(
+        start_date_str, '%Y-%m-%d').date() if start_date_str else None
+    e_date = datetime.strptime(
+        end_date_str, '%Y-%m-%d').date() if end_date_str else None
+
+    # 3. Fetch Data using the same service, but pass the specific agency
+    service = DashboardService()
+    revenue_data = service.get_weekly_revenue_breakdown(
+        s_date, e_date, agency=agency)
+    volume_data = service.get_weekly_volume_breakdown(
+        s_date, e_date, agency=agency)
+
+    return JsonResponse({
+        'status': 'success',
+        'revenue_chart': revenue_data,
+        'volume_chart': volume_data,
+    })
+
+
+@user_passes_test(is_agency)
+def api_agency_kpis(request):
+    """
+    Endpoint to retrieve financial, ferry, visa, and spending KPIs
+    for the logged-in agency.
+    """
+    # 1. Identity Check
+    agency = getattr(request.user, 'agency', None)
+    if not agency:
+        return JsonResponse({'status': 'error', 'message': 'Unauthorized or no agency linked'}, status=403)
+
+    # 2. Parse Optional Date Filters
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+
+    s_date = None
+    e_date = None
+
+    try:
+        if start_date_str:
+            s_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        if end_date_str:
+            e_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+    except ValueError:
+        return JsonResponse({'status': 'error', 'message': 'Invalid date format. Use YYYY-MM-DD'}, status=400)
+
+    # 3. Fetch Data from Service
+    service = ClientKPIService()
+
+    financials = service.get_financial_summary(agency)
+    ferry_stats = service.get_ferry_stats(agency, s_date, e_date)
+    visa_stats = service.get_visa_stats(agency, s_date, e_date)
+    spending = service.get_spending_stats(agency, s_date, e_date)
+
+    # 4. Return Consolidated JSON
+    return JsonResponse({
+        'status': 'success',
+        'data': {
+            'wallet': financials,
+            'ferry': ferry_stats,
+            'visa': visa_stats,
+            'spending': spending
+        }
     })

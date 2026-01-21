@@ -222,12 +222,8 @@ def login_success_router(request):
     user = request.user
 
     # 1. Check if the user has a Role assigned
-    if hasattr(user, 'role') and user.role is not None:
-
-        # 2. If Role is 'Agency' -> Client Dashboard
-        # Make sure the string matches exactly what you stored in the DB ('Agency')
-        if user.role.name == 'Agency':
-            return redirect('dashboard')
+    if hasattr(user, 'agency') and user.agency is not None:
+        return redirect('client_dashboard')
 
     # 3. Fallback: Everyone else (Platform Manager, Finance, Superuser) -> Admin Panel
     return redirect('admin_dashboard')

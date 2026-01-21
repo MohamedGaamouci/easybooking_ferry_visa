@@ -76,7 +76,7 @@
     <header class="bg-white border-b border-slate-200 fixed w-full top-0 z-50 h-16 transition-all duration-300">
         <div class="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
             <div class="flex items-center gap-8">
-                <a href="{% url 'dashboard' %}"
+                <a href="{% url 'client_dashboard' %}"
                     class="flex items-center gap-2 font-bold text-xl text-brand-900 tracking-tight group">
                     <img src="{% static 'img/logo.png' %}"
                         onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden')"
@@ -87,12 +87,12 @@
                 </a>
                 <nav class="hidden md:flex space-x-1" id="client-nav">
 
-                    <a href="{% url 'dashboard' %}" class="px-3 py-2 text-sm rounded-md transition-colors
-       {% if request.resolver_match.url_name == 'dashboard' %}
-           font-bold text-brand-700 bg-brand-50 ring-1 ring-brand-100
-       {% else %}
-           font-medium text-slate-500 hover:text-brand-600 hover:bg-slate-50
-       {% endif %}">
+                    <a href="{% url 'client_dashboard' %}" class="px-3 py-2 text-sm rounded-md transition-colors
+                        {% if request.resolver_match.url_name == 'dashboard' %}
+                            font-bold text-brand-700 bg-brand-50 ring-1 ring-brand-100
+                        {% else %}
+                            font-medium text-slate-500 hover:text-brand-600 hover:bg-slate-50
+                        {% endif %}">
                         Dashboard
                     </a>
 
