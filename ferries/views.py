@@ -1,6 +1,8 @@
 # Assuming you have a basic ProviderForm
 # Ensure you have this from previous steps
-from .models import FerryRequest  # Ensure this is imported
+from ferries.services.ferry_services import FerryPricingService, FerryScheduleService, FerryPriceAdminService
+from ferries.models.provider_route import RouteSchedule
+from .models import FerryRequest
 from finance.services.invoice import create_single_service_invoice
 from django.core.exceptions import ValidationError
 from django.db.models import Sum, Count, Q
@@ -17,8 +19,8 @@ from django.db import transaction
 import json
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
-from django.views.decorators.http import require_POST, require_GET, require_http_methods
-from django.contrib.auth.decorators import login_required, permission_required
+from django.views.decorators.http import require_POST, require_GET
+from django.contrib.auth.decorators import login_required
 from .models import Port, FerryRequest
 from .form import PortForm
 from django.shortcuts import render
@@ -282,22 +284,34 @@ def create_ferry_request_api(request):
         if not user_agency:
             return JsonResponse({'status': 'error', 'message': 'You must be logged in as an Agency Manager.'}, status=403)
 
-        # C. Validate Form
+        # C. Validate Form (Includes Schedule Validation)
         form = FerryRequestForm(data)
         if not form.is_valid():
             first_error = next(iter(form.errors.values()))[0]
             return JsonResponse({'status': 'error', 'message': first_error}, status=400)
 
-        # D. Validate Passengers
+        # D. Validate Passenger Structure
         passengers = data.get('passengers', [])
         p_error = validate_passenger_structure(passengers)
         if p_error:
             return JsonResponse({'status': 'error', 'message': p_error}, status=400)
 
-        # E. Save
+        # E. NEW: Atomic Pricing Calculation
+        # This calculates the price server-side so it cannot be manipulated by the client
+        try:
+            pricing_result = FerryPricingService.calculate_total_price(
+                route_id=data['route_id'],
+                travel_date=data['departure_date'],
+                passengers=passengers,
+                vehicle=data.get('vehicle'),
+                accommodation=data.get('accommodation')
+            )
+        except ValidationError as ve:
+            return JsonResponse({'status': 'error', 'message': str(ve)}, status=400)
+
+        # F. Save with Atomic Transaction
         with transaction.atomic():
             cleaned = form.cleaned_data
-            # Safe because form validated it
             route = ProviderRoute.objects.get(pk=cleaned['route_id'])
 
             req = FerryRequest.objects.create(
@@ -308,7 +322,14 @@ def create_ferry_request_api(request):
                 return_date=cleaned['return_date'],
                 accommodation=cleaned['accommodation'],
                 passengers_data=passengers,
-                vehicle_data=data.get('vehicle', None),  # Can be None
+                vehicle_data=data.get('vehicle', None),
+
+                # Dynamic Pricing Data
+                net_price=pricing_result['total_net'],
+                selling_price=pricing_result['total_selling'],
+                # breakdown is stored to keep a record of prices at time of booking
+                price_breakdown=pricing_result['breakdown'],
+
                 status='pending',
                 requested_by=request.user
             )
@@ -316,16 +337,17 @@ def create_ferry_request_api(request):
         return JsonResponse({
             'status': 'success',
             'reference': req.reference,
-            'message': 'Request created successfully'
+            'message': 'Request created successfully',
+            'total_price': float(req.selling_price)
         })
 
     except Exception as e:
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
-
-
+        return JsonResponse({'status': 'error', 'message': f"System Error: {str(e)}"}, status=500)
 # ==========================================
 # 2. UPDATE METHOD
 # ==========================================
+
+
 @login_required
 @require_POST
 def update_ferry_request_api(request, reference):
@@ -831,3 +853,187 @@ def api_attach_voucher(request):
         return JsonResponse({'status': 'error', 'message': 'Request not found.'})
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)})
+
+
+# ==========================================
+#  Add Route Dates and price componenets
+# ==========================================
+
+# --- CLIENT SIDE APIS ---
+
+
+@login_required
+@require_GET
+def get_available_dates_api(request, route_id):
+    """
+    API: Returns a list of strings ['YYYY-MM-DD'] representing available trips.
+    Used by the frontend datepicker to enable specific dates.
+    """
+    try:
+        available_dates = FerryPricingService.get_available_dates(route_id)
+        # Convert date objects to strings for JSON
+        date_strings = [d.strftime('%Y-%m-%d') for d in available_dates]
+        return JsonResponse({'status': 'success', 'dates': date_strings})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
+@login_required
+@require_POST
+def validate_and_calculate_price_api(request):
+    """
+    API: Receives current form selection and returns a live price breakdown.
+    Used to show the price to the user BEFORE they click 'Submit'.
+    """
+    try:
+        data = json.loads(request.body)
+        route_id = data.get('route_id')
+        travel_date = data.get('departure_date')  # Expects 'YYYY-MM-DD'
+        passengers = data.get('passengers', [])
+        vehicle = data.get('vehicle', None)
+        accommodation = data.get('accommodation', None)
+
+        if not route_id or not travel_date:
+            return JsonResponse({'status': 'error', 'message': 'Missing route or date.'}, status=400)
+
+        # Calculate using the Service
+        result = FerryPricingService.calculate_total_price(
+            route_id=route_id,
+            travel_date=travel_date,
+            passengers=passengers,
+            vehicle=vehicle,
+            accommodation=accommodation
+        )
+
+        return JsonResponse({'status': 'success', 'pricing': result})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+
+# --- ADMIN SIDE APIS (CRUD) ---
+
+@login_required
+@require_POST
+def admin_manage_schedule_api(request, route_id):
+    """
+    API: Bulk add dates to a route schedule.
+    Expects JSON: {"dates": ["2026-06-01", "2026-06-08"]}
+    """
+    # if hasattr(request.user, 'agency'):  # Security: Prevent non-staff from access
+    #     return JsonResponse({'status': 'error', 'message': 'Unauthorized'}, status=403)
+
+    try:
+        data = json.loads(request.body)
+        dates = data.get('dates', [])  # This is your array from selectedDates
+
+        with transaction.atomic():
+            # 1. Clear the old schedule for this specific route
+            RouteSchedule.objects.filter(route_id=route_id).delete()
+
+            # 2. Add the new "Final Truth" list
+            if dates:
+                FerryScheduleService.bulk_add_dates(route_id, dates)
+
+        return JsonResponse({
+            'status': 'success',
+            'message': f'Schedule synchronized. {len(dates)} dates active.'
+        })
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+
+@login_required
+@require_POST
+def admin_save_price_component_api(request, route_id):
+    """
+    API: Create or update a price component.
+    """
+    # if hasattr(request.user, 'agency'):
+    #     return JsonResponse({'status': 'error', 'message': 'Unauthorized'}, status=403)
+
+    try:
+        data = json.loads(request.body)
+        # This calls your Atomic service method
+        price_item = FerryPriceAdminService.create_or_update_price(
+            route_id, data)
+        return JsonResponse({'status': 'success', 'message': 'Price saved successfully.'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+# --- ADMIN SCHEDULE MANAGEMENT ---
+
+
+@login_required
+def get_admin_route_calendar_api(request, route_id):
+    """
+    API: Returns all scheduled dates for a route so the admin can see them in a list/table.
+
+    """
+    # if hasattr(request.user, 'agency'):
+    #     print("curret user: ", request.user)
+    #     print('has agency: ', hasattr(request.user, 'agency'))
+    #     print(getattr(request.user, 'agency'))
+    #     return JsonResponse({'status': 'error', 'message': 'Unauthorized'}, status=403)
+
+    try:
+        # Use the service to get the ordered queryset
+        schedules = FerryScheduleService.get_route_calendar(route_id)
+
+        data = [{
+            'id': s.id,
+            'date': s.date.strftime('%Y-%m-%d'),
+            'is_active': s.is_active
+        } for s in schedules]
+
+        return JsonResponse({'status': 'success', 'data': data})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
+@login_required
+@require_POST
+def delete_schedule_date_api(request, schedule_id):
+    """
+    API: Removes a specific date from the schedule.
+
+    """
+    # if hasattr(request.user, 'agency'):
+    #     return JsonResponse({'status': 'error', 'message': 'Unauthorized'}, status=403)
+
+    try:
+        # The service method uses @transaction.atomic internally
+        deleted_count, _ = FerryScheduleService.delete_date(schedule_id)
+
+        if deleted_count > 0:
+            return JsonResponse({'status': 'success', 'message': 'Date removed from schedule.'})
+        else:
+            return JsonResponse({'status': 'error', 'message': 'Schedule entry not found.'}, status=404)
+
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
+@login_required
+def get_pricing_structure_api(request):
+    """
+    Returns Providers -> Routes for the management tab.
+    """
+    providers = Provider.objects.filter(is_active=True).prefetch_related(
+        'routes__origin', 'routes__destination')
+
+    data = []
+    for p in providers:
+        routes = [{
+            'id': r.id,
+            'origin': r.origin.code,
+            'destination': r.destination.code,
+            'is_active': r.is_active
+        } for r in p.routes.all()]
+
+        data.append({
+            'id': p.id,
+            'name': p.name,
+            'logo': p.logo.url if p.logo else None,
+            'routes': routes
+        })
+    return JsonResponse({'status': 'success', 'data': data})

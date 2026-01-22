@@ -33,4 +33,19 @@ urlpatterns = [
          admin_reject_request, name='api_reject_offer'),
 
     path('api/attach-voucher/', api_attach_voucher, name='api_attach_voucher'),
+
+
+    # Admin Management
+    path('api/admin/route/<int:route_id>/schedule/',
+         admin_manage_schedule_api, name='admin_manage_schedule'),
+    path('api/admin/route/<int:route_id>/pricing/',
+         admin_save_price_component_api, name='admin_save_pricing'),
+    # Admin Schedule Management
+    path('api/admin/route/<int:route_id>/calendar/',
+         get_admin_route_calendar_api, name='api_admin_route_calendar'),
+    path('api/admin/schedule/delete/<int:schedule_id>/',
+         delete_schedule_date_api, name='api_delete_schedule_date'),
+    #     pricing/structure/
+    path('/api/pricing/structure/',
+         get_pricing_structure_api, name='api_pricing_structure'),
 ]

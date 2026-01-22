@@ -1,6 +1,8 @@
 import datetime
 from django.core.exceptions import ValidationError
 from django import forms
+
+from ferries.models.provider_route import RouteSchedule
 from .models import Port, Provider, ProviderRoute
 from .models import FerryRequest, ProviderRoute
 
@@ -103,3 +105,32 @@ class FerryRequestForm(forms.ModelForm):
         if not ProviderRoute.objects.filter(pk=rid, is_active=True).exists():
             raise ValidationError("The selected route is invalid or inactive.")
         return rid
+
+
+class FerryRequestForm(forms.ModelForm):
+    route_id = forms.IntegerField(required=True)
+
+    class Meta:
+        model = FerryRequest
+        fields = ['trip_type', 'departure_date',
+                  'return_date', 'accommodation']
+
+    def clean(self):
+        cleaned_data = super().clean()
+        route_id = cleaned_data.get('route_id')
+        dep_date = cleaned_data.get('departure_date')
+
+        # New Schedule Validation
+        if route_id and dep_date:
+            # Check if this date is actually in the RouteSchedule table
+            is_available = RouteSchedule.objects.filter(
+                route_id=route_id,
+                date=dep_date,
+                is_active=True
+            ).exists()
+
+            if not is_available:
+                self.add_error(
+                    'departure_date', "The selected provider does not have a departure on this date.")
+
+        return cleaned_data

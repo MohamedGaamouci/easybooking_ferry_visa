@@ -111,6 +111,9 @@ class FerryRequest(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    # breakdown is stored to keep a record of prices at time of booking
+    price_breakdown = models.JSONField(null=True)
+
     class Meta:
         db_table = 'ferries_request'
 

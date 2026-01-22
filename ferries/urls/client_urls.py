@@ -20,4 +20,11 @@ urlpatterns = [
     path('api/demand/respond/<str:reference>/',
          respond_to_offer_api, name='api_demand_respond'),
 
+
+    # Scheduling & Pricing Discovery
+    path('api/route/<int:route_id>/available-dates/',
+         get_available_dates_api, name='api_available_dates'),
+    path('api/pricing/calculate/', validate_and_calculate_price_api,
+         name='api_calculate_price'),
+
 ]
