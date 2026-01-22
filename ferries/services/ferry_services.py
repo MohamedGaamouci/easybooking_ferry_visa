@@ -145,23 +145,43 @@ class FerryPriceAdminService:
     @staticmethod
     def create_or_update_price(route_id, data):
         """Atomic update/create with overlap validation."""
+        price_id = data.get('id')
+
+        # 1. Check for overlaps (excluding the current record if editing)
         FerryPriceAdminService.check_for_overlaps(
             route_id, data['category'], data['item_name'],
             data['start_date'], data['end_date'],
-            exclude_id=data.get('id')
+            exclude_id=price_id
         )
 
-        price_item, created = RoutePriceComponent.objects.update_or_create(
-            route_id=route_id,
-            category=data['category'],
-            item_name=data['item_name'],
-            start_date=data['start_date'],
-            end_date=data['end_date'],
-            defaults={
-                'net_price': data.get('net_price', 0),
-                'selling_price': data['selling_price']
-            }
-        )
+        # 2. Use the ID to find the record for an update,
+        # or use all fields to create a new one if no ID exists.
+        if price_id:
+            # UPDATE case: Find by ID and update all fields
+            price_item, created = RoutePriceComponent.objects.update_or_create(
+                id=price_id,
+                defaults={
+                    'route_id': route_id,
+                    'category': data['category'],
+                    'item_name': data['item_name'],
+                    'start_date': data['start_date'],
+                    'end_date': data['end_date'],
+                    'net_price': data.get('net_price', 0),
+                    'selling_price': data['selling_price']
+                }
+            )
+        else:
+            # CREATE case: Standard creation
+            price_item = RoutePriceComponent.objects.create(
+                route_id=route_id,
+                category=data['category'],
+                item_name=data['item_name'],
+                start_date=data['start_date'],
+                end_date=data['end_date'],
+                net_price=data.get('net_price', 0),
+                selling_price=data['selling_price']
+            )
+
         return price_item
 
     @staticmethod

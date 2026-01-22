@@ -1673,80 +1673,6 @@
         }
     }
 
-    // --- PRICE EDITOR (Inside the same Modal) ---
-    async function openPriceEditor(routeId) {
-        const body = document.getElementById('ops-modal-body');
-        document.getElementById('ops-modal-subtitle').innerText = "Set component prices for specific seasons";
-        body.innerHTML = '<div class="flex justify-center py-12"><i class="fas fa-spinner fa-spin fa-2x text-slate-200"></i></div>';
-
-        try {
-            const response = await fetch(`/admin_panel/api/admin/route/${routeId}/pricing/`);
-            const result = await response.json();
-
-            if (result.status === 'success') {
-                body.innerHTML = `
-                <div class="space-y-6">
-                    <button onclick="renderPriceForm(${routeId})" class="bg-slate-900 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-slate-800 transition-all">
-                        + New Price Rule
-                    </button>
-                    
-                    <div class="overflow-hidden border border-slate-200 rounded-xl">
-                        <table class="w-full text-left text-xs">
-                            <thead class="bg-slate-50 text-slate-500 font-bold uppercase text-[10px]">
-                                <tr>
-                                    <th class="px-4 py-3">Category</th>
-                                    <th class="px-4 py-3">Item</th>
-                                    <th class="px-4 py-3">Validity Period</th>
-                                    <th class="px-4 py-3 text-right">Price</th>
-                                    <th class="px-4 py-3"></th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-100">
-                                ${result.data.map(p => `
-                                    <tr class="hover:bg-slate-50/50">
-                                        <td class="px-4 py-3 font-bold text-blue-600 uppercase">${p.category}</td>
-                                        <td class="px-4 py-3 text-slate-700 font-medium">${p.item_name}</td>
-                                        <td class="px-4 py-3 text-slate-500 font-mono">${p.start_date} <i class="fas fa-arrow-right mx-1 text-[8px]"></i> ${p.end_date}</td>
-                                        <td class="px-4 py-3 text-right font-black text-slate-900">${p.selling_price} DA</td>
-                                        <td class="px-4 py-3 text-right">
-                                            <button onclick="removePrice(${routeId}, ${p.id})" class="text-slate-300 hover:text-red-500"><i class="fas fa-trash"></i></button>
-                                        </td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            `;
-            }
-        } catch (e) {
-            body.innerHTML = `<div class="text-red-500">Error: ${e.message}</div>`;
-        }
-    }
-
-
-    async function saveNewDate(routeId) {
-        const date = document.getElementById('new-sched-date').value;
-        if (!date) return alert("Select a date first.");
-
-        const response = await fetch(`/admin_panel/api/admin/route/${routeId}/schedule/`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
-            body: JSON.stringify({ dates: [date] })
-        });
-
-        if ((await response.json()).status === 'success') openScheduleEditor(routeId);
-    }
-
-    async function removeDate(routeId, scheduleId) {
-        if (!confirm("Delete this sailing date?")) return;
-        const response = await fetch(`/admin_panel/api/admin/schedule/delete/${scheduleId}/`, {
-            method: 'POST',
-            headers: { 'X-CSRFToken': getCookie('csrftoken') }
-        });
-        if ((await response.json()).status === 'success') openScheduleEditor(routeId);
-    }
-
     // --- Security Helper for Django CSRF ---
     function getCookie(name) {
         let cookieValue = null;
@@ -1763,5 +1689,168 @@
         }
         return cookieValue;
     }
+
+    // --- PRICE EDITOR (Inside the same Modal) ---
+    // --- PRICE EDITOR ---
+    async function openPriceEditor(routeId) {
+        const body = document.getElementById('ops-modal-body');
+        // Ensure the back button is visible so we can return to the route list
+        document.getElementById('ops-back-btn').classList.remove('hidden');
+
+        document.getElementById('ops-modal-subtitle').innerText = "Manage individual prices for Pax, Vehicles, and Cabins";
+        body.innerHTML = '<div class="flex justify-center py-12"><i class="fas fa-spinner fa-spin fa-2x text-slate-200"></i></div>';
+
+        try {
+            const response = await fetch(`/admin_panel/api/admin/route/${routeId}/pricing/`);
+            const result = await response.json();
+
+            if (result.status === 'success') {
+                body.innerHTML = `
+                <div class="space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h4 class="text-sm font-bold text-slate-700 uppercase tracking-wider">Active Price Components</h4>
+                        <button onclick="renderPriceForm(${routeId})" class="bg-slate-900 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-slate-800 transition-all">
+                            + Add New Price Rule
+                        </button>
+                    </div>
+                    
+                    <div class="overflow-hidden border border-slate-200 rounded-xl bg-white">
+                        <table class="w-full text-left text-xs table-auto"> <thead class="bg-slate-50 text-slate-500 font-bold uppercase text-[10px]">
+                                <tr>
+                                    <th class="px-4 py-3">Category</th>
+                                    <th class="px-4 py-3">Item Name</th>
+                                    <th class="px-4 py-3">Validity Period</th>
+                                    <th class="px-4 py-3 text-right">Selling Price</th>
+                                    <th class="px-4 py-3 text-center w-24">Actions</th> </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                ${result.data.map(p => `
+                                    <tr class="hover:bg-slate-50/50">
+                                        <td class="px-4 py-3 font-bold text-blue-600 uppercase text-[10px]">${p.category}</td>
+                                        <td class="px-4 py-3 text-slate-700 font-medium">${p.item_name}</td>
+                                        <td class="px-4 py-3 text-slate-500 font-mono text-[10px]">${p.start_date} <i class="ph ph-arrow-right mx-1"></i> ${p.end_date}</td>
+                                        <td class="px-4 py-3 text-right font-black text-slate-900">${p.selling_price} DA</td>
+                                        <td class="px-4 py-3">
+                                            <div class="flex items-center justify-end gap-2">
+                                                <button onclick='renderPriceForm(${routeId}, ${JSON.stringify(p)})' 
+                                                        class="h-8 w-8 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all">
+                                                    <i class="ph-bold ph-pencil-simple text-base"></i>
+                                                </button>
+                                                <button onclick="removePriceComponent(${routeId}, ${p.id})" 
+                                                        class="h-8 w-8 flex items-center justify-center rounded-lg bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition-all">
+                                                    <i class="ph-bold ph-trash text-base"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+            }
+        } catch (e) {
+            body.innerHTML = `<div class="p-6 bg-red-50 text-red-600 rounded-xl border border-red-100 font-bold">Error: ${e.message}</div>`;
+        }
+    }
+
+    function renderPriceForm(routeId, existingData = null) {
+        const body = document.getElementById('ops-modal-body');
+        document.getElementById('ops-back-btn').classList.add('hidden');
+
+        const isEdit = existingData !== null;
+        document.getElementById('ops-modal-subtitle').innerText = isEdit ? "Modify existing price rule" : "Create a new price building block";
+
+        body.innerHTML = `
+        <div class="max-w-2xl mx-auto bg-slate-50 p-6 rounded-2xl border border-slate-200">
+            <h4 class="text-sm font-bold text-slate-800 mb-6 flex items-center gap-2">
+                <i class="fas ${isEdit ? 'fa-edit text-blue-500' : 'fa-plus-circle text-emerald-500'}"></i> 
+                ${isEdit ? 'Edit Price Rule' : 'Create New Price Rule'}
+            </h4>
+            
+            <input type="hidden" id="price-id" value="${isEdit ? existingData.id : ''}">
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="col-span-1">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Category</label>
+                    <select id="price-category" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none">
+                        <option value="pax" ${isEdit && existingData.category === 'pax' ? 'selected' : ''}>Passenger</option>
+                        <option value="vehicle" ${isEdit && existingData.category === 'vehicle' ? 'selected' : ''}>Vehicle</option>
+                        <option value="accommodation" ${isEdit && existingData.category === 'accommodation' ? 'selected' : ''}>Accommodation</option>
+                    </select>
+                </div>
+                <div class="col-span-1">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Item Name</label>
+                    <input type="text" id="price-item-name" value="${isEdit ? existingData.item_name : ''}" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none">
+                </div>
+                <div class="col-span-1">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Start Date</label>
+                    <input type="date" id="price-start-date" value="${isEdit ? existingData.start_date : ''}" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none">
+                </div>
+                <div class="col-span-1">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">End Date</label>
+                    <input type="date" id="price-end-date" value="${isEdit ? existingData.end_date : ''}" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none">
+                </div>
+                <div class="col-span-1">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Net Price (DA)</label>
+                    <input type="number" id="price-net" value="${isEdit ? existingData.net_price : '0'}" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none">
+                </div>
+                <div class="col-span-1">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Selling Price (DA)</label>
+                    <input type="number" id="price-selling" value="${isEdit ? existingData.selling_price : ''}" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none">
+                </div>
+            </div>
+            
+            <div class="mt-8 flex justify-end gap-3">
+                <button onclick="openPriceEditor(${routeId})" class="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-800">Cancel</button>
+                <button onclick="savePriceComponent(${routeId})" class="${isEdit ? 'bg-blue-600' : 'bg-emerald-600'} text-white px-6 py-2 rounded-lg font-bold text-xs hover:opacity-90 transition-all">
+                    ${isEdit ? 'Update Price Rule' : 'Save Price Rule'}
+                </button>
+            </div>
+        </div>
+    `;
+    }
+
+    async function savePriceComponent(routeId) {
+        const data = {
+            id: document.getElementById('price-id').value || null, // Capture the ID
+            category: document.getElementById('price-category').value,
+            item_name: document.getElementById('price-item-name').value,
+            start_date: document.getElementById('price-start-date').value,
+            end_date: document.getElementById('price-end-date').value,
+            net_price: document.getElementById('price-net').value,
+            selling_price: document.getElementById('price-selling').value
+        };
+
+        if (!data.item_name || !data.start_date || !data.end_date || !data.selling_price) {
+            return alert("Please fill in all fields.");
+        }
+
+        try {
+            const response = await fetch(`/admin_panel/api/admin/route/${routeId}/pricing/save/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+                body: JSON.stringify(data)
+            });
+            const result = await response.json();
+            if (result.status === 'success') {
+                openPriceEditor(routeId);
+            } else {
+                alert(result.message);
+            }
+        } catch (e) { alert("Error: " + e.message); }
+    }
+
+    async function removePriceComponent(routeId, componentId) {
+        if (!confirm("Delete this price rule?")) return;
+        const response = await fetch(`/admin_panel/api/admin/pricing/delete/${componentId}/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCookie('csrftoken') }
+        });
+        if ((await response.json()).status === 'success') openPriceEditor(routeId);
+    }
+
+
 </script>
 {% endblock %}

@@ -1037,3 +1037,56 @@ def get_pricing_structure_api(request):
             'routes': routes
         })
     return JsonResponse({'status': 'success', 'data': data})
+
+
+@login_required
+def get_route_pricing_api(request, route_id):
+    """
+    API: Returns all price rules for a specific route.
+    Uses FerryPriceAdminService.get_route_pricing_grid
+    """
+    # if hasattr(request.user, 'agency'):
+    #     return JsonResponse({'status': 'error', 'message': 'Unauthorized'}, status=403)
+
+    try:
+        # Using your service method
+        components = FerryPriceAdminService.get_route_pricing_grid(route_id)
+
+        data = [{
+            'id': c.id,
+            'category': c.category,  # 'pax', 'vehicle', etc.
+            'item_name': c.item_name,
+            'start_date': c.start_date.strftime('%Y-%m-%d'),
+            'end_date': c.end_date.strftime('%Y-%m-%d'),
+            'net_price': float(c.net_price),
+            'selling_price': float(c.selling_price)
+        } for c in components]
+
+        return JsonResponse({'status': 'success', 'data': data})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
+@login_required
+@require_POST
+def delete_price_component_api(request, component_id):
+    """
+    API: Deletes a specific price rule.
+    Uses FerryPriceAdminService.delete_price_component
+    """
+    # if hasattr(request.user, 'agency'):
+    #     return JsonResponse({'status': 'error', 'message': 'Unauthorized'}, status=403)
+
+    try:
+        # Using your atomic service method
+        deleted_count, _ = FerryPriceAdminService.delete_price_component(
+            component_id)
+
+        if deleted_count > 0:
+            return JsonResponse({'status': 'success', 'message': 'Price component deleted.'})
+        else:
+            return JsonResponse({'status': 'error', 'message': 'Component not found.'}, status=404)
+
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    

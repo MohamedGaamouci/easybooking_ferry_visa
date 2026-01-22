@@ -38,8 +38,15 @@ urlpatterns = [
     # Admin Management
     path('api/admin/route/<int:route_id>/schedule/',
          admin_manage_schedule_api, name='admin_manage_schedule'),
-    path('api/admin/route/<int:route_id>/pricing/',
+    path('api/admin/route/<int:route_id>/pricing/save/',
          admin_save_price_component_api, name='admin_save_pricing'),
+    # 1st Endpoint: List Prices
+    path('api/admin/route/<int:route_id>/pricing/',
+         get_route_pricing_api, name='api_get_pricing'),
+
+    # 3rd Endpoint: Delete Price
+    path('api/admin/pricing/delete/<int:component_id>/',
+         delete_price_component_api, name='api_delete_pricing'),
     # Admin Schedule Management
     path('api/admin/route/<int:route_id>/calendar/',
          get_admin_route_calendar_api, name='api_admin_route_calendar'),
