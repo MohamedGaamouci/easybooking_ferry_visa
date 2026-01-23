@@ -53,6 +53,6 @@ urlpatterns = [
     path('api/admin/schedule/delete/<int:schedule_id>/',
          delete_schedule_date_api, name='api_delete_schedule_date'),
     #     pricing/structure/
-    path('/api/pricing/structure/',
+    path('api/pricing/structure/',
          get_pricing_structure_api, name='api_pricing_structure'),
 ]

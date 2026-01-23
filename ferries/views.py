@@ -1,7 +1,7 @@
 # Assuming you have a basic ProviderForm
 # Ensure you have this from previous steps
 from ferries.services.ferry_services import FerryPricingService, FerryScheduleService, FerryPriceAdminService
-from ferries.models.provider_route import RouteSchedule
+from ferries.models.provider_route import RoutePriceComponent, RouteSchedule
 from .models import FerryRequest
 from finance.services.invoice import create_single_service_invoice
 from django.core.exceptions import ValidationError
@@ -882,35 +882,111 @@ def get_available_dates_api(request, route_id):
 @require_POST
 def validate_and_calculate_price_api(request):
     """
-    API: Receives current form selection and returns a live price breakdown.
-    Used to show the price to the user BEFORE they click 'Submit'.
+    API: Receives current form selection (one-way or round-trip)
+    Returns a live price breakdown for both legs.
     """
     try:
         data = json.loads(request.body)
         route_id = data.get('route_id')
-        travel_date = data.get('departure_date')  # Expects 'YYYY-MM-DD'
+        departure_date = data.get('departure_date')
+        return_date = data.get('return_date')  # Might be None
         passengers = data.get('passengers', [])
         vehicle = data.get('vehicle', None)
-        accommodation = data.get('accommodation', None)
 
-        if not route_id or not travel_date:
+        if not route_id or not departure_date:
             return JsonResponse({'status': 'error', 'message': 'Missing route or date.'}, status=400)
 
-        # Calculate using the Service
-        result = FerryPricingService.calculate_total_price(
+        # 1. Calculate Outbound Price
+        # We assume 'accommodation' in the passenger object is the outbound choice
+        outbound_result = FerryPricingService.calculate_total_price(
             route_id=route_id,
-            travel_date=travel_date,
+            travel_date=departure_date,
             passengers=passengers,
-            vehicle=vehicle,
-            accommodation=accommodation
+            vehicle=vehicle
         )
 
-        return JsonResponse({'status': 'success', 'pricing': result})
+        final_result = {
+            'total_net': outbound_result['total_net'],
+            'total_selling': outbound_result['total_selling'],
+            'breakdown': outbound_result['breakdown']
+        }
+
+        # 2. If Round Trip, Calculate Return Price
+        if return_date:
+            # Find the reverse route (B -> A)
+            forward_route = get_object_or_404(ProviderRoute, pk=route_id)
+            reverse_route = ProviderRoute.objects.filter(
+                provider=forward_route.provider,
+                origin=forward_route.destination,
+                destination=forward_route.origin
+            ).first()
+
+            if reverse_route:
+                # Map return_accommodation choices to the passenger list
+                return_passengers = []
+                for p in passengers:
+                    return_passengers.append({
+                        'type': p['type'],
+                        'accommodation': p.get('return_accommodation')
+                    })
+
+                return_result = FerryPricingService.calculate_total_price(
+                    route_id=reverse_route.id,
+                    travel_date=return_date,
+                    passengers=return_passengers,
+                    vehicle=vehicle  # Assume same vehicle for return
+                )
+
+                # Combine the totals and breakdowns
+                final_result['total_net'] += return_result['total_net']
+                final_result['total_selling'] += return_result['total_selling']
+
+                # Tag return items for clarity in the frontend panel
+                return_breakdown = []
+                for item in return_result['breakdown']:
+                    item['item'] = f"(Return) {item['item']}"
+                    return_breakdown.append(item)
+
+                final_result['breakdown'].extend(return_breakdown)
+
+        return JsonResponse({'status': 'success', 'pricing': final_result})
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
 
 
+@login_required
+@require_GET
+def get_route_options_api(request, route_id):
+    """
+    API: Returns unique Accommodation and Vehicle types available for a route.
+    Used to populate frontend dropdowns dynamically.
+    """
+    try:
+        # Fetch all pricing rules for this route
+        components = RoutePriceComponent.objects.filter(route_id=route_id)
+
+        # Extract unique item names by category
+        accommodations = list(components.filter(category='accommodation')
+                              .values_list('item_name', flat=True).distinct())
+
+        vehicles = list(components.filter(category='vehicle')
+                        .values_list('item_name', flat=True).distinct())
+
+        # We also return Passenger types in case you want to dynamicize those manifest labels later
+        passengers = list(components.filter(category='pax')
+                          .values_list('item_name', flat=True).distinct())
+
+        return JsonResponse({
+            'status': 'success',
+            'accommodations': accommodations,
+            'vehicles': vehicles,
+            'passenger_types': passengers
+        })
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
 # --- ADMIN SIDE APIS (CRUD) ---
+
 
 @login_required
 @require_POST
@@ -1089,4 +1165,3 @@ def delete_price_component_api(request, component_id):
 
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
-    

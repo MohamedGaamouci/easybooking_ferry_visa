@@ -26,5 +26,7 @@ urlpatterns = [
          get_available_dates_api, name='api_available_dates'),
     path('api/pricing/calculate/', validate_and_calculate_price_api,
          name='api_calculate_price'),
+    path('api/route/<int:route_id>/options/',
+         get_route_options_api, name='api_route_options')
 
 ]
