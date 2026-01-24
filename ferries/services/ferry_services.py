@@ -1,7 +1,7 @@
 from django.db import transaction
 from datetime import date
 from django.core.exceptions import ValidationError
-from ferries.models.provider_route import RouteSchedule, RoutePriceComponent
+from ferries.models.provider_route import ProviderRoute, RouteSchedule, RoutePriceComponent
 from django.db.models import Q
 
 
@@ -25,71 +25,83 @@ class FerryPricingService:
         ).exists()
 
     @staticmethod
-    def calculate_total_price(route_id, travel_date, passengers, vehicle=None, accommodation=None):
-        """
-        Calculates the sum of all individual components for a specific date.
-        Uses Atomic to ensure consistency during the complex lookup.
-        """
-        if not FerryPricingService.is_date_available(route_id, travel_date):
-            raise ValidationError(
-                f"No active trip scheduled for {travel_date}")
-
+    def calculate_total_price(route_id, trip_type, departure_date, return_date, passengers, vehicle_data):
         total_net = 0
         total_selling = 0
         breakdown = []
 
-        # 1. Calculate Passengers
-        for p in passengers:
+        # 1. Load Route Data
+        try:
+            outbound_route = ProviderRoute.objects.get(pk=route_id)
+            return_route = None
+            if trip_type == 'round':
+                # Find the reverse route based on origin/destination swap
+                return_route = ProviderRoute.objects.filter(
+                    origin=outbound_route.destination,
+                    destination=outbound_route.origin,
+                    provider=outbound_route.provider,
+                    is_active=True
+                ).first()
+        except ProviderRoute.DoesNotExist:
+            raise ValidationError("Invalid Route ID")
+
+        # 2. Process Passengers
+        for idx, p in enumerate(passengers, 1):
             p_type = p.get('type')
-            price_row = RoutePriceComponent.objects.filter(
-                route_id=route_id,
-                category='pax',
-                item_name=p_type,
-                start_date__lte=travel_date,
-                end_date__gte=travel_date
-            ).first()
 
-            if price_row:
-                total_net += price_row.net_price
-                total_selling += price_row.selling_price
+            # --- Ongoing Leg (A -> B) ---
+            # Passenger Price
+            out_pax_rule = RoutePriceComponent.objects.filter(
+                route=outbound_route, category='pax', item_name=p_type).first()
+            if out_pax_rule:
+                total_net += out_pax_rule.net_price
+                total_selling += out_pax_rule.selling_price
+                breakdown.append({'item': f"Pax {idx} ({p_type}) - Out",
+                                 'price': float(out_pax_rule.selling_price)})
+
+            # Accommodation Price (Only if selected)
+            out_acc = p.get('outbound_accommodation')
+            if out_acc:  # This handles None, empty string, or "none" from frontend
+                out_acc_rule = RoutePriceComponent.objects.filter(
+                    route=outbound_route, category='accommodation', item_name=out_acc).first()
+                if out_acc_rule:
+                    total_net += out_acc_rule.net_price
+                    total_selling += out_acc_rule.selling_price
+                    breakdown.append(
+                        {'item': f"Acc {idx} ({out_acc}) - Out", 'price': float(out_acc_rule.selling_price)})
+
+            # --- Return Leg (B -> A) ---
+            if trip_type == 'round' and return_route:
+                # Passenger Price
+                ret_pax_rule = RoutePriceComponent.objects.filter(
+                    route=return_route, category='pax', item_name=p_type).first()
+                if ret_pax_rule:
+                    total_net += ret_pax_rule.net_price
+                    total_selling += ret_pax_rule.selling_price
+                    breakdown.append(
+                        {'item': f"Pax {idx} ({p_type}) - Ret", 'price': float(ret_pax_rule.selling_price)})
+
+                # Accommodation Price (Only if selected)
+                ret_acc = p.get('return_accommodation')
+                if ret_acc:
+                    ret_acc_rule = RoutePriceComponent.objects.filter(
+                        route=return_route, category='accommodation', item_name=ret_acc).first()
+                    if ret_acc_rule:
+                        total_net += ret_acc_rule.net_price
+                        total_selling += ret_acc_rule.selling_price
+                        breakdown.append(
+                            {'item': f"Acc {idx} ({ret_acc}) - Ret", 'price': float(ret_acc_rule.selling_price)})
+
+        # 3. Vehicle (Ongoing only as requested)
+        if vehicle_data and vehicle_data.get('type'):
+            v_type = vehicle_data.get('type')
+            v_rule = RoutePriceComponent.objects.filter(
+                route=outbound_route, category='vehicle', item_name=v_type).first()
+            if v_rule:
+                total_net += v_rule.net_price
+                total_selling += v_rule.selling_price
                 breakdown.append(
-                    {'item': f"Passenger ({p_type})", 'price': float(price_row.selling_price)})
-            else:
-                raise ValidationError(
-                    f"No pricing found for passenger type: {p_type}")
-
-        # 2. Calculate Vehicle
-        if vehicle and vehicle.get('type'):
-            v_type = vehicle.get('type')
-            price_row = RoutePriceComponent.objects.filter(
-                route_id=route_id,
-                category='vehicle',
-                item_name=v_type,
-                start_date__lte=travel_date,
-                end_date__gte=travel_date
-            ).first()
-
-            if price_row:
-                total_net += price_row.net_price
-                total_selling += price_row.selling_price
-                breakdown.append(
-                    {'item': f"Vehicle ({v_type})", 'price': float(price_row.selling_price)})
-
-        # 3. Calculate Accommodation
-        if accommodation:
-            price_row = RoutePriceComponent.objects.filter(
-                route_id=route_id,
-                category='accommodation',
-                item_name=accommodation,
-                start_date__lte=travel_date,
-                end_date__gte=travel_date
-            ).first()
-
-            if price_row:
-                total_net += price_row.net_price
-                total_selling += price_row.selling_price
-                breakdown.append({'item': f"Accommodation ({accommodation})", 'price': float(
-                    price_row.selling_price)})
+                    {'item': f"Vehicle ({v_type})", 'price': float(v_rule.selling_price)})
 
         return {
             'total_net': total_net,

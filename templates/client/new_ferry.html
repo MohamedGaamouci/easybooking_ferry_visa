@@ -5,24 +5,93 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
-<main class="max-w-6xl mx-auto px-6 pt-28 pb-20">
+<style>
+    body {
+        background-color: #f8fafc;
+    }
+
+    .glass-card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 1.25rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    .section-label {
+        color: #64748b;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .input-group-custom {
+        background: #f1f5f9;
+        border: 1px solid #cbd5e1;
+        border-radius: 0.75rem;
+        transition: all 0.2s;
+    }
+
+    .input-group-custom:focus-within {
+        border-color: #94a3b8;
+        background: white;
+    }
+
+    .btn-primary-custom {
+        background: #1e293b;
+        color: white;
+        transition: all 0.2s;
+    }
+
+    .btn-primary-custom:hover {
+        background: #0f172a;
+        transform: translateY(-1px);
+    }
+
+    /* RESPONSIVE LOGIC */
+    @media (min-width: 1024px) {
+        .sticky-sidebar {
+            position: sticky;
+            top: 7rem;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .passenger-row {
+            padding: 1rem !important;
+        }
+
+        .grid-cols-2 {
+            grid-template-columns: repeat(1, minmax(0, 1fr));
+        }
+    }
+</style>
+
+<main class="max-w-6xl mx-auto px-4 sm:px-6 pt-28 pb-20">
 
     <div id="view-marketplace" class="fade-in">
-        <div class="text-center mb-10">
-            <h1 class="text-3xl font-bold text-slate-900 mb-2">Sélectionnez un Opérateur</h1>
-            <p class="text-slate-500">Choisissez une compagnie de ferry pour commencer votre demande.</p>
+        <div class="text-center mb-12">
+            <h1 class="text-3xl md:text-4xl font-black text-slate-900 mb-3">Select a Provider</h1>
+            <div class="w-16 h-1 bg-slate-200 mx-auto rounded-full mb-4"></div>
+            <p class="text-slate-500 max-w-lg mx-auto px-4">Choose a ferry operator to start your personalized booking
+                request.</p>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             {% for provider in providers %}
             <div onclick="selectProvider('{{ provider.id }}', '{{ provider.name }}', '{% if provider.logo %}{{ provider.logo.url }}{% endif %}')"
-                class="group relative h-64 w-full rounded-2xl overflow-hidden cursor-pointer bg-slate-900 transition-all shadow-lg hover:-translate-y-1">
-                <div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
+                class="group relative h-64 md:h-72 w-full glass-card overflow-hidden cursor-pointer transition-all hover:shadow-xl">
+                <div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
                     style="background-image: url('{% if provider.logo %}{{ provider.logo.url }}{% endif %}');">
                 </div>
-                <div class="absolute inset-0 bg-black/20"></div>
-                <div class="absolute bottom-0 left-0 p-6 w-full z-10 text-white">
-                    <h3 class="text-lg font-bold mb-1">{{ provider.name }}</h3>
-                    <p class="text-xs text-slate-200">{{ provider.code }}</p>
+                <div class="absolute inset-0 bg-slate-900/10"></div>
+                <div
+                    class="absolute bottom-0 left-0 p-6 w-full z-10 bg-gradient-to-t from-slate-900/90 to-transparent text-white">
+                    <h3 class="text-xl font-bold mb-1">{{ provider.name }}</h3>
+                    <p class="text-xs text-slate-300 font-medium tracking-widest">{{ provider.code }}</p>
                 </div>
             </div>
             {% endfor %}
@@ -31,80 +100,75 @@
 
     <div id="view-form" class="hidden fade-in">
         <button onclick="showMarketplace()"
-            class="mb-6 flex items-center gap-2 text-sm text-slate-500 hover:text-slate-800 transition-colors bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm">
-            <i class="ph-bold ph-arrow-left"></i> Retour aux Opérateurs
+            class="mb-6 md:mb-8 flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-900 uppercase tracking-widest">
+            <i class="ph-bold ph-arrow-left"></i> Back to Providers
         </button>
 
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div class="flex flex-col lg:flex-row gap-8 lg:gap-10 items-start">
 
-            <div class="lg:col-span-1">
-                <div id="price-summary-card"
-                    class="bg-white border border-slate-200 rounded-2xl p-5 sticky top-24 shadow-sm animate-fade-in">
-                    <h4 class="font-bold text-slate-900 mb-4 flex items-center gap-2 text-xs uppercase tracking-wider">
-                        <i class="ph-bold ph-receipt text-brand-600"></i> Résumé du Voyage
-                    </h4>
-
+            <div class="w-full lg:w-1/4 sticky-sidebar order-1 lg:order-1">
+                <div class="glass-card p-6">
+                    <h4 class="section-label"><i class="ph-bold ph-receipt"></i> Trip Summary</h4>
                     <div id="summary-content" class="space-y-6">
-                        <p class="text-xs text-slate-400 italic">Sélectionnez vos options...</p>
-                    </div>
-
-                    <div class="border-t border-slate-100 mt-4 pt-4">
-                        <div class="flex justify-between items-center">
-                            <span class="text-xs font-bold text-slate-500 uppercase">Total à Payer</span>
-                            <span id="total-price-display" class="text-lg font-black text-brand-600">0 DA</span>
+                        <div class="py-6 lg:py-10 text-center">
+                            <p class="text-[10px] text-slate-400 italic">Select your options...</p>
                         </div>
+                    </div>
+                    <div class="border-t border-slate-100 mt-6 pt-6">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Estimated
+                            Total</span>
+                        <span id="total-price-display" class="block text-2xl font-black text-slate-900">0 DA</span>
                     </div>
                 </div>
             </div>
 
-            <div class="lg:col-span-3">
-                <div class="bg-white rounded-2xl shadow-card border border-slate-200 overflow-hidden">
-                    <div class="bg-slate-50 border-b border-slate-200 p-6">
-                        <h2 class="text-xl font-bold text-slate-900">Demande de Devis</h2>
-                        <p class="text-sm text-slate-500">Opérateur: <span id="selected-provider-name"
-                                class="font-bold text-brand-600">Provider</span></p>
+            <div class="w-full lg:w-3/4 order-2 lg:order-2">
+                <div class="glass-card overflow-hidden">
+                    <div class="bg-slate-50/50 border-b border-slate-100 p-6 md:p-8">
+                        <h2 class="text-xl md:text-2xl font-black text-slate-900">Request Quotation</h2>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Provider: <span
+                                id="selected-provider-name" class="text-slate-700"></span></p>
                     </div>
 
-                    <form id="booking-form" onsubmit="event.preventDefault(); submitDemand();" class="p-6 space-y-8">
+                    <form id="booking-form" onsubmit="event.preventDefault(); submitDemand();"
+                        class="p-6 md:p-8 space-y-10 md:space-y-12">
                         <section>
-                            <h3
-                                class="text-sm font-bold text-slate-900 uppercase tracking-wide mb-4 flex items-center gap-2">
-                                <i class="ph-fill ph-map-pin text-slate-400"></i> Itinéraire & Dates
-                            </h3>
-                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
-                                <div class="flex gap-4">
-                                    <label class="flex items-center gap-2 cursor-pointer">
+                            <h3 class="section-label"><i class="ph-fill ph-map-pin"></i> Route & Dates</h3>
+                            <div class="bg-slate-50/80 p-4 md:p-6 rounded-2xl border border-slate-100 space-y-6">
+                                <div class="flex flex-wrap gap-4 md:gap-6">
+                                    <label class="flex items-center gap-3 cursor-pointer group">
                                         <input type="radio" name="triptype" value="round" checked
-                                            onclick="toggleTripTypeUI(true)" class="w-4 h-4 text-brand-600">
-                                        <span class="text-sm font-medium">Aller-Retour</span>
+                                            onclick="toggleTripTypeUI(true)" class="w-4 h-4 text-slate-900">
+                                        <span class="text-sm font-bold text-slate-600 group-hover:text-slate-900">Round
+                                            Trip</span>
                                     </label>
-                                    <label class="flex items-center gap-2 cursor-pointer">
+                                    <label class="flex items-center gap-3 cursor-pointer group">
                                         <input type="radio" name="triptype" value="oneway"
-                                            onclick="toggleTripTypeUI(false)" class="w-4 h-4 text-brand-600">
-                                        <span class="text-sm font-medium">Aller Simple</span>
+                                            onclick="toggleTripTypeUI(false)" class="w-4 h-4 text-slate-900">
+                                        <span class="text-sm font-bold text-slate-600 group-hover:text-slate-900">One
+                                            Way</span>
                                     </label>
                                 </div>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div
-                                        class="flex items-center gap-2 bg-white p-1 rounded-lg border border-slate-300">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                                    <div class="flex items-center gap-2 input-group-custom p-1 px-3">
                                         <select id="inp-origin" onchange="updateDestinations()" required
-                                            class="w-full text-sm p-2 outline-none bg-transparent">
-                                            <option value="">Origine...</option>
+                                            class="w-full text-sm p-2 outline-none bg-transparent font-bold">
+                                            <option value="">Origin...</option>
                                         </select>
                                         <i class="ph-bold ph-arrows-left-right text-slate-400"></i>
                                         <select id="inp-dest" onchange="updateCalendarsAndOptions()" required
-                                            class="w-full text-sm p-2 outline-none text-right bg-transparent">
+                                            class="w-full text-sm p-2 outline-none text-right bg-transparent font-bold">
                                             <option value="">Destination...</option>
                                         </select>
                                     </div>
-                                    <div class="flex gap-2">
+                                    <div class="flex flex-col sm:flex-row gap-3">
                                         <input type="text" id="inp-date-dep"
-                                            class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white"
-                                            placeholder="Date Aller" required>
+                                            class="w-full input-group-custom p-3 text-sm font-bold"
+                                            placeholder="📅 Departure Date" required>
                                         <div class="w-full" id="return-date-container">
                                             <input type="text" id="inp-date-ret"
-                                                class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white"
-                                                placeholder="Date Retour">
+                                                class="w-full input-group-custom p-3 text-sm font-bold"
+                                                placeholder="📅 Return Date">
                                         </div>
                                     </div>
                                 </div>
@@ -112,83 +176,91 @@
                         </section>
 
                         <section>
-                            <h3
-                                class="text-sm font-bold text-slate-900 uppercase tracking-wide mb-4 flex items-center gap-2">
-                                <i class="ph-fill ph-users text-slate-400"></i> Passagers & Installations
-                            </h3>
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6" id="passenger-counts-container">
-                            </div>
+                            <h3 class="section-label"><i class="ph-fill ph-users"></i> Passengers & Accommodations</h3>
+                            <div class="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 mb-8"
+                                id="passenger-counts-container"></div>
                             <div id="manifest-container" class="space-y-6"></div>
                         </section>
 
                         <section>
-                            <div class="flex items-center justify-between mb-4">
-                                <h3
-                                    class="text-sm font-bold text-slate-900 uppercase tracking-wide flex items-center gap-2">
-                                    <i class="ph-fill ph-car text-slate-400"></i> Détails du Véhicule
-                                </h3>
+                            <div class="flex items-center justify-between mb-6">
+                                <h3 class="section-label mb-0"><i class="ph-fill ph-car"></i> Vehicle Details</h3>
                                 <label class="flex items-center gap-2 cursor-pointer">
                                     <input type="checkbox" id="vehicle-toggle" onclick="toggleVehicle()"
                                         class="w-4 h-4 text-brand-600 rounded" />
-                                    <span class="text-sm font-medium text-slate-600">Ajouter un véhicule</span>
+                                    <span class="text-sm font-bold text-slate-600">Add a vehicle</span>
                                 </label>
                             </div>
                             <div id="vehicle-form"
-                                class="hidden bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
-                                <div class="grid grid-cols-2 gap-4">
+                                class="hidden bg-slate-50/80 p-4 md:p-6 rounded-2xl border border-slate-100 space-y-6">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                                     <select id="v-type" onchange="FerryBookingEngine.runCalculation()"
-                                        class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white">
-                                        <option value="">Type de véhicule...</option>
+                                        class="input-group-custom p-3 text-sm font-bold w-full">
+                                        <option value="">Type...</option>
                                     </select>
-                                    <input type="text" id="v-model" placeholder="Modèle"
-                                        class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white">
+                                    <input type="text" id="v-model" placeholder="Model"
+                                        class="input-group-custom p-3 text-sm font-bold w-full">
                                 </div>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <input type="text" id="v-plate" placeholder="Immatriculation"
-                                        class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white font-mono uppercase">
-                                    <div class="flex items-center gap-4 pt-2">
-                                        <label class="flex items-center gap-2 text-xs font-medium"><input
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                                    <input type="text" id="v-plate" placeholder="Plate Number"
+                                        class="input-group-custom p-3 text-sm font-bold w-full uppercase font-mono">
+                                    <div class="flex items-center gap-6">
+                                        <label
+                                            class="flex items-center gap-2 text-xs font-bold text-slate-500 cursor-pointer"><input
                                                 type="checkbox" id="v-roof"
-                                                onchange="FerryBookingEngine.runCalculation()"> Bagages Toit</label>
-                                        <label class="flex items-center gap-2 text-xs font-medium"><input
+                                                onchange="FerryBookingEngine.runCalculation()"> Roof Box</label>
+                                        <label
+                                            class="flex items-center gap-2 text-xs font-bold text-slate-500 cursor-pointer"><input
                                                 type="checkbox" id="v-trailer"
-                                                onchange="FerryBookingEngine.runCalculation()"> Remorque</label>
+                                                onchange="FerryBookingEngine.runCalculation()"> Trailer</label>
                                     </div>
                                 </div>
                             </div>
                         </section>
 
-                        <div class="pt-4 border-t border-slate-100">
-                            <button type="submit"
-                                class="w-full bg-brand-600 text-white font-bold text-lg py-4 rounded-xl shadow-lg hover:bg-brand-700 transition-all flex items-center justify-center gap-2">
-                                Envoyer la Demande <i class="ph-bold ph-paper-plane-right"></i>
-                            </button>
-                        </div>
+                        <button type="submit"
+                            class="w-full btn-primary-custom font-black text-lg py-5 rounded-2xl shadow-lg">SEND QUOTE
+                            REQUEST</button>
                     </form>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="view-success" class="hidden fade-in text-center pt-10">
+    <div id="view-success" class="hidden fade-in text-center py-16 md:py-20 glass-card mx-auto max-w-2xl">
         <div
-            class="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl shadow-sm">
-            <i class="ph-fill ph-check"></i>
+            class="w-20 h-20 md:w-24 md:h-24 bg-slate-100 text-slate-800 rounded-full flex items-center justify-center mx-auto mb-8 text-4xl md:text-5xl shadow-sm">
+            <i class="ph-fill ph-check-circle"></i>
         </div>
-        <h2 class="text-2xl font-bold text-slate-900 mb-2">Demande Envoyée avec Succès !</h2>
-        <p class="text-slate-500 max-w-md mx-auto mb-8">Votre ID de demande est <span
-                class="font-mono font-bold text-slate-900" id="success-id">#REQ-000</span>.</p>
-        <a href="{% url 'new_ferry' %}"
-            class="bg-brand-600 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-brand-700">Nouvelle Demande</a>
+        <h2 class="text-2xl md:text-3xl font-black text-slate-900 mb-3">
+            Request Sent!
+        </h2>
+        <p class="text-slate-500 mb-10 px-6">
+            Reference:
+            <span id="success-id" class="font-mono font-bold text-slate-900 bg-slate-100 px-3 py-1 rounded">
+            </span>
+        </p>
+        <!-- Action buttons -->
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="{% url 'new_ferry' %}"
+                class="btn-primary-custom px-8 md:px-10 py-4 rounded-xl font-bold inline-block">
+                Start New Request
+            </a>
+
+            <a href="{% url 'ferries' %}" class="px-8 md:px-10 py-4 rounded-xl font-bold inline-block
+                   bg-white border border-slate-300 text-slate-700
+                   hover:bg-slate-50 hover:border-slate-400 transition-all">
+                My Requests
+            </a>
+        </div>
     </div>
+
 </main>
 
 <script>
     const FerryBookingEngine = (function () {
-        let providerRoutes = [];
-        let depPicker, retPicker;
-        let outboundPricing = [];
-        let returnPricing = [];
+        let providerRoutes = [], depPicker, retPicker;
+        let outboundPricing = [], returnPricing = [];
         let outboundOptions = { accommodations: [], passenger_types: [], vehicles: [] };
         let returnOptions = { accommodations: [] };
 
@@ -200,103 +272,78 @@
         const _calculateTotal = () => {
             const isRound = document.querySelector('input[name="triptype"]:checked').value === 'round';
             const depDate = document.getElementById('inp-date-dep').value;
+            let total = 0, ongoingItems = [], returnItems = [];
 
-            let total = 0;
-            let ongoingBreakdown = [];
-            let returnBreakdown = [];
+            if (!depDate) { _updateUI(0, [], []); return; }
 
-            if (!depDate) {
-                _updateUI(0, [], []);
-                return;
-            }
-
-            const paxRows = document.querySelectorAll('.passenger-row');
-            paxRows.forEach((row, idx) => {
+            document.querySelectorAll('.passenger-row').forEach((row, idx) => {
                 const type = row.dataset.type;
                 const outAcc = row.querySelector('.p-acc-out').value;
                 const retAcc = row.querySelector('.p-acc-ret')?.value;
 
-                // 1. ALLER (Ongoing)
                 const outPax = _findPriceRule(outboundPricing, 'pax', type);
                 if (outPax) {
                     const p = parseFloat(outPax.selling_price);
                     total += p;
-                    ongoingBreakdown.push({ label: `${type}`, price: p });
+                    ongoingItems.push({ label: `${type}`, price: p });
                 }
-                if (outAcc) {
+                if (outAcc && outAcc !== "") {
                     const outAccPrice = _findPriceRule(outboundPricing, 'accommodation', outAcc);
                     if (outAccPrice) {
                         const p = parseFloat(outAccPrice.selling_price);
                         total += p;
-                        ongoingBreakdown.push({ label: `${outAcc}`, price: p });
+                        ongoingBreakdownLabel = isRound ? `${outAcc} (Out)` : outAcc;
+                        ongoingItems.push({ label: ongoingBreakdownLabel, price: p });
                     }
                 }
 
-                // 2. RETOUR (Return)
                 if (isRound) {
                     const retPax = _findPriceRule(returnPricing, 'pax', type);
                     if (retPax) {
                         const p = parseFloat(retPax.selling_price);
                         total += p;
-                        returnBreakdown.push({ label: `${type}`, price: p });
+                        returnItems.push({ label: `${type}`, price: p });
                     }
-                    if (retAcc) {
+                    if (retAcc && retAcc !== "") {
                         const retAccPrice = _findPriceRule(returnPricing, 'accommodation', retAcc);
                         if (retAccPrice) {
                             const p = parseFloat(retAccPrice.selling_price);
                             total += p;
-                            returnBreakdown.push({ label: `${retAcc}`, price: p });
+                            returnItems.push({ label: `${retAcc}`, price: p });
                         }
                     }
                 }
             });
 
-            // 3. VÉHICULE (Aller uniquement)
             if (document.getElementById('vehicle-toggle').checked) {
-                const vType = document.getElementById('v-type').value;
-                if (vType) {
-                    const vPrice = _findPriceRule(outboundPricing, 'vehicle', vType);
-                    if (vPrice) {
-                        const p = parseFloat(vPrice.selling_price);
+                const vt = document.getElementById('v-type').value;
+                if (vt) {
+                    const vP = _findPriceRule(outboundPricing, 'vehicle', vt);
+                    if (vP) {
+                        const p = parseFloat(vP.selling_price);
                         total += p;
-                        ongoingBreakdown.push({ label: `Véhicule (${vType})`, price: p });
+                        ongoingItems.push({ label: `Vehicle (${vt})`, price: p });
                     }
                 }
             }
-
-            _updateUI(total, ongoingBreakdown, returnBreakdown);
+            _updateUI(total, ongoingItems, returnItems);
         };
 
         const _updateUI = (total, ongoing, retour) => {
             document.getElementById('total-price-display').innerText = `${total.toFixed(2)} DA`;
             const content = document.getElementById('summary-content');
-
             if (ongoing.length === 0 && retour.length === 0) {
-                content.innerHTML = '<p class="text-xs text-slate-400 italic">Aucune option sélectionnée...</p>';
+                content.innerHTML = '<div class="py-6 text-center"><p class="text-[10px] text-slate-400 italic">Select your options...</p></div>';
                 return;
             }
-
-            let html = `<div><p class="text-[10px] font-bold text-brand-600 uppercase mb-2">Trajet Aller</p>`;
-            html += ongoing.map(b => `
-                <div class="flex justify-between text-[10px] mb-1">
-                    <span class="text-slate-500">${b.label}</span>
-                    <span class="font-bold text-slate-700">${b.price} DA</span>
-                </div>
-            `).join('');
+            let html = `<div><p class="text-[10px] font-black text-slate-900 uppercase border-b pb-2 mb-3 tracking-widest">Ongoing Trip</p>`;
+            html += ongoing.map(b => `<div class="flex justify-between text-[11px] mb-1"><span>${b.label}</span><b>${b.price.toFixed(0)} DA</b></div>`).join('');
             html += `</div>`;
-
             if (retour.length > 0) {
-                html += `<div class="mt-4 pt-4 border-t border-slate-100">
-                    <p class="text-[10px] font-bold text-brand-600 uppercase mb-2">Trajet Retour</p>`;
-                html += retour.map(b => `
-                    <div class="flex justify-between text-[10px] mb-1">
-                        <span class="text-slate-500">${b.label}</span>
-                        <span class="font-bold text-slate-700">${b.price} DA</span>
-                    </div>
-                `).join('');
+                html += `<div class="mt-6 pt-4 border-t border-slate-100"> <p class="text-[10px] font-black text-slate-900 uppercase border-b pb-2 mb-3 tracking-widest">Return Trip</p>`;
+                html += retour.map(b => `<div class="flex justify-between text-[11px] mb-1"><span>${b.label}</span><b>${b.price.toFixed(0)} DA</b></div>`).join('');
                 html += `</div>`;
             }
-
             content.innerHTML = html;
         };
 
@@ -305,28 +352,24 @@
                 depPicker = flatpickr("#inp-date-dep", { dateFormat: "Y-m-d", minDate: "today", onChange: _calculateTotal });
                 retPicker = flatpickr("#inp-date-ret", { dateFormat: "Y-m-d", minDate: "today", onChange: _calculateTotal });
             },
-            setRoutes: (r) => providerRoutes = r,
+            setRoutes: r => providerRoutes = r,
             getRoutes: () => providerRoutes,
             getPickers: () => ({ dep: depPicker, ret: retPicker }),
-            fetchPricing: async (routeId) => {
-                const outRes = await fetch(`/admin_panel/api/admin/route/${routeId}/pricing/`);
-                const out = await outRes.json();
-                if (out.status === 'success') outboundPricing = out.data;
-
-                const isRound = document.querySelector('input[name="triptype"]:checked').value === 'round';
-                if (isRound) {
-                    const f = providerRoutes.find(r => r.route_id == routeId);
-                    const rRoute = providerRoutes.find(r => r.origin_name === f.dest_name && r.dest_name === f.origin_name);
-                    if (rRoute) {
-                        const rRes = await fetch(`/admin_panel/api/admin/route/${rRoute.route_id}/pricing/`);
-                        const rData = await rRes.json();
-                        if (rData.status === 'success') {
-                            returnPricing = rData.data;
+            fetchPricing: async id => {
+                const outRes = await fetch(`/admin_panel/api/admin/route/${id}/pricing/`);
+                const out = await outRes.json(); if (out.status === 'success') outboundPricing = out.data;
+                const isR = document.querySelector('input[name="triptype"]:checked').value === 'round';
+                if (isR) {
+                    const f = providerRoutes.find(r => r.route_id == id);
+                    const rr = providerRoutes.find(r => r.origin_name === f.dest_name && r.dest_name === f.origin_name);
+                    if (rr) {
+                        const rRes = await fetch(`/admin_panel/api/admin/route/${rr.route_id}/pricing/`);
+                        const rD = await rRes.json(); if (rD.status === 'success') {
+                            returnPricing = rD.data;
                             returnOptions.accommodations = [...new Set(returnPricing.filter(i => i.category === 'accommodation').map(i => i.item_name))];
                         }
                     }
                 }
-
                 outboundOptions = {
                     accommodations: [...new Set(outboundPricing.filter(i => i.category === 'accommodation').map(i => i.item_name))],
                     passenger_types: [...new Set(outboundPricing.filter(i => i.category === 'pax').map(i => i.item_name))],
@@ -337,11 +380,7 @@
             getOptions: () => outboundOptions,
             getReturnOptions: () => returnOptions,
             runCalculation: _calculateTotal,
-            clearPickers: function () {
-                if (depPicker) depPicker.clear();
-                if (retPicker) retPicker.clear();
-                _calculateTotal();
-            }
+            clearPickers: () => { depPicker.clear(); retPicker.clear(); _calculateTotal(); }
         };
     })();
 
@@ -351,14 +390,12 @@
         document.getElementById('view-marketplace').classList.add('hidden');
         document.getElementById('view-form').classList.remove('hidden');
         document.getElementById('selected-provider-name').innerText = name;
-        fetch(`/ferries/api/provider/${id}/routes/`)
-            .then(res => res.json())
-            .then(data => { FerryBookingEngine.setRoutes(data.routes); populateOrigins(); });
+        fetch(`/ferries/api/provider/${id}/routes/`).then(res => res.json()).then(data => { FerryBookingEngine.setRoutes(data.routes); populateOrigins(); });
     }
 
     function populateOrigins() {
         const origins = [...new Set(FerryBookingEngine.getRoutes().map(r => r.origin_name))];
-        document.getElementById('inp-origin').innerHTML = '<option value="">Départ...</option>' + origins.map(o => `<option value="${o}">${o}</option>`).join('');
+        document.getElementById('inp-origin').innerHTML = '<option value="">Origin...</option>' + origins.map(o => `<option value="${o}">${o}</option>`).join('');
     }
 
     function updateDestinations() {
@@ -369,71 +406,54 @@
     }
 
     async function updateCalendarsAndOptions() {
-        const routeId = document.getElementById('inp-dest').value;
-        if (!routeId) return;
-        fetch(`/ferries/api/route/${routeId}/available-dates/`).then(res => res.json()).then(data => {
-            if (data.status === 'success') FerryBookingEngine.getPickers().dep.set("enable", data.dates);
-        });
+        const routeId = document.getElementById('inp-dest').value; if (!routeId) return;
+        fetch(`/ferries/api/route/${routeId}/available-dates/`).then(res => res.json()).then(data => { if (data.status === 'success') FerryBookingEngine.getPickers().dep.set("enable", data.dates); });
+        const options = await FerryBookingEngine.fetchPricing(routeId);
         const isRound = document.querySelector('input[name="triptype"]:checked').value === 'round';
         if (isRound) {
             const f = FerryBookingEngine.getRoutes().find(r => r.route_id == routeId);
             const r = FerryBookingEngine.getRoutes().find(r => r.origin_name === f.dest_name && r.dest_name === f.origin_name);
-            if (r) {
-                fetch(`/ferries/api/route/${r.route_id}/available-dates/`).then(res => res.json()).then(data => {
-                    if (data.status === 'success') FerryBookingEngine.getPickers().ret.set("enable", data.dates);
-                });
-            }
+            if (r) fetch(`/ferries/api/route/${r.route_id}/available-dates/`).then(res => res.json()).then(data => { if (data.status === 'success') FerryBookingEngine.getPickers().ret.set("enable", data.dates); });
         }
-        const options = await FerryBookingEngine.fetchPricing(routeId);
-        document.getElementById('v-type').innerHTML = '<option value="">Type de véhicule...</option>' + options.vehicles.map(v => `<option value="${v}">${v}</option>`).join('');
+        document.getElementById('v-type').innerHTML = '<option value="">Type...</option>' + options.vehicles.map(v => `<option value="${v}">${v}</option>`).join('');
         document.getElementById('passenger-counts-container').innerHTML = options.passenger_types.map(t => `
-            <div class="bg-white border border-slate-200 p-3 rounded-xl text-center">
-                <label class="block text-xs text-slate-500 mb-1">${t}s</label>
-                <input type="number" id="count-${t.toLowerCase()}" value="${t === 'Adult' ? '1' : '0'}" min="${t === 'Adult' ? '1' : '0'}" 
-                       onchange="renderManifest()" class="w-full text-center font-bold text-lg outline-none bg-transparent">
+            <div class="glass-card p-4 text-center bg-slate-50/30 border-slate-100">
+                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">${t}s</label>
+                <input type="number" id="count-${t.toLowerCase()}" value="${t === 'Adult' ? '1' : '0'}" min="${t === 'Adult' ? '1' : '0'}" onchange="renderManifest()" class="w-full text-center font-black text-xl outline-none bg-transparent">
             </div>`).join('');
         renderManifest();
     }
 
     function renderManifest() {
-        const container = document.getElementById('manifest-container');
-        container.innerHTML = '';
+        const container = document.getElementById('manifest-container'); container.innerHTML = '';
         const isRound = document.querySelector('input[name="triptype"]:checked').value === 'round';
-        const origin = document.getElementById('inp-origin').value || 'A';
-        const dest = document.getElementById('inp-dest').options[document.getElementById('inp-dest').selectedIndex]?.text || 'B';
-        const options = FerryBookingEngine.getOptions();
-        const retOptions = FerryBookingEngine.getReturnOptions();
+        const opts = FerryBookingEngine.getOptions(), retOpts = FerryBookingEngine.getReturnOptions();
+        const origin = document.getElementById('inp-origin').value || 'A', dest = document.getElementById('inp-dest').options[document.getElementById('inp-dest').selectedIndex]?.text || 'B';
 
-        options.passenger_types.forEach(type => {
+        opts.passenger_types.forEach(type => {
             const count = parseInt(document.getElementById(`count-${type.toLowerCase()}`)?.value || 0);
             for (let i = 1; i <= count; i++) {
                 container.innerHTML += `
-                <div class="passenger-row bg-slate-50 border border-slate-200 rounded-xl p-5 space-y-4 animate-fade-in" data-type="${type}">
-                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">${type} ${i}</span>
-                    <div class="grid grid-cols-2 gap-4">
-                        <input type="text" placeholder="Prénom" class="p-fname border p-2.5 rounded-lg text-sm bg-white" required>
-                        <input type="text" placeholder="Nom" class="p-lname border p-2.5 rounded-lg text-sm bg-white" required>
+                <div class="passenger-row glass-card p-4 sm:p-6 space-y-6 animate-fade-in" data-type="${type}">
+                    <span class="section-label mb-0">${type} ${i}</span>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
+                        <input type="text" placeholder="First Name" class="p-fname input-group-custom p-3 text-sm font-bold" required>
+                        <input type="text" placeholder="Last Name" class="p-lname input-group-custom p-3 text-sm font-bold" required>
                     </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <input type="text" placeholder="N° Passeport" class="p-passport border p-2.5 rounded-lg text-sm bg-white font-mono uppercase" required>
-                        <input type="date" class="p-dob border p-2.5 rounded-lg text-sm bg-white" required>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
+                        <input type="text" placeholder="Passport No." class="p-passport input-group-custom p-3 text-sm font-bold uppercase font-mono" required>
+                        <input type="date" class="p-dob input-group-custom p-3 text-sm font-bold" required>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-${isRound ? '2' : '1'} gap-4 pt-2">
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">${origin} → ${dest}</label>
-                            <select class="p-acc-out w-full border p-2.5 rounded-lg text-sm bg-white font-medium" onchange="FerryBookingEngine.runCalculation()" required>
-                                <option value="">Installation Aller...</option>
-                                ${options.accommodations.map(a => `<option value="${a}">${a}</option>`).join('')}
-                            </select>
-                        </div>
+                    <div class="grid grid-cols-1 md:grid-cols-${isRound ? '2' : '1'} gap-4 md:gap-6">
+                        <select class="p-acc-out input-group-custom p-3 text-sm font-bold" onchange="FerryBookingEngine.runCalculation()">
+                            <option value="">❌ No Accommodation (Sharing)</option>
+                            ${opts.accommodations.map(a => `<option value="${a}">${a}</option>`).join('')}
+                        </select>
                         ${isRound ? `
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">${dest} → ${origin}</label>
-                            <select class="p-acc-ret w-full border p-2.5 rounded-lg text-sm bg-white font-medium" onchange="FerryBookingEngine.runCalculation()" required>
-                                <option value="">Installation Retour...</option>
-                                ${retOptions.accommodations.map(a => `<option value="${a}">${a}</option>`).join('')}
-                            </select>
-                        </div>` : ''}
+                        <select class="p-acc-ret input-group-custom p-3 text-sm font-bold" onchange="FerryBookingEngine.runCalculation()">
+                            <option value="">🏠 Return Acc (${dest} → ${origin})</option>
+                            ${retOpts.accommodations.map(a => `<option value="${a}">${a}</option>`).join('')}
+                        </select>` : ''}
                     </div>
                 </div>`;
             }
@@ -442,64 +462,113 @@
     }
 
     function toggleTripTypeUI(isRound) {
-        document.getElementById('return-date-container').classList.toggle('invisible', !isRound);
+        document.getElementById('return-date-container').style.opacity = isRound ? '1' : '0.3';
+        document.getElementById('return-date-container').style.pointerEvents = isRound ? 'auto' : 'none';
         updateCalendarsAndOptions();
     }
-
-    function toggleVehicle() {
-        document.getElementById('vehicle-form').classList.toggle('hidden', !document.getElementById('vehicle-toggle').checked);
-        FerryBookingEngine.runCalculation();
-    }
-
+    function toggleVehicle() { document.getElementById('vehicle-form').classList.toggle('hidden', !document.getElementById('vehicle-toggle').checked); FerryBookingEngine.runCalculation(); }
     function showMarketplace() { document.getElementById('view-form').classList.add('hidden'); document.getElementById('view-marketplace').classList.remove('hidden'); }
 
     function submitDemand() {
         const btn = document.querySelector('button[type="submit"]');
-        btn.disabled = true;
-        btn.innerHTML = '<i class="ph ph-spinner animate-spin"></i> Envoi...';
 
+        // 1. Basic Validation check
+        const routeId = document.getElementById('inp-dest').value;
+        const depDate = document.getElementById('inp-date-dep').value;
+        if (!routeId || !depDate) {
+            alert("Please select a route and departure date first.");
+            return;
+        }
+
+        // 2. Prepare Payload
         const payload = {
-            route_id: document.getElementById('inp-dest').value,
+            route_id: parseInt(routeId),
             trip_type: document.querySelector('input[name="triptype"]:checked').value,
-            departure_date: document.getElementById('inp-date-dep').value,
+            departure_date: depDate,
             return_date: document.getElementById('inp-date-ret').value || null,
             passengers: [],
             vehicle: null
         };
 
-        document.querySelectorAll('.passenger-row').forEach(row => {
+        // 3. Collect Passengers Data
+        const paxRows = document.querySelectorAll('.passenger-row');
+        let namesValid = true;
+
+        paxRows.forEach((row) => {
+            const firstName = row.querySelector('.p-fname').value.trim();
+            const lastName = row.querySelector('.p-lname').value.trim();
+            const passport = row.querySelector('.p-passport').value.trim();
+            const dob = row.querySelector('.p-dob').value;
+            const outAcc = row.querySelector('.p-acc-out').value;
+            const retAcc = row.querySelector('.p-acc-ret')?.value || null;
+
+            if (!firstName || !lastName) namesValid = false;
+
             payload.passengers.push({
-                type: row.dataset.type,
-                first_name: row.querySelector('.p-fname').value,
-                last_name: row.querySelector('.p-lname').value,
-                birth_date: row.querySelector('.p-dob').value,
-                passport_number: row.querySelector('.p-passport').value,
-                outbound_accommodation: row.querySelector('.p-acc-out').value,
-                return_accommodation: row.querySelector('.p-acc-ret')?.value || null
+                type: row.dataset.type, // e.g., 'Adult'
+                first_name: firstName,
+                last_name: lastName,
+                passport_number: passport,
+                birth_date: dob,
+                outbound_accommodation: outAcc || null, // Sends null if empty string
+                return_accommodation: retAcc || null   // Sends null if empty string
             });
         });
 
+        if (!namesValid) {
+            alert("Please fill in all passenger names.");
+            return;
+        }
+
+        // 4. Collect Vehicle Data (if toggled)
         if (document.getElementById('vehicle-toggle').checked) {
+            const vType = document.getElementById('v-type').value;
+            if (!vType) {
+                alert("Please select a vehicle type.");
+                return;
+            }
             payload.vehicle = {
-                type: document.getElementById('v-type').value,
-                model: document.getElementById('v-model').value,
-                plate: document.getElementById('v-plate').value,
+                type: vType,
+                model: document.getElementById('v-model').value.trim(),
+                plate: document.getElementById('v-plate').value.trim(),
                 roof_box: document.getElementById('v-roof').checked,
                 trailer: document.getElementById('v-trailer').checked
             };
         }
 
+        // 5. Execute API Call
+        btn.disabled = true;
+        btn.innerHTML = '<i class="ph ph-spinner animate-spin"></i> Processing...';
+
         fetch("{% url 'api_create_demand' %}", {
             method: "POST",
             body: JSON.stringify(payload),
-            headers: { "Content-Type": "application/json", "X-CSRFToken": "{{ csrf_token }}" }
-        }).then(res => res.json()).then(data => {
-            if (data.status === 'success') {
-                document.getElementById('view-form').classList.add('hidden');
-                document.getElementById('view-success').classList.remove('hidden');
-                document.getElementById('success-id').innerText = data.reference;
-            } else { alert(data.message); btn.disabled = false; btn.innerText = "Envoyer la Demande"; }
-        });
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": "{{ csrf_token }}"
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Hide form and show success view
+                    document.getElementById('view-form').classList.add('hidden');
+                    document.getElementById('view-success').classList.remove('hidden');
+                    document.getElementById('success-id').innerText = data.reference;
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                    // Handle server-side validation errors
+                    alert("Error: " + data.message);
+                    btn.disabled = false;
+                    btn.innerHTML = 'SEND QUOTE REQUEST';
+                }
+            })
+            .catch(error => {
+                console.error("Submission Error:", error);
+                alert("A system error occurred. Please try again.");
+                btn.disabled = false;
+                btn.innerHTML = 'SEND QUOTE REQUEST';
+            });
     }
 </script>
 {% endblock %}

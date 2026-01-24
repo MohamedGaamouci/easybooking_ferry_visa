@@ -67,70 +67,45 @@ def validate_passenger_structure(passengers):
 # --- Main Form ---
 
 
-class FerryRequestForm(forms.ModelForm):
-    # We add route_id explicitly because the model expects a 'route' object,
-    # but the API receives a 'route_id' integer.
+class FerryRequestForm(forms.Form):
     route_id = forms.IntegerField(required=True)
-
-    class Meta:
-        model = FerryRequest
-        fields = ['trip_type', 'departure_date',
-                  'return_date', 'accommodation']
+    trip_type = forms.ChoiceField(
+        choices=[('oneway', 'One Way'), ('round', 'Round Trip')], required=True)
+    departure_date = forms.DateField(required=True)
+    return_date = forms.DateField(required=False)
 
     def clean(self):
         cleaned_data = super().clean()
+        rid = cleaned_data.get('route_id')
         trip_type = cleaned_data.get('trip_type')
         dep_date = cleaned_data.get('departure_date')
         ret_date = cleaned_data.get('return_date')
 
-        # 1. Date Logic
+        # 1. Ensure Route Exists
+        if rid and not ProviderRoute.objects.filter(pk=rid, is_active=True).exists():
+            raise ValidationError("The selected route is invalid.")
+
+        # 2. Schedule Check (Ongoing)
+        if rid and dep_date:
+            if not RouteSchedule.objects.filter(route_id=rid, date=dep_date, is_active=True).exists():
+                self.add_error('departure_date',
+                               "No departure available on this date.")
+
+        # 3. Round Trip Logic
         if trip_type == 'round':
             if not ret_date:
-                self.add_error(
-                    'return_date', "Return date is required for round trips.")
-            elif dep_date and ret_date and ret_date < dep_date:
+                self.add_error('return_date', "Return date is required.")
+            elif dep_date and ret_date < dep_date:
                 self.add_error(
                     'return_date', "Return date cannot be before departure.")
 
-        # 2. Prevent Past Dates (Optional, good practice)
-        if dep_date and dep_date < datetime.date.today():
-            self.add_error('departure_date',
-                           "Departure cannot be in the past.")
-
-        return cleaned_data
-
-    def clean_route_id(self):
-        rid = self.cleaned_data['route_id']
-        # Ensure route exists and is active
-        if not ProviderRoute.objects.filter(pk=rid, is_active=True).exists():
-            raise ValidationError("The selected route is invalid or inactive.")
-        return rid
-
-
-class FerryRequestForm(forms.ModelForm):
-    route_id = forms.IntegerField(required=True)
-
-    class Meta:
-        model = FerryRequest
-        fields = ['trip_type', 'departure_date',
-                  'return_date', 'accommodation']
-
-    def clean(self):
-        cleaned_data = super().clean()
-        route_id = cleaned_data.get('route_id')
-        dep_date = cleaned_data.get('departure_date')
-
-        # New Schedule Validation
-        if route_id and dep_date:
-            # Check if this date is actually in the RouteSchedule table
-            is_available = RouteSchedule.objects.filter(
-                route_id=route_id,
-                date=dep_date,
-                is_active=True
-            ).exists()
-
-            if not is_available:
-                self.add_error(
-                    'departure_date', "The selected provider does not have a departure on this date.")
+            # Schedule Check (Return Leg)
+            outbound = ProviderRoute.objects.get(pk=rid)
+            reverse_route = ProviderRoute.objects.filter(
+                origin=outbound.destination, destination=outbound.origin).first()
+            if reverse_route and ret_date:
+                if not RouteSchedule.objects.filter(route=reverse_route, date=ret_date, is_active=True).exists():
+                    self.add_error(
+                        'return_date', "No return ferry available on this date.")
 
         return cleaned_data

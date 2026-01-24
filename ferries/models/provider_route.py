@@ -89,6 +89,12 @@ class RoutePriceComponent(models.Model):
             models.Index(fields=['route', 'category', 'item_name']),
             models.Index(fields=['start_date', 'end_date']),
         ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['route', 'category', 'item_name'],
+                name='unique_price_component_per_route'
+            )
+        ]
 
     def __str__(self):
         return f"{self.item_name} on {self.route.provider.code} ({self.selling_price} DA)"

@@ -2,26 +2,19 @@
 # Ensure you have this from previous steps
 from ferries.services.ferry_services import FerryPricingService, FerryScheduleService, FerryPriceAdminService
 from ferries.models.provider_route import RoutePriceComponent, RouteSchedule
-from .models import FerryRequest
 from finance.services.invoice import create_single_service_invoice
 from django.core.exceptions import ValidationError
 from django.db.models import Sum, Count, Q
-from .models import FerryRequest
 from django.db.models import Q
 from django.core.paginator import Paginator
-from .form import FerryRequestForm, validate_passenger_structure
-from .models import FerryRequest, ProviderRoute
+from .form import FerryRequestForm, validate_passenger_structure, ProviderForm
+from .models import FerryRequest, ProviderRoute, Provider, ProviderRoute, Port
 from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_POST
-from .form import ProviderForm, FerryRequestForm
-from .models import Provider, ProviderRoute, Port
 from django.db import transaction
 import json
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST, require_GET
-from django.contrib.auth.decorators import login_required
-from .models import Port, FerryRequest
 from .form import PortForm
 from django.shortcuts import render
 
@@ -269,67 +262,128 @@ def get_provider_routes_api(request, provider_id):
 # 1. CREATE METHOD
 # ==========================================
 
+# @login_required
+# @require_POST
+# def create_ferry_request_api(request):
+#     try:
+#         # A. Parse JSON
+#         try:
+#             data = json.loads(request.body)
+#         except json.JSONDecodeError:
+#             return JsonResponse({'status': 'error', 'message': 'Invalid JSON format.'}, status=400)
+
+#         # B. Get Agency (Security)
+#         user_agency = getattr(request.user, 'agency', None)
+#         if not user_agency:
+#             return JsonResponse({'status': 'error', 'message': 'You must be logged in as an Agency Manager.'}, status=403)
+
+#         # C. Validate Form (Includes Schedule Validation)
+#         form = FerryRequestForm(data)
+#         if not form.is_valid():
+#             first_error = next(iter(form.errors.values()))[0]
+#             return JsonResponse({'status': 'error', 'message': first_error}, status=400)
+
+#         # D. Validate Passenger Structure
+#         passengers = data.get('passengers', [])
+#         p_error = validate_passenger_structure(passengers)
+#         if p_error:
+#             return JsonResponse({'status': 'error', 'message': p_error}, status=400)
+
+#         # E. NEW: Atomic Pricing Calculation
+#         # This calculates the price server-side so it cannot be manipulated by the client
+#         try:
+#             pricing_result = FerryPricingService.calculate_total_price(
+#                 route_id=data['route_id'],
+#                 travel_date=data['departure_date'],
+#                 passengers=passengers,
+#                 vehicle=data.get('vehicle'),
+#                 accommodation=data.get('accommodation')
+#             )
+#         except ValidationError as ve:
+#             return JsonResponse({'status': 'error', 'message': str(ve)}, status=400)
+
+#         # F. Save with Atomic Transaction
+#         with transaction.atomic():
+#             cleaned = form.cleaned_data
+#             route = ProviderRoute.objects.get(pk=cleaned['route_id'])
+
+#             req = FerryRequest.objects.create(
+#                 agency=user_agency,
+#                 route=route,
+#                 trip_type=cleaned['trip_type'],
+#                 departure_date=cleaned['departure_date'],
+#                 return_date=cleaned['return_date'],
+#                 accommodation=cleaned['accommodation'],
+#                 passengers_data=passengers,
+#                 vehicle_data=data.get('vehicle', None),
+
+#                 # Dynamic Pricing Data
+#                 net_price=pricing_result['total_net'],
+#                 selling_price=pricing_result['total_selling'],
+#                 # breakdown is stored to keep a record of prices at time of booking
+#                 price_breakdown=pricing_result['breakdown'],
+
+#                 status='pending',
+#                 requested_by=request.user
+#             )
+
+#         return JsonResponse({
+#             'status': 'success',
+#             'reference': req.reference,
+#             'message': 'Request created successfully',
+#             'total_price': float(req.selling_price)
+#         })
+
+#     except Exception as e:
+#         return JsonResponse({'status': 'error', 'message': f"System Error: {str(e)}"}, status=500)
+
 @login_required
 @require_POST
 def create_ferry_request_api(request):
     try:
-        # A. Parse JSON
-        try:
-            data = json.loads(request.body)
-        except json.JSONDecodeError:
-            return JsonResponse({'status': 'error', 'message': 'Invalid JSON format.'}, status=400)
-
-        # B. Get Agency (Security)
+        data = json.loads(request.body)
         user_agency = getattr(request.user, 'agency', None)
-        if not user_agency:
-            return JsonResponse({'status': 'error', 'message': 'You must be logged in as an Agency Manager.'}, status=403)
 
-        # C. Validate Form (Includes Schedule Validation)
+        if not user_agency:
+            return JsonResponse({'status': 'error', 'message': 'Agency account required.'}, status=403)
+
+        # 1. Form Validation
         form = FerryRequestForm(data)
         if not form.is_valid():
-            first_error = next(iter(form.errors.values()))[0]
-            return JsonResponse({'status': 'error', 'message': first_error}, status=400)
+            return JsonResponse({'status': 'error', 'message': form.errors.as_text()}, status=400)
 
-        # D. Validate Passenger Structure
         passengers = data.get('passengers', [])
-        p_error = validate_passenger_structure(passengers)
-        if p_error:
-            return JsonResponse({'status': 'error', 'message': p_error}, status=400)
+        if not passengers:
+            return JsonResponse({'status': 'error', 'message': 'Passenger list is empty.'}, status=400)
 
-        # E. NEW: Atomic Pricing Calculation
-        # This calculates the price server-side so it cannot be manipulated by the client
+        # 2. Server-side Pricing (Atomic)
         try:
             pricing_result = FerryPricingService.calculate_total_price(
                 route_id=data['route_id'],
-                travel_date=data['departure_date'],
+                trip_type=data['trip_type'],
+                departure_date=data['departure_date'],
+                return_date=data.get('return_date'),
                 passengers=passengers,
-                vehicle=data.get('vehicle'),
-                accommodation=data.get('accommodation')
+                vehicle_data=data.get('vehicle')
             )
-        except ValidationError as ve:
-            return JsonResponse({'status': 'error', 'message': str(ve)}, status=400)
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': f"Pricing Error: {str(e)}"}, status=400)
 
-        # F. Save with Atomic Transaction
+        # 3. Save to Database
         with transaction.atomic():
-            cleaned = form.cleaned_data
-            route = ProviderRoute.objects.get(pk=cleaned['route_id'])
+            route = ProviderRoute.objects.get(pk=data['route_id'])
 
             req = FerryRequest.objects.create(
                 agency=user_agency,
                 route=route,
-                trip_type=cleaned['trip_type'],
-                departure_date=cleaned['departure_date'],
-                return_date=cleaned['return_date'],
-                accommodation=cleaned['accommodation'],
-                passengers_data=passengers,
-                vehicle_data=data.get('vehicle', None),
-
-                # Dynamic Pricing Data
+                trip_type=data['trip_type'],
+                departure_date=data['departure_date'],
+                return_date=data.get('return_date'),
+                passengers_data=passengers,  # JSONField in model
+                vehicle_data=data.get('vehicle'),  # JSONField in model
                 net_price=pricing_result['total_net'],
                 selling_price=pricing_result['total_selling'],
-                # breakdown is stored to keep a record of prices at time of booking
                 price_breakdown=pricing_result['breakdown'],
-
                 status='pending',
                 requested_by=request.user
             )
@@ -337,12 +391,11 @@ def create_ferry_request_api(request):
         return JsonResponse({
             'status': 'success',
             'reference': req.reference,
-            'message': 'Request created successfully',
             'total_price': float(req.selling_price)
         })
 
     except Exception as e:
-        return JsonResponse({'status': 'error', 'message': f"System Error: {str(e)}"}, status=500)
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 # ==========================================
 # 2. UPDATE METHOD
 # ==========================================

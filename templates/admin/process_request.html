@@ -11,297 +11,283 @@
                 class="hover:text-slate-900 cursor-pointer transition-colors">Requests</a>
             <i class="ph-bold ph-caret-right text-xs"></i>
             <span class="font-medium text-slate-900">{{ req.reference }}</span>
-            {% if req.status == 'pending' %}
-            <span class="ml-2 font-bold text-blue-800 bg-blue-100 px-2 py-0.5 rounded-full text-xs uppercase">
-                New
-            </span>
-            {% elif req.status == 'processing' %}
-            <span
-                class="ml-2 inline-flex items-center gap-1 font-bold text-white bg-blue-600 px-2 py-0.5 rounded-full text-xs uppercase">
-                <i class="ph-bold ph-spinner animate-spin"></i>
-                Processing
-            </span>
 
-            {% elif req.status == 'offer_sent' %}
-            <span class="ml-2 font-bold text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded-full text-xs uppercase">
-                Offer Sent
+            <span class="ml-2">
+                {% if req.status == 'pending' %}
+                <span class="font-bold text-blue-800 bg-blue-100 px-2 py-0.5 rounded-full text-xs uppercase">New</span>
+                {% elif req.status == 'processing' %}
+                <span
+                    class="inline-flex items-center gap-1 font-bold text-white bg-blue-600 px-2 py-0.5 rounded-full text-xs uppercase">
+                    <i class="ph-bold ph-spinner animate-spin"></i> Processing
+                </span>
+                {% elif req.status == 'offer_sent' %}
+                <span class="font-bold text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded-full text-xs uppercase">Offer
+                    Sent</span>
+                {% elif req.status == 'confirmed' %}
+                <span
+                    class="font-bold text-green-800 bg-green-100 px-2 py-0.5 rounded-full text-xs uppercase">Confirmed</span>
+                {% elif req.status == 'cancelled' or req.status == 'rejected' %}
+                <span class="font-bold text-red-800 bg-red-100 px-2 py-0.5 rounded-full text-xs uppercase">
+                    {{ req.status|capfirst }}</span>
+                {% else %}
+                <span class="font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-full text-xs uppercase">
+                    {{ req.status|capfirst }}</span>
+                {% endif %}
             </span>
-            {% elif req.status == 'confirmed' %}
-            <span class="ml-2 font-bold text-green-800 bg-green-100 px-2 py-0.5 rounded-full text-xs uppercase">
-                Confirmed
-            </span>
-            {% elif req.status == 'cancelled' or req.status == 'rejected' %}
-            <span class="ml-2 font-bold text-red-800 bg-red-100 px-2 py-0.5 rounded-full text-xs uppercase">
-                {{ req.status|capfirst }}
-            </span>
-            {% else %}
-            <span class="ml-2 font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-full text-xs uppercase">
-                {{ req.status|capfirst }}
-            </span>
-            {% endif %}
-
 
             <span
-                class="ml-2 bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide">
-                User Agent: {{ req.user_admin.get_full_name|default:"Unknown" }}
+                class="ml-2 bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide">
+                Agency: {{ req.agency.company_name }}
             </span>
         </div>
 
-        {% if req.status == "pending" or req.status == 'new' or req.status == 'processing'%}
-        <div class="flex gap-3">
-            <button onclick="reject_offer('{{ req.id }}', this)"
+        <div class="flex items-center gap-3">
+            {% if req.status == "pending" or req.status == 'processing' or req.status == 'offer_sent' %}
+            <button onclick="reject_offer('{{ req.reference }}', this)"
                 class="text-red-600 hover:bg-red-50 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-transparent hover:border-red-200">
                 Reject Request
             </button>
-        </div>
-        {% endif %}
-
-        {% if req.status == "confirmed" %}
-
-        <div class="flex flex-row items-center justify-end gap-3">
-
-            {% if req.voucher %}
-            <div class="flex flex-nowrap items-center gap-2 whitespace-nowrap
-                text-xs text-green-700 bg-green-50 px-3 py-2
-                rounded-lg border border-green-200">
-                <i class="ph-fill ph-check-circle text-lg"></i>
-                <span class="font-semibold hidden xl:inline">Voucher Attached</span>
-                <span class="text-green-300 hidden xl:inline">|</span>
-                <a href="{{ req.voucher.url }}" target="_blank" class="hover:text-green-900 font-bold underline
-                  decoration-green-300 hover:decoration-green-900
-                  underline-offset-2 transition-all">
-                    View File
-                </a>
-            </div>
             {% endif %}
 
-            <input type="file" id="voucher-input-{{ req.id }}" class="hidden" accept="application/pdf, image/*"
-                onchange="uploadVoucher('{{ req.id }}', this)">
-
-            <button onclick="document.getElementById('voucher-input-{{ req.id }}').click()" class="{% if req.voucher_file %}
-               bg-white border border-slate-300 text-slate-700 hover:bg-slate-50
-               {% else %}
-               bg-green-600 text-white hover:bg-green-700 border border-transparent
-               {% endif %}
-               px-4 py-2 rounded-lg text-sm font-bold shadow-sm
-               transition-all flex items-center gap-2">
-                <i
-                    class="ph-bold {% if req.voucher_file %}ph-arrows-clockwise{% else %}ph-file-arrow-up{% endif %}"></i>
-                {% if req.voucher_file %} Replace Voucher {% else %} Attach Voucher {% endif %}
-            </button>
-
+            {% if req.status == "confirmed" %}
+            <div class="flex items-center gap-3">
+                {% if req.voucher_file %}
+                <div
+                    class="flex items-center gap-2 text-xs text-green-700 bg-green-50 px-3 py-2 rounded-lg border border-green-200">
+                    <i class="ph-fill ph-check-circle text-lg"></i>
+                    <span class="font-semibold">Voucher Attached</span>
+                    <a href="{{ req.voucher_file.url }}" target="_blank"
+                        class="hover:text-green-900 font-bold underline underline-offset-2">View File</a>
+                </div>
+                {% endif %}
+                <input type="file" id="voucher-input-{{ req.id }}" class="hidden" accept="application/pdf, image/*"
+                    onchange="uploadVoucher('{{ req.id }}', this)">
+                <button onclick="document.getElementById('voucher-input-{{ req.id }}').click()"
+                    class="bg-green-600 text-white hover:bg-green-700 px-4 py-2 rounded-lg text-sm font-bold shadow-sm flex items-center gap-2">
+                    <i
+                        class="ph-bold {% if req.voucher_file %}ph-arrows-clockwise{% else %}ph-file-arrow-up{% endif %}"></i>
+                    {% if req.voucher_file %} Replace Voucher {% else %} Attach Voucher {% endif %}
+                </button>
+            </div>
+            {% endif %}
         </div>
-
-        {% endif %}
-
-
-
     </header>
 
-    <div class="flex-1 overflow-y-auto p-6 md:p-8">
+    <div class="flex-1 overflow-y-auto p-6 md:p-8 bg-slate-50/50">
         <div class="max-w-7xl mx-auto grid grid-cols-12 gap-6">
 
             <div class="col-span-12 lg:col-span-7 space-y-6">
 
-                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex items-center gap-4">
-                    <div
-                        class="w-12 h-12 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-xl">
-                        <i class="ph-fill ph-briefcase"></i>
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="bg-slate-50 p-4 border-b border-slate-200 flex items-center justify-between">
+                        <h3 class="font-bold text-slate-800 flex items-center gap-2 text-sm uppercase tracking-wider">
+                            <i class="ph-fill ph-map-trifold text-brand-500"></i> Trip Details
+                        </h3>
+                        <span
+                            class="text-[10px] font-bold text-slate-400 bg-white px-2 py-1 rounded border border-slate-200 uppercase">
+                            {{ req.get_trip_type_display }}
+                        </span>
                     </div>
-                    <div>
-                        <h3 class="text-sm font-bold text-slate-900">{{ req.agency.company_name }}</h3>
-                        <p class="text-xs text-slate-500">
-                            Agent: {{ req.requested_by.get_full_name|default:"Unknown" }} •
-                            <span class="text-green-600 font-medium">Verified Partner</span>
-                        </p>
+                    <div class="p-6">
+                        <div class="flex items-center justify-between mb-8 relative">
+                            <div class="text-center z-10 bg-white pr-4">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                    {{ req.route.origin.name }}</p>
+                                <h4 class="text-xl font-black text-slate-900">
+                                    {{ req.route.origin.code|default:req.route.origin.name|truncatechars:10 }}</h4>
+                                <p class="text-xs text-slate-500 mt-1">{{ req.departure_date }}</p>
+                            </div>
+                            <div
+                                class="absolute top-1/2 left-0 w-full h-px bg-dashed border-t-2 border-dashed border-slate-200 -z-0">
+                            </div>
+                            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-3">
+                                <i class="ph-fill ph-boat text-brand-500 text-xl"></i>
+                            </div>
+                            <div class="text-center z-10 bg-white pl-4">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                    {{ req.route.destination.name }}</p>
+                                <h4 class="text-xl font-black text-slate-900">
+                                    {{ req.route.destination.code|default:req.route.destination.name|truncatechars:10 }}
+                                </h4>
+                                <p class="text-xs text-slate-500 mt-1">{% if req.return_date %}{{ req.return_date }}
+                                    {% else %}One Way{% endif %}</p>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4 pt-4 border-t border-slate-100">
+                            <div>
+                                <span class="text-[10px] font-bold text-slate-400 uppercase block">Provider
+                                    Operator</span>
+                                <span class="text-sm font-bold text-slate-700">{{ req.route.provider.name }}</span>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase block">Agency Partner</span>
+                                <span class="text-sm font-bold text-slate-700">{{ req.agency.company_name }}</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div class="bg-slate-50 p-4 border-b border-slate-200 flex justify-between items-center">
-                        <h3 class="font-bold text-slate-800 flex items-center gap-2">
-                            <i class="ph-fill ph-list-magnifying-glass text-slate-400"></i> Request Details
+                    <div class="bg-slate-50 p-4 border-b border-slate-200">
+                        <h3 class="font-bold text-slate-800 flex items-center gap-2 text-sm uppercase tracking-wider">
+                            <i class="ph-fill ph-users text-slate-400"></i> Passenger Manifest
                         </h3>
                     </div>
-
-                    <div class="p-5 space-y-6">
-                        <section>
-                            <h4 class="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-1">
-                                <i class="ph-bold ph-map-pin"></i> Trip Details
-                            </h4>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-[10px] font-semibold text-slate-400 mb-1">Provider</label>
-                                    <input disabled value="{{ req.route.provider.name }}"
-                                        class="w-full bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg p-2 font-bold">
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-semibold text-slate-400 mb-1">Trip Type</label>
-                                    <input disabled value="{{ req.get_trip_type_display }}"
-                                        class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg p-2 font-medium">
-                                </div>
-                                <div class="col-span-2">
-                                    <label class="block text-[10px] font-semibold text-slate-400 mb-1">Route</label>
-                                    <input disabled
-                                        value="{{ req.route.origin.name }} ↔ {{ req.route.destination.name }}"
-                                        class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg p-2 font-medium">
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-semibold text-slate-400 mb-1">Departure</label>
-                                    <input disabled value="{{ req.departure_date }}"
-                                        class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg p-2 font-medium">
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-semibold text-slate-400 mb-1">Return</label>
-                                    <input disabled value="{{ req.return_date|default:'-' }}"
-                                        class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg p-2 font-medium">
-                                </div>
-                            </div>
-                        </section>
-
-                        <hr class="border-slate-100">
-
-                        <section>
-                            <h4 class="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-1">
-                                <i class="ph-bold ph-armchair"></i> Preferences
-                            </h4>
-                            <div class="mb-4">
-                                <label class="block text-[10px] font-semibold text-slate-400 mb-1">Cabin
-                                    Preference</label>
-                                <input disabled value="{{ req.accommodation }}"
-                                    class="w-full bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg p-2 font-bold">
-                            </div>
-                        </section>
-
-                        <hr class="border-slate-100">
-
-                        <section>
-                            <h4 class="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-1">
-                                <i class="ph-bold ph-users"></i> Passenger Manifest ({{ passenger_count }})
-                            </h4>
-                            <div class="space-y-3">
+                    <div class="p-0">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50/50">
+                                    <th
+                                        class="p-4 text-[10px] font-black text-slate-400 uppercase border-b border-slate-100">
+                                        Passenger</th>
+                                    <th
+                                        class="p-4 text-[10px] font-black text-slate-400 uppercase border-b border-slate-100">
+                                        Passport / DOB</th>
+                                    <th
+                                        class="p-4 text-[10px] font-black text-slate-400 uppercase border-b border-slate-100">
+                                        Installations</th>
+                                </tr>
+                            </thead>
+                            <tbody>
                                 {% for p in req.passengers_data %}
-                                <div class="bg-slate-50 border border-slate-200 rounded-lg p-3 relative text-sm">
-                                    <div class="flex justify-between items-center mb-2">
-                                        <span
-                                            class="text-xs font-bold text-slate-500 uppercase bg-white px-2 py-0.5 rounded border border-slate-200">
-                                            {{p.type }}</span>
-                                    </div>
-                                    <div class="grid grid-cols-2 gap-2">
-                                        <div><span class="text-[10px] text-slate-400 block">Name</span> <span
-                                                class="font-bold text-slate-800">
-                                                {{ p.first_name }} {{ p.last_name}}</span></div>
-                                        <div><span class="text-[10px] text-slate-400 block">Passport</span> <span
-                                                class="font-mono text-slate-600">{{ p.passport_number }}</span></div>
-                                    </div>
-                                </div>
+                                <tr class="hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0">
+                                    <td class="p-4">
+                                        <div class="font-bold text-slate-900">{{ p.first_name }} {{ p.last_name }}</div>
+                                        <div class="text-[10px] font-bold text-brand-600 uppercase">{{ p.type }}</div>
+                                    </td>
+                                    <td class="p-4">
+                                        <div class="font-mono text-xs text-slate-700">{{ p.passport_number }}</div>
+                                        <div class="text-[10px] text-slate-400">{{ p.birth_date }}</div>
+                                    </td>
+                                    <td class="p-4">
+                                        <div class="space-y-1">
+                                            <div class="flex items-center gap-2">
+                                                <span
+                                                    class="text-[9px] font-black bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded">OUT</span>
+                                                <span class="text-xs font-medium text-slate-700">
+                                                    {% if p.outbound_accommodation %}{{ p.outbound_accommodation }}
+                                                    {% else %}Sharing / No Acc{% endif %}</span>
+                                            </div>
+                                            {% if req.trip_type == 'round' %}
+                                            <div class="flex items-center gap-2">
+                                                <span
+                                                    class="text-[9px] font-black bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded">RET</span>
+                                                <span class="text-xs font-medium text-slate-700">
+                                                    {% if p.return_accommodation %}{{ p.return_accommodation }}
+                                                    {% else %}Sharing / No Acc
+                                                    {% endif %}</span>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
                                 {% endfor %}
-                            </div>
-                        </section>
-
-                        {% if req.vehicle_data %}
-                        <hr class="border-slate-100">
-                        <section>
-                            <h4 class="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-1">
-                                <i class="ph-bold ph-car"></i> Vehicle
-                            </h4>
-                            <div class="grid grid-cols-2 gap-4 mb-3">
-                                <div>
-                                    <label
-                                        class="block text-[10px] font-semibold text-slate-400 mb-1">Type/Model</label>
-                                    <input disabled value="{{ req.vehicle_data.type }} - {{ req.vehicle_data.model }}"
-                                        class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg p-2 font-medium">
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-semibold text-slate-400 mb-1">Plate
-                                        Number</label>
-                                    <input disabled value="{{ req.vehicle_data.plate }}"
-                                        class="w-full bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg p-2 font-bold font-mono uppercase">
-                                </div>
-                            </div>
-                        </section>
-                        {% endif %}
-
+                            </tbody>
+                        </table>
                     </div>
                 </div>
+
+                {% if req.vehicle_data %}
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="bg-slate-50 p-4 border-b border-slate-200">
+                        <h3 class="font-bold text-slate-800 flex items-center gap-2 text-sm uppercase tracking-wider">
+                            <i class="ph-fill ph-car text-slate-400"></i> Vehicle Details
+                        </h3>
+                    </div>
+                    <div class="p-6 grid grid-cols-3 gap-6">
+                        <div>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase block">Type & Model</span>
+                            <span class="text-sm font-bold text-slate-800">{{ req.vehicle_data.type }} -
+                                {{ req.vehicle_data.model }}</span>
+                        </div>
+                        <div>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase block">License Plate</span>
+                            <span class="text-sm font-bold text-slate-900 font-mono bg-slate-100 px-2 py-0.5 rounded">
+                                {{ req.vehicle_data.plate }}</span>
+                        </div>
+                        <div class="flex gap-2 items-center">
+                            {% if req.vehicle_data.roof_box %}
+                            <span
+                                class="text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-200 px-2 py-1 rounded">Roof
+                                Box</span>
+                            {% endif %}
+                            {% if req.vehicle_data.trailer %}
+                            <span
+                                class="text-[10px] font-bold bg-blue-50 text-blue-600 border border-blue-200 px-2 py-1 rounded">Trailer</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
             </div>
 
             <div class="col-span-12 lg:col-span-5 space-y-6">
 
-                <div
-                    class="bg-white rounded-xl shadow-card border border-slate-200 overflow-hidden relative sticky top-6">
-                    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-500 to-green-500"></div>
-
-                    <div class="p-6">
-                        <h3 class="font-bold text-lg text-slate-900 mb-6 flex items-center gap-2">
-                            <i class="ph-fill ph-currency-eur text-brand-600"></i> Set Pricing
+                <div class="bg-white rounded-xl shadow-card border border-slate-200 overflow-hidden sticky top-6">
+                    <div class="p-6 border-b border-slate-100 bg-slate-50/50">
+                        <h3 class="font-bold text-lg text-slate-900 flex items-center gap-2">
+                            <i class="ph-fill ph-currency-circle-dollar text-brand-600"></i> Quotation Setup
                         </h3>
+                    </div>
 
+                    <div class="p-6 space-y-6">
                         <div class="grid grid-cols-2 gap-6">
                             <div>
-                                <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Net Price
-                                    (Cost)</label>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Net Cost
+                                    (Purchased)</label>
                                 <div class="relative group">
                                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <span class="text-slate-400">DA</span>
+                                        <span class="text-slate-400 text-xs font-bold">DA</span>
                                     </div>
                                     <input type="number" id="net-price" oninput="calculateMargin()" required
-                                        value="{{ req.net_price|default_if_none:'' }}" placeholder=""
-                                        class="w-full border-2 border-slate-200 rounded-xl py-3 pl-10 pr-4 text-slate-900 font-bold focus:border-slate-400 focus:outline-none transition-colors bg-slate-50">
+                                        value="{{ req.net_price|default_if_none:'' }}"
+                                        class="w-full border-2 border-slate-100 rounded-xl py-3 pl-10 pr-4 text-slate-900 font-black focus:border-brand-500 outline-none transition-all bg-slate-50/50">
                                 </div>
-                                <p class="text-[10px] text-slate-400 mt-1">Visible only to you</p>
                             </div>
 
                             <div>
-                                <label class="block text-xs font-bold text-brand-600 uppercase mb-2">Sell Price
+                                <label class="block text-xs font-bold text-brand-600 uppercase mb-2">Selling Price
                                     (Client)</label>
                                 <div class="relative">
                                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <span class="text-brand-600 font-bold">DA</span>
+                                        <span class="text-brand-600 font-black text-xs">DA</span>
                                     </div>
                                     <input type="number" id="sell-price" oninput="calculateMargin()" required
-                                        value="{{ req.selling_price|default_if_none:'' }}" placeholder=""
-                                        class="w-full border-2 border-brand-100 rounded-xl py-3 pl-10 pr-4 text-brand-700 font-bold focus:border-brand-500 focus:outline-none transition-colors bg-white shadow-sm">
+                                        value="{{ req.selling_price|default_if_none:'' }}"
+                                        class="w-full border-2 border-brand-100 rounded-xl py-3 pl-10 pr-4 text-brand-700 font-black focus:border-brand-500 outline-none transition-all shadow-sm">
                                 </div>
-                                <p class="text-[10px] text-brand-500 mt-1">Client sees this price</p>
                             </div>
                         </div>
 
                         <div
-                            class="mt-8 bg-slate-50 rounded-xl p-4 border border-slate-200 flex justify-between items-center">
+                            class="bg-slate-900 rounded-2xl p-5 text-white flex justify-between items-center shadow-lg">
                             <div>
-                                <span class="block text-xs text-slate-500 uppercase font-semibold">Estimated
+                                <span
+                                    class="block text-[10px] text-slate-400 uppercase font-bold tracking-widest mb-1">Agency
                                     Profit</span>
-                                <span id="margin-display" class="text-2xl font-bold text-slate-300">DA 0.00</span>
+                                <span id="margin-display" class="text-2xl font-black">DA 0.00</span>
                             </div>
                             <div class="text-right">
-                                <span id="margin-percent" class="block text-sm font-medium text-slate-400">0%
+                                <span id="margin-percent"
+                                    class="inline-block bg-brand-500 text-white text-[10px] font-black px-2 py-1 rounded uppercase tracking-tighter">0%
                                     Margin</span>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="bg-slate-50 p-6 border-t border-slate-200 space-y-4">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Notes for Client
-                                (Optional)</label>
-                            <textarea id="notes"
-                                class="w-full border border-slate-200 rounded-lg p-3 text-sm focus:border-brand-500 outline-none h-20 resize-none bg-white"
-                                placeholder="e.g. Exact dates not available, proposed +1 day.">{{req.admin_note}}</textarea>
-                        </div>
+                        <div class="pt-4 border-t border-slate-100 space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Admin Notes
+                                    (Proposal Details)</label>
+                                <textarea id="notes"
+                                    class="w-full border border-slate-200 rounded-xl p-4 text-sm focus:border-brand-500 outline-none h-28 bg-slate-50/50 resize-none"
+                                    placeholder="e.g. Price valid for 24h. Proposal includes cabin accommodation as requested.">{{req.admin_note|default:""}}</textarea>
+                            </div>
 
-                        <div class="flex justify-end gap-3 pt-2">
-                            {% if req.status == 'pending' or req.status == 'offer_sent' %}
                             <button onclick="sendOffer()"
-                                class="w-full px-6 py-3 bg-brand-600 text-white font-bold rounded-xl shadow-lg shadow-brand-200 hover:bg-brand-700 hover:shadow-xl transition-all flex items-center justify-center gap-2">
-                                <i class="ph-bold ph-paper-plane-right"></i> Send Offer to Client
+                                class="w-full py-4 bg-brand-600 text-white font-black rounded-xl shadow-lg shadow-brand-100 hover:bg-brand-700 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-3">
+                                <i class="ph-bold ph-paper-plane-right"></i> SEND PROPOSAL TO CLIENT
                             </button>
-                            {% elif req.status == 'rejected' or req.status == 'processing' %}
-                            <button onclick="sendOffer()"
-                                class="w-full px-6 py-3 bg-brand-600 text-white font-bold rounded-xl shadow-lg shadow-brand-200 hover:bg-brand-700 hover:shadow-xl transition-all flex items-center justify-center gap-2">
-                                <i class="ph-bold ph-paper-plane-right"></i> Send Offer to Client
-                            </button>
-                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -309,7 +295,6 @@
             </div>
         </div>
     </div>
-
 </main>
 
 <script>
