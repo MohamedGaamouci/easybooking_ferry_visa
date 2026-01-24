@@ -69,6 +69,20 @@
             grid-template-columns: repeat(1, minmax(0, 1fr));
         }
     }
+
+    /* Color available dates green */
+    .flatpickr-day.available-date {
+        background: #10b981 !important;
+        /* emerald-500 */
+        border-color: #10b981 !important;
+        color: white !important;
+        border-radius: 8px;
+    }
+
+    .flatpickr-day.available-date:hover {
+        background: #059669 !important;
+        /* emerald-600 */
+    }
 </style>
 
 <main class="max-w-6xl mx-auto px-4 sm:px-6 pt-28 pb-20">
@@ -406,21 +420,57 @@
     }
 
     async function updateCalendarsAndOptions() {
-        const routeId = document.getElementById('inp-dest').value; if (!routeId) return;
-        fetch(`/ferries/api/route/${routeId}/available-dates/`).then(res => res.json()).then(data => { if (data.status === 'success') FerryBookingEngine.getPickers().dep.set("enable", data.dates); });
+        const routeId = document.getElementById('inp-dest').value;
+        if (!routeId) return;
+
+        // Outbound Dates
+        fetch(`/ferries/api/route/${routeId}/available-dates/`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const depPicker = FerryBookingEngine.getPickers().dep;
+                    depPicker.set("enable", data.dates);
+                    // Highlight outbound available dates
+                    depPicker.set("onDayCreate", (dObj, dStr, fp, dayElem) => {
+                        if (data.dates.includes(flatpickr.formatDate(dayElem.dateObj, "Y-m-d"))) {
+                            dayElem.classList.add("available-date");
+                        }
+                    });
+                }
+            });
+
         const options = await FerryBookingEngine.fetchPricing(routeId);
         const isRound = document.querySelector('input[name="triptype"]:checked').value === 'round';
+
+        // Return Dates
         if (isRound) {
             const f = FerryBookingEngine.getRoutes().find(r => r.route_id == routeId);
             const r = FerryBookingEngine.getRoutes().find(r => r.origin_name === f.dest_name && r.dest_name === f.origin_name);
-            if (r) fetch(`/ferries/api/route/${r.route_id}/available-dates/`).then(res => res.json()).then(data => { if (data.status === 'success') FerryBookingEngine.getPickers().ret.set("enable", data.dates); });
+            if (r) {
+                fetch(`/ferries/api/route/${r.route_id}/available-dates/`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            const retPicker = FerryBookingEngine.getPickers().ret;
+                            retPicker.set("enable", data.dates);
+                            // Highlight return available dates
+                            retPicker.set("onDayCreate", (dObj, dStr, fp, dayElem) => {
+                                if (data.dates.includes(flatpickr.formatDate(dayElem.dateObj, "Y-m-d"))) {
+                                    dayElem.classList.add("available-date");
+                                }
+                            });
+                        }
+                    });
+            }
         }
+
+        // Update UI elements
         document.getElementById('v-type').innerHTML = '<option value="">Type...</option>' + options.vehicles.map(v => `<option value="${v}">${v}</option>`).join('');
         document.getElementById('passenger-counts-container').innerHTML = options.passenger_types.map(t => `
-            <div class="glass-card p-4 text-center bg-slate-50/30 border-slate-100">
-                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">${t}s</label>
-                <input type="number" id="count-${t.toLowerCase()}" value="${t === 'Adult' ? '1' : '0'}" min="${t === 'Adult' ? '1' : '0'}" onchange="renderManifest()" class="w-full text-center font-black text-xl outline-none bg-transparent">
-            </div>`).join('');
+        <div class="glass-card p-4 text-center bg-slate-50/30 border-slate-100">
+            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">${t}s</label>
+            <input type="number" id="count-${t.toLowerCase()}" value="${t === 'Adult' ? '1' : '0'}" min="${t === 'Adult' ? '1' : '0'}" onchange="renderManifest()" class="w-full text-center font-black text-xl outline-none bg-transparent">
+        </div>`).join('');
         renderManifest();
     }
 
