@@ -51,12 +51,12 @@
 
             {% if req.status == "confirmed" %}
             <div class="flex items-center gap-3">
-                {% if req.voucher_file %}
+                {% if req.voucher %}
                 <div
                     class="flex items-center gap-2 text-xs text-green-700 bg-green-50 px-3 py-2 rounded-lg border border-green-200">
                     <i class="ph-fill ph-check-circle text-lg"></i>
                     <span class="font-semibold">Voucher Attached</span>
-                    <a href="{{ req.voucher_file.url }}" target="_blank"
+                    <a href="{{ req.voucher.url }}" target="_blank"
                         class="hover:text-green-900 font-bold underline underline-offset-2">View File</a>
                 </div>
                 {% endif %}
@@ -64,8 +64,7 @@
                     onchange="uploadVoucher('{{ req.id }}', this)">
                 <button onclick="document.getElementById('voucher-input-{{ req.id }}').click()"
                     class="bg-green-600 text-white hover:bg-green-700 px-4 py-2 rounded-lg text-sm font-bold shadow-sm flex items-center gap-2">
-                    <i
-                        class="ph-bold {% if req.voucher_file %}ph-arrows-clockwise{% else %}ph-file-arrow-up{% endif %}"></i>
+                    <i class="ph-bold {% if req.voucher %}ph-arrows-clockwise{% else %}ph-file-arrow-up{% endif %}"></i>
                     {% if req.voucher_file %} Replace Voucher {% else %} Attach Voucher {% endif %}
                 </button>
             </div>

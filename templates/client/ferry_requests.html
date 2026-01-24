@@ -7,8 +7,8 @@
 
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
-            <h1 class="text-2xl font-bold text-slate-900">My Requests</h1>
-            <p class="text-sm text-slate-500">Manage and track your ferry bookings</p>
+            <h1 class="text-2xl font-black text-slate-900">My Requests</h1>
+            <p class="text-sm text-slate-500 font-medium">Manage and track your ferry bookings</p>
         </div>
         <a href="{% url 'new_ferry' %}"
             class="bg-brand-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-brand-100 hover:bg-brand-700 transition-all flex items-center gap-2">
@@ -21,12 +21,12 @@
         <div class="relative w-full md:w-64">
             <i class="ph-bold ph-magnifying-glass absolute left-3 top-2.5 text-slate-400"></i>
             <input type="text" id="filter-search" oninput="debounceLoad()" placeholder="Search Ref or Name..."
-                class="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all">
+                class="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:border-brand-500 transition-all font-medium">
         </div>
 
         <div class="flex flex-wrap gap-3 w-full md:w-auto">
             <select id="filter-status" onchange="loadRequests()"
-                class="px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-600 outline-none focus:border-brand-500 bg-white">
+                class="px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-600 outline-none focus:border-brand-500 bg-white font-bold">
                 <option value="all">All Statuses</option>
                 <option value="pending">Pending</option>
                 <option value="processing">Processing</option>
@@ -36,7 +36,7 @@
             </select>
 
             <select id="filter-provider" onchange="loadRequests()"
-                class="px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-600 outline-none focus:border-brand-500 bg-white">
+                class="px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-600 outline-none focus:border-brand-500 bg-white font-bold">
                 <option value="">All Providers</option>
                 {% for p in providers %}
                 <option value="{{ p.id }}">{{ p.name }}</option>
@@ -44,7 +44,7 @@
             </select>
 
             <input type="date" id="filter-date" onchange="loadRequests()"
-                class="px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-600 outline-none focus:border-brand-500 bg-white">
+                class="px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-600 outline-none focus:border-brand-500 bg-white font-bold">
 
             <button onclick="resetFilters()"
                 class="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-500" title="Reset Filters">
@@ -53,7 +53,7 @@
         </div>
     </div>
 
-    <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden min-h-[400px] relative">
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden min-h-[400px] relative">
         <div id="table-loader" class="absolute inset-0 bg-white/80 z-10 flex items-center justify-center hidden">
             <div class="flex flex-col items-center gap-2">
                 <i class="ph-bold ph-spinner animate-spin text-3xl text-brand-600"></i>
@@ -62,18 +62,18 @@
         </div>
 
         <table class="w-full text-left border-collapse">
-            <thead class="bg-slate-50 border-b border-slate-200 text-xs uppercase text-slate-500 font-semibold">
+            <thead
+                class="bg-slate-50/50 border-b border-slate-200 text-[10px] uppercase text-slate-400 font-black tracking-widest">
                 <tr>
-                    <th class="px-6 py-4">Reference</th>
-                    <th class="px-6 py-4">Status</th>
-                    <th class="px-6 py-4">Provider</th>
-                    <th class="px-6 py-4">Route & Date</th>
-                    <th class="px-6 py-4">Passengers</th>
-                    <th class="px-6 py-4 text-right">Price</th>
-                    <th class="px-6 py-4 text-right">Action</th>
+                    <th class="px-6 py-5">Reference</th>
+                    <th class="px-6 py-5">Status</th>
+                    <th class="px-6 py-5">Provider</th>
+                    <th class="px-6 py-5">Route & Date</th>
+                    <th class="px-6 py-5 text-right">Price</th>
+                    <th class="px-6 py-5 text-right">Action</th>
                 </tr>
             </thead>
-            <tbody id="requests-table-body" class="divide-y divide-slate-100 text-sm"></tbody>
+            <tbody id="requests-table-body" class="divide-y divide-slate-100 text-sm font-medium"></tbody>
         </table>
 
         <div id="empty-state" class="hidden flex flex-col items-center justify-center py-16 text-center">
@@ -86,7 +86,7 @@
 
         <div id="pagination-container"
             class="border-t border-slate-200 p-4 flex items-center justify-between bg-slate-50 hidden">
-            <span class="text-xs text-slate-500" id="page-info">Showing 1-10 of 20</span>
+            <span class="text-xs text-slate-500 font-bold uppercase tracking-widest" id="page-info"></span>
             <div class="flex gap-2">
                 <button id="btn-prev" onclick="changePage(-1)"
                     class="px-3 py-1 border border-slate-300 rounded bg-white text-slate-600 text-xs font-bold hover:bg-slate-50 disabled:opacity-50">Previous</button>
@@ -95,164 +95,113 @@
             </div>
         </div>
     </div>
-
 </main>
 
 <div id="detail-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
-    <!-- Overlay -->
     <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeModal()"></div>
 
-    <!-- Modal Container -->
-    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-y-auto flex flex-col">
+    <div
+        class="relative bg-white rounded-3xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col animate-fade-in">
 
-        <!-- Header -->
-        <div class="sticky top-0 bg-white border-b border-slate-100 p-6 flex items-center justify-between z-10">
+        <div
+            class="sticky top-0 bg-white border-b border-slate-100 p-6 flex items-center justify-between z-10 shrink-0">
             <div class="flex items-center gap-3">
-                <h2 class="text-2xl font-bold text-slate-900" id="modal-title-ferry"></h2>
-                <span id="modal-status" class="px-3 py-1 rounded-full text-xs font-bold uppercase">STATUS</span>
+                <h2 class="text-2xl font-black text-slate-900" id="modal-title-ferry"></h2>
+                <span id="modal-status"
+                    class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border">STATUS</span>
             </div>
-            <div class="flex gap-2">
-                <button id="btn-edit-mode" onclick="toggleEditMode()"
-                    class="hidden px-4 py-2 bg-slate-100 text-slate-600 rounded-lg text-sm font-bold hover:bg-slate-200 transition-colors">
-                    <i class="ph-bold ph-pencil-simple"></i> Edit Request
-                </button>
-                <button onclick="closeModal()"
-                    class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors">
-                    <i class="ph-bold ph-x"></i>
-                </button>
-            </div>
+            <button onclick="closeModal()"
+                class="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:text-slate-900 transition-colors">
+                <i class="ph-bold ph-x"></i>
+            </button>
         </div>
 
-        <!-- Content -->
-        <div class="p-6 md:p-8 space-y-8">
+        <div class="p-6 md:p-8 space-y-8 overflow-y-auto">
 
-            <!-- Summary / Price / Voucher -->
             <div id="summary-section"
-                class="hidden grid grid-cols-1 md:grid-cols-2 gap-4 bg-green-50 border border-green-200 rounded-xl p-4">
-                <div id="box-price" class="hidden">
-                    <p class="text-xs font-bold text-green-700 uppercase">Total Price</p>
-                    <p class="text-2xl font-bold text-slate-900" id="view-price">0.00 DA</p>
+                class="hidden grid grid-cols-1 md:grid-cols-2 gap-6 bg-emerald-50 border border-emerald-100 border-l-4 border-l-emerald-500 rounded-2xl p-6 shadow-sm">
+                <div id="box-price">
+                    <p class="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Final Offer Price
+                    </p>
+                    <div class="flex items-baseline gap-1">
+                        <p class="text-3xl font-black text-emerald-900" id="view-price">0.00 DA</p>
+                        <span class="text-xs font-bold text-emerald-500 uppercase">TTC</span>
+                    </div>
                 </div>
                 <div id="box-voucher" class="hidden flex items-center justify-end">
                     <a id="btn-voucher" href="#" target="_blank"
-                        class="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg font-bold shadow hover:bg-green-700 transition-colors">
-                        <i class="ph-bold ph-file-pdf"></i> Download Voucher
+                        class="flex items-center gap-2 bg-emerald-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200">
+                        <i class="ph-bold ph-file-arrow-down text-lg"></i> Download Voucher
                     </a>
                 </div>
             </div>
 
-            <!-- Offer Card -->
-            <div id="offer-action-card"
-                class="hidden bg-yellow-50 border border-yellow-200 rounded-xl p-6 relative overflow-hidden shadow-sm">
-                <div class="absolute top-0 right-0 p-4 opacity-10">
-                    <i class="ph-fill ph-tag text-6xl text-yellow-600"></i>
+            <div id="offer-action-card" class="hidden bg-amber-50 border-2 border-amber-100 rounded-2xl p-6 shadow-sm">
+                <div class="flex items-center gap-2 text-amber-800 font-black text-sm uppercase tracking-wider mb-2">
+                    <i class="ph-fill ph-tag"></i> Offer Received!
                 </div>
-                <div class="relative z-10">
-                    <h3 class="text-yellow-800 font-bold text-lg mb-1">Offer Received!</h3>
-                    <p id="offer-text-msg" class="text-yellow-700 text-sm mb-4">The provider has sent a quote for this
-                        request.</p>
-
-                    <div class="flex flex-col md:flex-row gap-3 mt-4">
-                        <button onclick="respondToOffer('accept')"
-                            class="flex-1 bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 shadow-md transition-all flex items-center justify-center gap-2">
-                            <i class="ph-bold ph-check"></i> Accept & Confirm
-                        </button>
-                        <button onclick="respondToOffer('reject')"
-                            class="px-6 py-3 bg-white border border-red-200 text-red-600 font-bold rounded-lg hover:bg-red-50 transition-all">
-                            Reject
-                        </button>
-                    </div>
+                <p id="offer-text-msg" class="text-amber-700 text-sm font-medium mb-5"></p>
+                <div class="flex gap-3">
+                    <button onclick="respondToOffer('accept')"
+                        class="bg-amber-600 text-white px-8 py-3 rounded-xl font-bold text-sm hover:bg-amber-700 shadow-md transition-all">Accept
+                        Offer</button>
+                    <button onclick="respondToOffer('reject')"
+                        class="bg-white border border-amber-200 text-amber-600 px-6 py-3 rounded-xl font-bold text-sm hover:bg-amber-50 transition-all">Decline</button>
                 </div>
             </div>
 
-            <!-- Form Details -->
-            <form id="update-form" onsubmit="event.preventDefault(); saveChanges();" class="space-y-6">
-
-                <input type="hidden" id="edit-route-id">
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-slate-50 rounded-xl border border-slate-200">
-                    <div>
-                        <label class="text-xs font-bold text-slate-400 uppercase">Provider & Route</label>
-                        <p class="font-bold text-slate-900 text-lg" id="view-route">Route Info</p>
-                    </div>
-                    <div>
-                        <label class="text-xs font-bold text-slate-400 uppercase">Trip Type</label>
-                        <select id="edit-triptype" class="w-full bg-transparent font-bold text-slate-900 outline-none"
-                            disabled>
-                            <option value="round">Round Trip</option>
-                            <option value="oneway">One Way</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="text-xs font-bold text-slate-400 uppercase">Departure</label>
-                        <input type="date" id="edit-dep-date"
-                            class="w-full bg-transparent font-medium text-slate-900 outline-none" disabled>
-                    </div>
-                    <div>
-                        <label class="text-xs font-bold text-slate-400 uppercase">Return</label>
-                        <input type="date" id="edit-ret-date"
-                            class="w-full bg-transparent font-medium text-slate-900 outline-none" disabled>
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="text-xs font-bold text-slate-400 uppercase">Accommodation</label>
-                        <select id="edit-acc" class="w-full bg-transparent font-medium text-slate-900 outline-none p-1"
-                            disabled>
-                            <option value="Seat">Pullman Seat</option>
-                            <option value="Cabin 2">Private Cabin</option>
-                            <option value="Cabin 4">Shared Cabin</option>
-                            <option value="Suite">Suite</option>
-                        </select>
-                    </div>
+            <div
+                class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6 bg-slate-50/50 rounded-2xl border border-slate-100">
+                <div class="lg:col-span-1">
+                    <label class="section-label mb-2">Provider & Route</label>
+                    <p class="font-black text-slate-900 text-lg" id="view-route">Route Info</p>
                 </div>
-
-                <!-- Passengers -->
-                <div class="flex items-center justify-between mt-6 mb-3 border-b pb-2">
-                    <h3 class="text-sm font-bold text-slate-900 uppercase">Passengers</h3>
-                    <button type="button" id="btn-add-pax" onclick="addPassengerRow()"
-                        class="hidden text-brand-600 text-xs font-bold flex items-center gap-1 hover:underline">
-                        <i class="ph-bold ph-plus-circle"></i> Add Passenger
-                    </button>
+                <div>
+                    <label class="section-label mb-2">Trip Type</label>
+                    <p class="font-bold text-slate-700" id="view-triptype">Trip Type</p>
                 </div>
+                <div>
+                    <label class="section-label mb-2">Dates</label>
+                    <p class="font-bold text-slate-700" id="view-dates">Departure & Return Dates</p>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="section-label mb-4 border-b pb-2"><i class="ph-bold ph-users"></i> Passenger Manifest</h3>
                 <div id="modal-passengers" class="space-y-3"></div>
+            </div>
 
-                <!-- Vehicle -->
-                <h3 class="text-sm font-bold text-slate-900 uppercase mt-6 mb-3 border-b pb-2">Vehicle</h3>
-                <div id="modal-vehicle" class="bg-white border border-slate-200 p-4 rounded-xl"></div>
+            <div>
+                <h3 class="section-label border-b pb-2 mb-4"><i class="ph-bold ph-car"></i> Vehicle Details</h3>
+                <div id="modal-vehicle" class="bg-white border border-slate-200 p-5 rounded-2xl shadow-sm"></div>
+            </div>
 
-                <!-- Edit Actions -->
-                <div id="edit-actions" class="hidden mt-8 pt-4 border-t border-slate-100 flex justify-end gap-3">
-                    <button type="button" onclick="toggleEditMode()"
-                        class="px-6 py-3 border border-slate-300 rounded-xl font-bold text-slate-600 hover:bg-slate-50">
-                        Cancel
-                    </button>
-                    <button type="submit"
-                        class="px-6 py-3 bg-brand-600 text-white rounded-xl font-bold shadow-lg hover:bg-brand-700 flex items-center gap-2">
-                        <i class="ph-bold ph-floppy-disk"></i> Save Changes
-                    </button>
+            <div id="admin-note-section" class="hidden bg-blue-50 border border-blue-100 rounded-2xl p-6 shadow-sm">
+                <div class="flex items-center gap-2 mb-3 text-blue-900 font-black text-xs uppercase">
+                    <i class="ph-bold ph-info"></i> Note from Provider
                 </div>
-            </form>
-
-            <!-- Admin Note -->
-            <div id="admin-note-section" class="bg-blue-50 border border-blue-200 rounded-xl p-6 shadow-sm">
-                <div class="flex items-center gap-2 mb-2">
-                    <i class="ph-bold ph-note-pencil text-blue-600 text-lg"></i>
-                    <h3 class="text-blue-900 font-bold text-sm uppercase">Admin Note</h3>
-                </div>
-                <p id="admin-note-text" class="text-blue-800 text-sm leading-relaxed whitespace-pre-line"></p>
+                <p id="admin-note-text"
+                    class="text-blue-800 text-sm font-medium italic leading-relaxed whitespace-pre-line"></p>
             </div>
 
         </div>
     </div>
 </div>
 
-
 <script>
     let currentPage = 1;
     let debounceTimer;
     let currentRef = null;
-    let isEditMode = false;
 
-    // --- INITIAL LOAD ---
+    const STATUS_LABELS = {
+        'pending': 'Pending',
+        'processing': 'Processing',
+        'offer_sent': 'Action Required',
+        'confirmed': 'Confirmed',
+        'cancelled': 'Cancelled',
+        'rejected': 'Rejected'
+    };
+
     document.addEventListener("DOMContentLoaded", () => {
         loadRequests();
     });
@@ -266,7 +215,6 @@
 
         loader.classList.remove('hidden');
 
-        // Filters
         const search = document.getElementById('filter-search').value;
         const status = document.getElementById('filter-status').value;
         const provider = document.getElementById('filter-provider').value;
@@ -289,39 +237,26 @@
                 emptyState.classList.add('hidden');
                 pagination.classList.remove('hidden');
 
-                // Render Rows
                 data.data.forEach(req => {
                     const row = document.createElement('tr');
-                    row.className = "hover:bg-slate-50 transition-colors cursor-pointer group border-b border-slate-100";
-
-                    // Main Row Click
+                    row.className = "hover:bg-slate-50 transition-all cursor-pointer group border-b border-slate-100";
                     row.onclick = () => openModal(req.reference);
 
-                    // Dynamic Button Logic
-                    let actionBtn = '';
-                    if (req.status === 'offer_sent') {
-                        // IMPORTANT: Added onclick with stopPropagation()
-                        actionBtn = `<button onclick="openModal('${req.reference}'); event.stopPropagation();" 
-                                        class="bg-red-50 text-red-600 border border-red-200 text-xs font-bold px-3 py-1.5 rounded animate-pulse hover:bg-red-100 shadow-sm transition-all relative z-10">
-                                        <i class="ph-bold ph-warning-circle mr-1"></i> Action Required
-                                     </button>`;
-                    } else if (req.status === 'pending') {
-                        actionBtn = `<button class="text-slate-500 font-medium text-xs border border-slate-200 bg-white px-3 py-1.5 rounded hover:text-brand-600 hover:border-brand-200 transition-all">View / Edit</button>`;
-                    } else {
-                        actionBtn = `<button class="text-slate-400 font-medium text-xs hover:text-slate-600">View Details</button>`;
-                    }
-
                     row.innerHTML = `
-                        <td class="px-6 py-4 font-mono font-bold text-slate-600 text-xs">${req.reference}</td>
-                        <td class="px-6 py-4">${getStatusBadge(req.status, req.status_label)}</td>
-                        <td class="px-6 py-4 font-semibold text-slate-900">${req.provider_name}</td>
-                        <td class="px-6 py-4 text-slate-600">
-                            <div class="font-medium text-slate-900">${req.route_str}</div>
-                            <div class="text-xs">${req.departure}</div>
+                        <td class="px-6 py-5 font-mono font-bold text-slate-400 text-xs">${req.reference}</td>
+                        <td class="px-6 py-5">${getStatusBadge(req.status, req.status_label)}</td>
+                        <td class="px-6 py-5 font-semibold text-slate-900">${req.provider_name}</td>
+                        <td class="px-6 py-5">
+                            <div class="font-bold text-slate-900">${req.route_str}</div>
+                            <div class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">${req.departure}</div>
                         </td>
-                        <td class="px-6 py-4 text-slate-500 text-xs">${req.passenger_summary}</td>
-                        <td class="px-6 py-4 text-right font-bold text-slate-900">${req.price}</td>
-                        <td class="px-6 py-4 text-right">${actionBtn}</td>
+                        <td class="px-6 py-5 text-right font-black text-slate-900">${req.price}</td>
+                        <td class="px-6 py-5 text-right">
+                            ${req.status === 'offer_sent' ?
+                            `<span class="bg-amber-100 text-amber-700 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest animate-pulse">View Offer</span>` :
+                            `<i class="ph-bold ph-caret-right text-slate-300 group-hover:text-slate-900 transition-colors"></i>`
+                        }
+                        </td>
                     `;
                     tbody.appendChild(row);
                 });
@@ -334,28 +269,20 @@
             });
     }
 
-    // --- 2. OPEN MODAL & EDIT ---
+    // --- 2. MODAL LOGIC ---
     function openModal(reference) {
         currentRef = reference;
-        const modal = document.getElementById('detail-modal');
 
-        // Reset UI State
-        isEditMode = false;
-        toggleInputs(false);
-        document.getElementById('edit-actions').classList.add('hidden');
-        document.getElementById('btn-edit-mode').classList.add('hidden');
         document.getElementById('offer-action-card').classList.add('hidden');
-
-        // Hide Summary
-        const summary = document.getElementById('summary-section');
-        if (summary) summary.classList.add('hidden');
+        document.getElementById('summary-section').classList.add('hidden');
+        document.getElementById('admin-note-section').classList.add('hidden');
 
         fetch(`/ferries/api/demand/detail/${reference}/`)
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'success') {
                     populateModal(data.data);
-                    modal.classList.remove('hidden');
+                    document.getElementById('detail-modal').classList.remove('hidden');
                 } else {
                     alert("Error: " + data.message);
                 }
@@ -364,321 +291,115 @@
 
     function populateModal(data) {
         document.getElementById('modal-title-ferry').innerText = data.reference;
-        document.getElementById('admin-note-text').innerText = data.admin_note;
-        console.log(data.admin_note)
-        console.log(document.getElementById('admin-note-text'))
+
+        // Status
         const badge = document.getElementById('modal-status');
         badge.innerText = data.status_label;
-        badge.className = `px-3 py-1 rounded-full text-xs font-bold uppercase ${getStatusColor(data.status)}`;
+        badge.className = `px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${getStatusColor(data.status)}`;
 
-        // VISIBILITY LOGIC
-        const btnEdit = document.getElementById('btn-edit-mode');
-        const offerCard = document.getElementById('offer-action-card');
-
-        if (data.status === 'pending') {
-            btnEdit.classList.remove('hidden');
-        } else if (data.status === 'offer_sent') {
-            offerCard.classList.remove('hidden');
-            // Safe Update of Text (Without removing buttons)
-            const priceText = data.selling_price ? "DA " + data.selling_price : "Check details";
-            const msgEl = document.getElementById('offer-text-msg');
-            if (msgEl) msgEl.innerText = "The provider has sent a quote for " + priceText;
+        // Offer Handling
+        if (data.status === 'offer_sent') {
+            document.getElementById('offer-action-card').classList.remove('hidden');
+            document.getElementById('offer-text-msg').innerText = `The provider has sent a formal quote for ${data.selling_price} DA.`;
         }
 
-        // SUMMARY SECTION (Price/Voucher)
-        const summary = document.getElementById('summary-section');
-        const boxPrice = document.getElementById('box-price');
+        // Summary Handling
+        if (data.selling_price) {
+            document.getElementById('summary-section').classList.remove('hidden');
+            document.getElementById('view-price').innerText = data.selling_price + " DA";
+        }
         const boxVoucher = document.getElementById('box-voucher');
-        let hasSummary = false;
-
-        if (data.selling_price && boxPrice) {
-            boxPrice.classList.remove('hidden');
-            document.getElementById('view-price').innerText = data.selling_price + " DA ";
-            hasSummary = true;
-        } else if (boxPrice) boxPrice.classList.add('hidden');
-
-        if (data.voucher_url && boxVoucher) {
+        if (data.voucher_url) {
             boxVoucher.classList.remove('hidden');
             document.getElementById('btn-voucher').href = data.voucher_url;
-            hasSummary = true;
-        } else if (boxVoucher) boxVoucher.classList.add('hidden');
-
-        if (summary && hasSummary) summary.classList.remove('hidden');
-
-        // FORM FIELDS
-        document.getElementById('view-route').innerText = `${data.provider_name}: ${data.route_str}`;
-        document.getElementById('edit-route-id').value = data.route_id;
-        document.getElementById('edit-triptype').value = data.trip_type;
-        document.getElementById('edit-dep-date').value = data.departure_date;
-        document.getElementById('edit-ret-date').value = data.return_date || '';
-        document.getElementById('edit-acc').value = data.accommodation;
-
-        // PASSENGERS
-        const pContainer = document.getElementById('modal-passengers');
-        pContainer.innerHTML = '';
-        if (data.passengers && data.passengers.length > 0) {
-            data.passengers.forEach(p => {
-                pContainer.innerHTML += buildPassengerRow(p);
-            });
+        } else {
+            boxVoucher.classList.add('hidden');
         }
 
-        // VEHICLE
+        // Route Details
+        document.getElementById('view-route').innerText = `${data.provider_name}: ${data.route_str}`;
+        document.getElementById('view-triptype').innerText = STATUS_LABELS[data.trip_type] || data.trip_type;
+
+        let dateStr = `Out: ${data.departure_date}`;
+        if (data.return_date) dateStr += ` | Ret: ${data.return_date}`;
+        document.getElementById('view-dates').innerText = dateStr;
+
+        // Passengers (Read-only list)
+        const pContainer = document.getElementById('modal-passengers');
+        pContainer.innerHTML = '';
+        data.passengers.forEach((p, idx) => {
+            const outAcc = p.outbound_accommodation || 'No Acc (Sharing)';
+            const retAcc = p.return_accommodation || '-';
+            pContainer.innerHTML += `
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-4 p-4 bg-slate-50/50 rounded-2xl border border-slate-100 items-center">
+                    <div class="md:col-span-1 text-center font-black text-slate-300">${idx + 1}</div>
+                    <div class="md:col-span-5">
+                        <p class="text-[9px] font-black text-slate-400 uppercase">Passenger</p>
+                        <p class="text-sm font-bold text-slate-900">${p.first_name} ${p.last_name}</p>
+                        <p class="text-[10px] font-bold text-brand-600 uppercase">${p.type}</p>
+                    </div>
+                    <div class="md:col-span-3">
+                        <p class="text-[9px] font-black text-slate-400 uppercase">Accommodations</p>
+                        <p class="text-xs font-bold text-slate-700">Aller: ${outAcc} | Retour: ${retAcc}</p>
+                    </div>
+                    <div class="md:col-span-3">
+                        <p class="text-[9px] font-black text-slate-400 uppercase">Passport</p>
+                        <p class="text-xs font-mono font-bold text-slate-500 uppercase">${p.passport_number}</p>
+                    </div>
+                </div>`;
+        });
+
+        // Vehicle
         const vContainer = document.getElementById('modal-vehicle');
         if (data.vehicle) {
             vContainer.innerHTML = `
-                <div class="grid grid-cols-2 gap-4 text-sm">
-                    <div><span class="text-slate-400 text-xs">Model:</span> <input id="v-model" class="bg-transparent font-medium w-full outline-none" value="${data.vehicle.model}" disabled></div>
-                    <div><span class="text-slate-400 text-xs">Plate:</span> <input id="v-plate" class="bg-transparent font-mono w-full outline-none" value="${data.vehicle.plate}" disabled></div>
-                    <input type="hidden" id="v-type" value="${data.vehicle.type}">
+                <div class="grid grid-cols-2 gap-4">
+                    <div><span class="text-slate-400 text-[10px] font-black uppercase">Model</span><p class="text-sm font-bold text-slate-900">${data.vehicle.type} - ${data.vehicle.model}</p></div>
+                    <div><span class="text-slate-400 text-[10px] font-black uppercase">Plate</span><p class="text-sm font-mono font-bold text-slate-900 uppercase">${data.vehicle.plate}</p></div>
                 </div>`;
         } else {
-            vContainer.innerHTML = `<p class="text-slate-400 italic text-sm">No vehicle added.</p>`;
-        }
-    }
-
-    // --- 3. EDIT LOGIC ---
-    function toggleEditMode() {
-        isEditMode = !isEditMode;
-        toggleInputs(isEditMode);
-        document.getElementById('btn-edit-mode').classList.toggle('hidden', isEditMode);
-        document.getElementById('edit-actions').classList.toggle('hidden', !isEditMode);
-
-        const btnAdd = document.getElementById('btn-add-pax');
-        if (btnAdd) btnAdd.classList.toggle('hidden', !isEditMode);
-
-        document.querySelectorAll('.btn-remove-pax').forEach(btn => {
-            btn.classList.toggle('hidden', !isEditMode);
-        });
-
-        if (!isEditMode) openModal(currentRef);
-    }
-
-    function toggleInputs(enable) {
-        const selectors = '#detail-modal select, #detail-modal input[type="date"], .p-fname, .p-lname, .p-passport, #v-model, #v-plate';
-        const inputs = document.querySelectorAll(selectors);
-        inputs.forEach(inp => {
-            inp.disabled = !enable;
-            if (enable) inp.classList.add('bg-white', 'border-slate-300', 'px-2');
-            else inp.classList.remove('bg-white', 'border-slate-300', 'px-2');
-        });
-    }
-
-    function buildPassengerRow(p = {}) {
-        const type = p.type || 'Adult';
-        const fname = p.first_name || '';
-        const lname = p.last_name || '';
-        const pass = p.passport_number || '';
-        const dob = p.birth_date || '';
-        const nat = p.nationality || 'Algerian';
-
-        const inputClass = isEditMode ? 'bg-white border-slate-300 px-2' : 'bg-transparent border-transparent';
-        const removeHidden = isEditMode ? '' : 'hidden';
-        const disabled = isEditMode ? '' : 'disabled';
-
-        return `
-            <div class="passenger-item grid grid-cols-1 md:grid-cols-12 gap-2 p-3 bg-slate-50 rounded-lg border border-slate-100 items-end">
-                <div class="md:col-span-2">
-                    <label class="text-[10px] text-slate-400 block mb-1">Type</label>
-                    <select class="p-type w-full text-xs font-bold bg-white border border-slate-200 rounded p-1" ${disabled}>
-                        <option value="Adult" ${type === 'Adult' ? 'selected' : ''}>Adult</option>
-                        <option value="Child" ${type === 'Child' ? 'selected' : ''}>Child</option>
-                        <option value="Infant" ${type === 'Infant' ? 'selected' : ''}>Infant</option>
-                    </select>
-                </div>
-                <div class="md:col-span-3">
-                    <label class="text-[10px] text-slate-400 block mb-1">First Name</label>
-                    <input type="text" class="p-fname w-full border-b focus:bg-white outline-none text-sm font-medium ${inputClass}" value="${fname}" ${disabled}>
-                </div>
-                <div class="md:col-span-3">
-                    <label class="text-[10px] text-slate-400 block mb-1">Last Name</label>
-                    <input type="text" class="p-lname w-full border-b focus:bg-white outline-none text-sm font-medium ${inputClass}" value="${lname}" ${disabled}>
-                </div>
-                <div class="md:col-span-3">
-                    <label class="text-[10px] text-slate-400 block mb-1">Passport</label>
-                    <input type="text" class="p-passport w-full border-b focus:bg-white outline-none text-sm font-mono uppercase text-slate-500 ${inputClass}" value="${pass}" ${disabled}>
-                </div>
-                <input type="hidden" class="p-dob" value="${dob}">
-                <input type="hidden" class="p-nat" value="${nat}">
-                <div class="md:col-span-1 flex justify-end">
-                    <button type="button" onclick="this.closest('.passenger-item').remove()" class="btn-remove-pax ${removeHidden} text-red-500 hover:bg-red-50 p-1 rounded">
-                        <i class="ph-bold ph-trash"></i>
-                    </button>
-                </div>
-            </div>`;
-    }
-
-    function addPassengerRow() {
-        const container = document.getElementById('modal-passengers');
-        container.insertAdjacentHTML('beforeend', buildPassengerRow({ type: 'Adult' }));
-    }
-
-    // --- 4. SAVE & RESPOND ---
-    function saveChanges() {
-        if (!confirm("Update this request?")) return;
-
-        const payload = {
-            route_id: document.getElementById('edit-route-id').value,
-            trip_type: document.getElementById('edit-triptype').value,
-            departure_date: document.getElementById('edit-dep-date').value,
-            return_date: document.getElementById('edit-ret-date').value || null,
-            accommodation: document.getElementById('edit-acc').value,
-            passengers: [],
-            vehicle: null
-        };
-
-        document.querySelectorAll('.passenger-item').forEach(row => {
-            payload.passengers.push({
-                type: row.querySelector('.p-type').value,
-                first_name: row.querySelector('.p-fname').value,
-                last_name: row.querySelector('.p-lname').value,
-                passport_number: row.querySelector('.p-passport').value,
-                birth_date: row.querySelector('.p-dob').value || '2000-01-01',
-                nationality: row.querySelector('.p-nat').value || 'Algerian'
-            });
-        });
-
-        if (document.getElementById('v-model')) {
-            payload.vehicle = {
-                model: document.getElementById('v-model').value,
-                plate: document.getElementById('v-plate').value,
-                type: document.getElementById('v-type').value
-            };
+            vContainer.innerHTML = `<p class="text-slate-400 italic text-sm font-medium">No vehicle registered.</p>`;
         }
 
-        fetch(`/ferries/api/demand/update/${currentRef}/`, {
-            method: 'POST',
-            body: JSON.stringify(payload),
-            headers: { "Content-Type": "application/json", "X-CSRFToken": "{{ csrf_token }}" }
-        })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    closeModal();
-                    loadRequests();
-                    alert("Request Updated!");
-                } else {
-                    alert("Update failed: " + data.message);
-                }
-            });
+        // Admin Note
+        if (data.admin_note) {
+            document.getElementById('admin-note-section').classList.remove('hidden');
+            document.getElementById('admin-note-text').innerText = data.admin_note;
+        }
     }
 
     function respondToOffer(action) {
-        let confirmMsg = action === 'accept'
-            ? "Are you sure you want to ACCEPT this offer? The cost will be deducted from your account."
-            : "Are you sure you want to REJECT this offer?";
-
-        if (!confirm(confirmMsg)) return;
-
+        if (!confirm(`Are you sure you want to ${action} this offer?`)) return;
         fetch(`/ferries/api/demand/respond/${currentRef}/`, {
             method: 'POST',
             body: JSON.stringify({ action: action }),
             headers: { "Content-Type": "application/json", "X-CSRFToken": "{{ csrf_token }}" }
-        })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    closeModal();
-                    loadRequests();
-                    if (action === 'accept') alert("Offer Accepted! Booking Confirmed.");
-                    else alert("Offer Rejected.");
-                } else {
-                    alert("Error: " + data.message);
-                }
-            })
-            .catch(err => alert("System Error: " + err));
+        }).then(res => res.json()).then(data => {
+            if (data.status === 'success') { closeModal(); loadRequests(); alert("Offer " + action + "ed successfully."); }
+            else alert(data.message);
+        });
     }
 
     // --- UTILITIES ---
-    function closeModal() {
-        document.getElementById('detail-modal').classList.add('hidden');
-    }
+    function closeModal() { document.getElementById('detail-modal').classList.add('hidden'); }
 
     function getStatusBadge(status, label) {
         const colors = getStatusColor(status);
         let icon = '';
         if (status === 'processing') icon = '<i class="ph-bold ph-spinner animate-spin mr-1"></i>';
-        if (status === 'offer_sent') icon = '<i class="ph-fill ph-tag mr-1"></i>';
-        if (status === 'confirmed') icon = '<i class="ph-bold ph-check mr-1"></i>';
-        return `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border ${colors}">${icon}${label}</span>`;
+        else if (status === 'offer_sent') icon = '<i class="ph-fill ph-tag mr-1"></i>';
+        else if (status === 'confirmed') icon = '<i class="ph-bold ph-check mr-1"></i>';
+
+        const text = STATUS_LABELS[status] || label;
+        return `<span class="inline-flex items-center px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${colors}">${icon}${text}</span>`;
     }
 
     function getStatusColor(status) {
         const map = {
             'pending': 'bg-slate-100 text-slate-600 border-slate-200',
             'processing': 'bg-blue-50 text-blue-600 border-blue-100',
-            'offer_sent': 'bg-yellow-50 text-yellow-700 border-yellow-200 ring-1 ring-yellow-300',
-            'confirmed': 'bg-green-50 text-green-700 border-green-200',
-            'cancelled': 'bg-red-50 text-red-600 border-red-100'
-        };
-        return map[status] || map['pending'];
-    }
-
-    function updatePagination(meta) {
-        document.getElementById('page-info').innerText = `Page ${meta.current_page} of ${meta.total_pages}`;
-        document.getElementById('btn-prev').disabled = !meta.has_previous;
-        document.getElementById('btn-next').disabled = !meta.has_next;
-    }
-
-    function changePage(d) { currentPage += d; loadRequests(); }
-
-    function resetFilters() {
-        document.getElementById('filter-search').value = '';
-        document.getElementById('filter-status').value = 'all';
-        document.getElementById('filter-provider').value = '';
-        document.getElementById('filter-date').value = '';
-        loadRequests();
-    }
-
-    function debounceLoad() {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => { currentPage = 1; loadRequests(); }, 500);
-    }
-
-    // --- UTILITIES ---
-    function closeModal() {
-        document.getElementById('detail-modal').classList.add('hidden');
-    }
-
-    // 1. Status Text Mapping (Matches your Python Model)
-    const STATUS_LABELS = {
-        'pending': 'Pending',
-        'processing': 'In Progress',
-        'offer_sent': 'Action Required', // Shortened slightly for table, or use full text
-        'confirmed': 'Confirmed',
-        'cancelled': 'Cancelled',
-        'rejected': 'Rejected'
-    };
-
-    function getStatusBadge(status, backendLabel) {
-        const colors = getStatusColor(status);
-
-        // Use our local JS mapping if it exists, otherwise use what backend sent
-        let text = STATUS_LABELS[status] || backendLabel || status;
-
-        // Specific Icons for specific states
-        let icon = '';
-        if (status === 'processing') {
-            icon = '<i class="ph-bold ph-spinner animate-spin mr-1"></i>';
-        } else if (status === 'offer_sent') {
-            icon = '<i class="ph-fill ph-warning-circle mr-1"></i>';
-            text = "Action Required"; // Keep it short in the table, detailed in modal
-        } else if (status === 'confirmed') {
-            icon = '<i class="ph-bold ph-check mr-1"></i>';
-        } else if (status === 'rejected') {
-            icon = '<i class="ph-bold ph-x-circle mr-1"></i>';
-        }
-
-        return `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border ${colors} whitespace-nowrap">${icon}${text}</span>`;
-    }
-
-    // 2. Status Color Mapping
-    function getStatusColor(status) {
-        const map = {
-            'pending': 'bg-slate-100 text-slate-600 border-slate-200',
-            'processing': 'bg-blue-50 text-blue-600 border-blue-100',
-            // Yellow/Orange for Offer Received (Urgent feel)
-            'offer_sent': 'bg-amber-50 text-amber-700 border-amber-200 ring-1 ring-amber-200',
-            'confirmed': 'bg-green-50 text-green-700 border-green-200',
+            'offer_sent': 'bg-amber-100 text-amber-700 border-amber-300 ring-2 ring-amber-100',
+            'confirmed': 'bg-emerald-50 text-emerald-700 border-emerald-200',
             'cancelled': 'bg-red-50 text-red-600 border-red-100',
             'rejected': 'bg-red-50 text-red-600 border-red-100'
         };
@@ -689,18 +410,17 @@
         document.getElementById('page-info').innerText = `Page ${meta.current_page} of ${meta.total_pages}`;
         document.getElementById('btn-prev').disabled = !meta.has_previous;
         document.getElementById('btn-next').disabled = !meta.has_next;
+        document.getElementById('pagination-container').classList.toggle('hidden', meta.total_pages <= 1);
     }
 
     function changePage(d) { currentPage += d; loadRequests(); }
-
     function resetFilters() {
         document.getElementById('filter-search').value = '';
         document.getElementById('filter-status').value = 'all';
         document.getElementById('filter-provider').value = '';
         document.getElementById('filter-date').value = '';
-        loadRequests();
+        currentPage = 1; loadRequests();
     }
-
     function debounceLoad() {
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => { currentPage = 1; loadRequests(); }, 500);
