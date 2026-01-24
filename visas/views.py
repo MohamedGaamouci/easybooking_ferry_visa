@@ -839,12 +839,13 @@ def get_client_applications_api(request):
     for app in page_obj:
         data.append({
             'id': app.id,
+            'updated_at': app.updated_at,
             'reference': app.reference,
             'applicant': f"{app.first_name} {app.last_name}",
             'passport': app.passport_number,
             'destination': app.destination.country,
             'destination_flag': "🏳️",  # You could add a flag field to your model later
-            'submitted_on': app.created_at.strftime('%b %d, %Y'),
+            'submitted_on': app.created_at,
             'status': app.status,
             'status_label': app.get_status_display(),  # Uses choices display
         })

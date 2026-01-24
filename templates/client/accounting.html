@@ -343,11 +343,11 @@
                                 id="trans-total-pages">{{ transactions.paginator.num_pages }}</span>
                         </span>
                         <div class="flex gap-2">
-                            <button id="trans-prev-btn" onclick="changePage('trans', -1)" 
-                            {% if not transactions.has_previous %} disabled {% endif %}
+                            <button id="trans-prev-btn" onclick="changePage('trans', -1)" {% if not
+                                transactions.has_previous %} disabled {% endif %}
                                 class="px-3 py-1 text-xs font-bold bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50">Prev</button>
-                            <button id="trans-next-btn" onclick="changePage('trans', 1)" 
-                            {% if not transactions.has_next%} disabled {% endif %}
+                            <button id="trans-next-btn" onclick="changePage('trans', 1)" {% if not
+                                transactions.has_next%} disabled {% endif %}
                                 class="px-3 py-1 text-xs font-bold bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50">Next</button>
                         </div>
                     </div>

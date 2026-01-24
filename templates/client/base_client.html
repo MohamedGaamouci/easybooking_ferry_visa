@@ -46,190 +46,122 @@
             }
         }
 
-        /* Chart Animations */
-        .bar {
-            transition: height 1s ease-out;
-            height: 0;
+        /* Mobile Nav Animation */
+        #mobile-menu {
+            transition: transform 0.3s ease-in-out;
         }
 
-        /* Donut Chart */
-        .donut {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            background: conic-gradient(#0284c7 0% 65%, #a855f7 65% 100%);
-            position: relative;
-        }
-
-        .donut::after {
-            content: "";
-            position: absolute;
-            inset: 15px;
-            background: white;
-            border-radius: 50%;
+        #mobile-menu.closed {
+            transform: translateX(-100%);
         }
     </style>
 </head>
 
-<body class="text-slate-800 pt-20" onload="animateCharts()">
+<body class="text-slate-800 pt-20">
 
     <header class="bg-white border-b border-slate-200 fixed w-full top-0 z-50 h-16 transition-all duration-300">
-        <div class="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
-            <div class="flex items-center gap-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 h-full flex items-center justify-between">
+            <div class="flex items-center gap-4 lg:gap-8">
+                <button onclick="toggleMobileMenu(true)"
+                    class="md:hidden text-slate-600 hover:text-brand-600 transition-colors">
+                    <i class="ph-bold ph-list text-2xl"></i>
+                </button>
+
                 <a href="{% url 'client_dashboard' %}"
-                    class="flex items-center gap-2 font-bold text-xl text-brand-900 tracking-tight group">
+                    class="flex items-center gap-2 font-bold text-xl text-brand-900 tracking-tight group shrink-0">
                     <img src="{% static 'img/logo.png' %}"
                         onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden')"
                         class="h-8 w-auto object-contain" alt="Easy booking">
-                    <div class="hidden flex items-center gap-2">
-                        <i class="ph-fill ph-boat text-brand-600 text-2xl group-hover:text-brand-700"></i>
+                    <div class="hidden flex items-center gap-2 text-brand-600">
+                        <i class="ph-fill ph-boat text-2xl"></i>
                     </div>
                 </a>
-                <nav class="hidden md:flex space-x-1" id="client-nav">
 
-                    <a href="{% url 'client_dashboard' %}" class="px-3 py-2 text-sm rounded-md transition-colors
-                        {% if request.resolver_match.url_name == 'dashboard' %}
-                            font-bold text-brand-700 bg-brand-50 ring-1 ring-brand-100
-                        {% else %}
-                            font-medium text-slate-500 hover:text-brand-600 hover:bg-slate-50
-                        {% endif %}">
-                        Dashboard
-                    </a>
-
+                <nav class="hidden md:flex items-center space-x-1" id="client-nav">
+                    <a href="{% url 'client_dashboard' %}"
+                        class="px-3 py-2 text-sm rounded-md transition-colors font-medium {% if request.resolver_match.url_name == 'dashboard' %} font-bold text-brand-700 bg-brand-50 ring-1 ring-brand-100 {% else %} text-slate-500 hover:text-brand-600 hover:bg-slate-50 {% endif %}">Dashboard</a>
                     <span class="border-r border-slate-200 h-6 my-auto mx-2"></span>
 
                     <div class="relative group">
-
-                        <button class="flex items-center gap-1 px-3 py-2 text-sm rounded-md transition-colors cursor-default
-        {% if 'ferr' in request.resolver_match.url_name %}
-            font-bold text-brand-700 bg-brand-50 ring-1 ring-brand-100
-        {% else %}
-            font-medium text-slate-500 hover:text-brand-600 hover:bg-slate-50
-        {% endif %}">
+                        <button
+                            class="flex items-center gap-1 px-3 py-2 text-sm rounded-md transition-colors cursor-default {% if 'ferr' in request.resolver_match.url_name %} font-bold text-brand-700 bg-brand-50 ring-1 ring-brand-100 {% else %} font-medium text-slate-500 hover:text-brand-600 hover:bg-slate-50 {% endif %}">
                             <span>Ferry Services</span>
                             <i
                                 class="ph-bold ph-caret-down text-xs mt-0.5 transition-transform duration-200 group-hover:rotate-180"></i>
                         </button>
-
                         <div
                             class="absolute left-0 top-full mt-2 w-56 bg-white border border-slate-100 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top-left z-50">
-
                             <div
                                 class="absolute -top-1.5 left-6 w-3 h-3 bg-white border-t border-l border-slate-100 rotate-45">
                             </div>
-
                             <div class="relative p-1.5 space-y-1 bg-white rounded-xl">
-
                                 <a href="{% url 'new_ferry' %}"
                                     class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-600 rounded-lg hover:bg-brand-50 hover:text-brand-700 transition-colors group/item">
                                     <div
                                         class="w-8 h-8 rounded-full bg-slate-50 text-slate-500 flex items-center justify-center group-hover/item:bg-white group-hover/item:text-brand-600 transition-colors shadow-sm border border-slate-100">
                                         <i class="ph-duotone ph-boat text-lg"></i>
                                     </div>
-                                    <div>
-                                        <span class="block text-slate-900 group-hover/item:text-brand-700">Book
-                                            Ferry</span>
-                                        <span class="block text-[10px] text-slate-400 font-normal">Search routes &
-                                            providers</span>
-                                    </div>
+                                    <div><span class="block text-slate-900 group-hover/item:text-brand-700">Book
+                                            Ferry</span></div>
                                 </a>
-
-                                <div class="h-px bg-slate-50 mx-2"></div>
-
                                 <a href="{% url 'ferries' %}"
                                     class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-600 rounded-lg hover:bg-brand-50 hover:text-brand-700 transition-colors group/item">
                                     <div
                                         class="w-8 h-8 rounded-full bg-slate-50 text-slate-500 flex items-center justify-center group-hover/item:bg-white group-hover/item:text-brand-600 transition-colors shadow-sm border border-slate-100">
                                         <i class="ph-duotone ph-ticket text-lg"></i>
                                     </div>
-                                    <div>
-                                        <span class="block text-slate-900 group-hover/item:text-brand-700">My
-                                            Bookings</span>
-                                        <span class="block text-[10px] text-slate-400 font-normal">Manage active
-                                            requests</span>
-                                    </div>
+                                    <div><span class="block text-slate-900 group-hover/item:text-brand-700">My
+                                            Bookings</span></div>
                                 </a>
-
                             </div>
                         </div>
                     </div>
-                    </a>
 
                     <span class="border-r border-slate-200 h-6 my-auto mx-2"></span>
 
                     <div class="relative group">
-
-                        <button class="flex items-center gap-1 px-3 py-2 text-sm rounded-md transition-colors cursor-default
-        {% if 'visa' in request.resolver_match.url_name %}
-            font-bold text-brand-700 bg-brand-50 ring-1 ring-brand-100
-        {% else %}
-            font-medium text-slate-500 hover:text-brand-600 hover:bg-slate-50
-        {% endif %}">
+                        <button
+                            class="flex items-center gap-1 px-3 py-2 text-sm rounded-md transition-colors cursor-default {% if 'visa' in request.resolver_match.url_name %} font-bold text-brand-700 bg-brand-50 ring-1 ring-brand-100 {% else %} font-medium text-slate-500 hover:text-brand-600 hover:bg-slate-50 {% endif %}">
                             <span>Visa Services</span>
                             <i
                                 class="ph-bold ph-caret-down text-xs mt-0.5 transition-transform duration-200 group-hover:rotate-180"></i>
                         </button>
-
                         <div
                             class="absolute left-0 top-full mt-2 w-56 bg-white border border-slate-100 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top-left z-50">
-
                             <div
                                 class="absolute -top-1.5 left-6 w-3 h-3 bg-white border-t border-l border-slate-100 rotate-45">
                             </div>
-
                             <div class="relative p-1.5 space-y-1 bg-white rounded-xl">
-
                                 <a href="{% url 'visa_marketplace' %}"
                                     class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-600 rounded-lg hover:bg-brand-50 hover:text-brand-700 transition-colors group/item">
                                     <div
                                         class="w-8 h-8 rounded-full bg-slate-50 text-slate-500 flex items-center justify-center group-hover/item:bg-white group-hover/item:text-brand-600 transition-colors shadow-sm border border-slate-100">
                                         <i class="ph-duotone ph-globe-hemisphere-west text-lg"></i>
                                     </div>
-                                    <div>
-                                        <span class="block text-slate-900 group-hover/item:text-brand-700">Browse
-                                            Visas</span>
-                                        <span class="block text-[10px] text-slate-400 font-normal">Explore
-                                            destinations</span>
-                                    </div>
+                                    <div><span class="block text-slate-900 group-hover/item:text-brand-700">Browse
+                                            Visas</span></div>
                                 </a>
-
-                                <div class="h-px bg-slate-50 mx-2"></div>
-
                                 <a href="{% url 'visa_applications' %}"
                                     class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-600 rounded-lg hover:bg-brand-50 hover:text-brand-700 transition-colors group/item">
                                     <div
                                         class="w-8 h-8 rounded-full bg-slate-50 text-slate-500 flex items-center justify-center group-hover/item:bg-white group-hover/item:text-brand-600 transition-colors shadow-sm border border-slate-100">
                                         <i class="ph-duotone ph-files text-lg"></i>
                                     </div>
-                                    <div>
-                                        <span class="block text-slate-900 group-hover/item:text-brand-700">My
-                                            Applications</span>
-                                        <span class="block text-[10px] text-slate-400 font-normal">Track status &
-                                            history</span>
-                                    </div>
+                                    <div><span class="block text-slate-900 group-hover/item:text-brand-700">My
+                                            Applications</span></div>
                                 </a>
-
                             </div>
                         </div>
                     </div>
 
                     <span class="border-r border-slate-200 h-6 my-auto mx-2"></span>
 
-                    <a href="{% url 'finance:dashboard' %}" class="px-3 py-2 text-sm rounded-md transition-colors
-   
-   {% if request.resolver_match.url_name == 'dashboard' and request.resolver_match.app_name == 'finance' %}
-       font-bold text-brand-700 bg-brand-50 ring-1 ring-brand-100
-   {% else %}
-       font-medium text-slate-500 hover:text-brand-600 hover:bg-slate-50
-   {% endif %}">
-                        Accounting
-                    </a>
-
+                    <a href="{% url 'finance:dashboard' %}"
+                        class="px-3 py-2 text-sm rounded-md transition-colors {% if request.resolver_match.url_name == 'dashboard' and request.resolver_match.app_name == 'finance' %} font-bold text-brand-700 bg-brand-50 ring-1 ring-brand-100 {% else %} font-medium text-slate-500 hover:text-brand-600 hover:bg-slate-50 {% endif %}">Accounting</a>
                 </nav>
-
             </div>
 
-            <div class="flex items-center gap-5">
+            <div class="flex items-center gap-3 sm:gap-5">
 
                 <button onclick="toggleContactModal(true)"
                     class="hidden lg:flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-brand-600 hover:bg-slate-50 border border-slate-200 rounded-lg transition-all active:scale-95">
@@ -237,19 +169,16 @@
                     <span>Help center</span>
                 </button>
 
-                <div class="hidden lg:block text-right leading-tight">
+                <div class="hidden sm:block text-right leading-tight">
                     <div class="text-[10px] uppercase font-bold text-slate-400">Wallet Balance</div>
                     <div class="text-sm font-bold text-green-600 font-mono">€ 2,450.00</div>
                 </div>
 
-                <div class="h-8 w-px bg-slate-200 hidden lg:block"></div>
+                <div class="h-8 w-px bg-slate-200 hidden sm:block"></div>
 
-                <div class="flex items-center gap-3">
-                    <a href="{% url 'setting' %}" class="group flex items-center gap-2">
-                        <div
-                            class="w-9 h-9 bg-brand-50 text-brand-700 rounded-full flex items-center justify-center font-bold text-xs border border-brand-200 group-hover:bg-brand-600 group-hover:text-white transition-all shadow-sm">
-                            GT</div>
-                    </a>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <a href="{% url 'setting' %}"
+                        class="w-9 h-9 bg-brand-50 text-brand-700 rounded-full flex items-center justify-center font-bold text-xs border border-brand-200 hover:bg-brand-600 hover:text-white transition-all shadow-sm">GT</a>
                     <form action="{% url 'logout' %}" method="post" class="inline">
                         {% csrf_token %}
                         <button type="submit" class="text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
@@ -261,121 +190,113 @@
             </div>
         </div>
 
-        <!-- contact Modal -->
-        <div id="contact-modal" class="hidden fixed inset-0 z-[100]" aria-labelledby="modal-title" role="dialog"
-            aria-modal="true">
+        <div id="mobile-menu-overlay" onclick="toggleMobileMenu(false)"
+            class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[60]"></div>
+
+        <div id="mobile-menu" class="fixed top-0 left-0 h-full w-72 bg-white z-[70] shadow-2xl flex flex-col closed">
+            <div class="p-6 border-b border-slate-100 flex items-center justify-between shrink-0">
+                <span class="font-bold text-brand-900 uppercase tracking-widest text-xs">Easy Booking</span>
+                <button onclick="toggleMobileMenu(false)" class="text-slate-400 hover:text-slate-900 transition-colors">
+                    <i class="ph-bold ph-x text-xl"></i>
+                </button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-4 space-y-1">
+                <a href="{% url 'client_dashboard' %}"
+                    class="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 font-bold text-slate-900">
+                    <i class="ph-bold ph-house"></i> Dashboard
+                </a>
+
+                <div class="pt-4 pb-2 px-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Ferry
+                    Services</div>
+                <a href="{% url 'new_ferry' %}"
+                    class="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 text-slate-700">
+                    <i class="ph-bold ph-boat"></i> Book Ferry
+                </a>
+                <a href="{% url 'ferries' %}"
+                    class="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 text-slate-700">
+                    <i class="ph-bold ph-ticket"></i> My Bookings
+                </a>
+
+                <div class="pt-4 pb-2 px-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Visa
+                    Services</div>
+                <a href="{% url 'visa_marketplace' %}"
+                    class="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 text-slate-700">
+                    <i class="ph-bold ph-globe-hemisphere-west"></i> Browse Visas
+                </a>
+                <a href="{% url 'visa_applications' %}"
+                    class="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 text-slate-700">
+                    <i class="ph-bold ph-files"></i> My Applications
+                </a>
+
+                <div class="pt-4 pb-2 px-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Finances
+                </div>
+                <a href="{% url 'finance:dashboard' %}"
+                    class="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 text-slate-700">
+                    <i class="ph-bold ph-chart-line"></i> Accounting
+                </a>
+
+                <div class="pt-4 pb-2 px-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Support
+                </div>
+                <button onclick="toggleMobileMenu(false); toggleContactModal(true);"
+                    class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 text-slate-700 transition-all text-left">
+                    <i class="ph-bold ph-headset"></i>
+                    <span>Help center</span>
+                </button>
+            </div>
+
+            <div class="p-6 bg-slate-50 border-t border-slate-100 shrink-0">
+                <div class="flex items-center justify-between">
+                    <div class="leading-tight">
+                        <div class="text-[10px] uppercase font-black text-slate-400 mb-0.5">Wallet Balance</div>
+                        <div class="text-lg font-bold text-green-600 font-mono">€ 2,450.00</div>
+                    </div>
+                    <a href="{% url 'setting' %}"
+                        class="w-10 h-10 bg-white text-brand-700 rounded-full flex items-center justify-center font-bold text-xs border border-slate-200 shadow-sm">GT</a>
+                </div>
+            </div>
+        </div>
+
+        <div id="contact-modal" class="hidden fixed inset-0 z-[100]" role="dialog" aria-modal="true">
             <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity"
                 onclick="toggleContactModal(false)"></div>
-
             <div class="fixed inset-0 z-10 overflow-y-auto">
                 <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
                     <div
                         class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-2xl border border-slate-100">
-
                         <div
                             class="bg-slate-50 px-4 py-4 sm:px-6 flex justify-between items-center border-b border-slate-100">
-                            <div>
-                                <h3 class="text-lg font-bold leading-6 text-brand-900" id="modal-title">Contact Support
-                                </h3>
-                                <p class="mt-1 text-sm text-slate-500">Our team is available Mon-Fri, 9am - 6pm.</p>
-                            </div>
-                            <button type="button" onclick="toggleContactModal(false)"
-                                class="rounded-md bg-white text-slate-400 hover:text-slate-500 focus:outline-none">
-                                <i class="ph-bold ph-x text-xl"></i>
-                            </button>
+                            <h3 class="text-lg font-bold leading-6 text-brand-900">Contact Support</h3>
+                            <button onclick="toggleContactModal(false)" class="text-slate-400 hover:text-slate-500"><i
+                                    class="ph-bold ph-x text-xl"></i></button>
                         </div>
-
-                        <div class="px-4 py-5 sm:p-6">
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-                                <div
-                                    class="p-4 rounded-lg border border-slate-100 hover:border-brand-200 hover:bg-brand-50/50 transition-colors group">
-                                    <div class="flex items-center gap-2 mb-3">
-                                        <div
-                                            class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
-                                            <i class="ph-bold ph-boat"></i>
-                                        </div>
-                                        <h4 class="font-bold text-slate-800">Ferry Bookings</h4>
+                        <div class="px-4 py-5 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div
+                                class="p-4 rounded-lg border border-slate-100 hover:border-brand-200 hover:bg-brand-50/50 transition-colors">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <div
+                                        class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
+                                        <i class="ph-bold ph-boat"></i>
                                     </div>
-                                    <div class="space-y-2 text-sm">
-                                        <a href="mailto:ferry@easybooking.pro"
-                                            class="flex items-center gap-2 text-slate-600 hover:text-brand-600">
-                                            <i class="ph-bold ph-envelope-simple"></i> ferry@easybooking.pro
-                                        </a>
-                                        <a href="tel:+123456789"
-                                            class="flex items-center gap-2 text-slate-600 hover:text-brand-600">
-                                            <i class="ph-bold ph-phone"></i> +212 600 000 000
-                                        </a>
-                                        <a href="#"
-                                            class="flex items-center gap-2 text-green-600 hover:text-green-700 font-medium">
-                                            <i class="ph-bold ph-whatsapp-logo"></i> WhatsApp Support
-                                        </a>
-                                    </div>
+                                    <h4 class="font-bold text-slate-800">Ferry Bookings</h4>
                                 </div>
-
-                                <div
-                                    class="p-4 rounded-lg border border-slate-100 hover:border-brand-200 hover:bg-brand-50/50 transition-colors group">
-                                    <div class="flex items-center gap-2 mb-3">
-                                        <div
-                                            class="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center">
-                                            <i class="ph-bold ph-passport"></i>
-                                        </div>
-                                        <h4 class="font-bold text-slate-800">Visa Department</h4>
-                                    </div>
-                                    <div class="space-y-2 text-sm">
-                                        <a href="mailto:visa@easybooking.pro"
-                                            class="flex items-center gap-2 text-slate-600 hover:text-brand-600">
-                                            <i class="ph-bold ph-envelope-simple"></i> visa@easybooking.pro
-                                        </a>
-                                        <a href="tel:+123456789"
-                                            class="flex items-center gap-2 text-slate-600 hover:text-brand-600">
-                                            <i class="ph-bold ph-phone"></i> +212 600 000 001
-                                        </a>
-                                        <a href="#"
-                                            class="flex items-center gap-2 text-green-600 hover:text-green-700 font-medium">
-                                            <i class="ph-bold ph-whatsapp-logo"></i> WhatsApp Support
-                                        </a>
-                                    </div>
+                                <div class="space-y-2 text-sm text-slate-600">
+                                    <p><i class="ph-bold ph-envelope-simple mr-2"></i> ferry@easybooking.pro</p>
+                                    <p><i class="ph-bold ph-phone mr-2"></i> +212 600 000 000</p>
                                 </div>
-
-                                <div
-                                    class="p-4 rounded-lg border border-slate-100 hover:border-brand-200 hover:bg-brand-50/50 transition-colors group">
-                                    <div class="flex items-center gap-2 mb-3">
-                                        <div
-                                            class="w-8 h-8 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center">
-                                            <i class="ph-bold ph-receipt"></i>
-                                        </div>
-                                        <h4 class="font-bold text-slate-800">Accounting</h4>
+                            </div>
+                            <div
+                                class="p-4 rounded-lg border border-slate-100 hover:border-brand-200 hover:bg-brand-50/50 transition-colors">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <div
+                                        class="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center">
+                                        <i class="ph-bold ph-passport"></i>
                                     </div>
-                                    <div class="space-y-2 text-sm">
-                                        <a href="mailto:billing@easybooking.pro"
-                                            class="flex items-center gap-2 text-slate-600 hover:text-brand-600">
-                                            <i class="ph-bold ph-envelope-simple"></i> billing@easybooking.pro
-                                        </a>
-                                        <a href="tel:+123456789"
-                                            class="flex items-center gap-2 text-slate-600 hover:text-brand-600">
-                                            <i class="ph-bold ph-phone"></i> +212 600 000 002
-                                        </a>
-                                    </div>
+                                    <h4 class="font-bold text-slate-800">Visa Department</h4>
                                 </div>
-
-                                <div
-                                    class="p-4 rounded-lg border border-slate-100 hover:border-brand-200 hover:bg-brand-50/50 transition-colors group">
-                                    <div class="flex items-center gap-2 mb-3">
-                                        <div
-                                            class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center">
-                                            <i class="ph-bold ph-code"></i>
-                                        </div>
-                                        <h4 class="font-bold text-slate-800">Tech Support</h4>
-                                    </div>
-                                    <div class="space-y-2 text-sm">
-                                        <a href="mailto:support@easybooking.pro"
-                                            class="flex items-center gap-2 text-slate-600 hover:text-brand-600">
-                                            <i class="ph-bold ph-envelope-simple"></i> support@easybooking.pro
-                                        </a>
-                                    </div>
+                                <div class="space-y-2 text-sm text-slate-600">
+                                    <p><i class="ph-bold ph-envelope-simple mr-2"></i> visa@easybooking.pro</p>
                                 </div>
-
                             </div>
                         </div>
                     </div>
@@ -384,16 +305,22 @@
         </div>
 
         <script>
-            // Modal Toggle Function
             function toggleContactModal(show) {
                 const modal = document.getElementById('contact-modal');
+                modal.classList.toggle('hidden', !show);
+                document.body.style.overflow = show ? 'hidden' : 'auto';
+            }
+
+            function toggleMobileMenu(show) {
+                const menu = document.getElementById('mobile-menu');
+                const overlay = document.getElementById('mobile-menu-overlay');
                 if (show) {
-                    modal.classList.remove('hidden');
-                    // Prevent background scrolling
+                    menu.classList.remove('closed');
+                    overlay.classList.remove('hidden');
                     document.body.style.overflow = 'hidden';
                 } else {
-                    modal.classList.add('hidden');
-                    // Restore background scrolling
+                    menu.classList.add('closed');
+                    overlay.classList.add('hidden');
                     document.body.style.overflow = 'auto';
                 }
             }
