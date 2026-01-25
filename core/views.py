@@ -3,6 +3,7 @@ from datetime import datetime
 from django.http import JsonResponse
 
 from agencies.models.agency import Agency
+from finance.services.account import get_account_stats
 # Make sure KPI is imported from your services file
 from .services import KPI, DashboardService, ClientKPIService
 from django.contrib.auth.decorators import user_passes_test
@@ -282,4 +283,39 @@ def api_agency_kpis(request):
             'visa': visa_stats,
             'spending': spending
         }
+    })
+
+
+@user_passes_test(is_agency)
+def api_get_my_info(request):
+    user = request.user
+
+    # Safely get the agency
+    agency = getattr(user, 'agency', None)
+
+    # Check if agency AND its account exists
+    if not agency or not hasattr(agency, 'account'):
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Unauthorized or no agency account linked'
+        }, status=403)
+
+    # 1. Fixed the typo: get_full_name() is the standard Django method
+    full_name = user.get_full_name()
+    print(full_name)
+
+    # 2. Extract buying power from the stats helper
+    try:
+        stats = get_account_stats(agency.account)
+        buying_power = stats.get('buying_power', 0)
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Could not calculate buying power'
+        }, status=500)
+
+    return JsonResponse({
+        'full_name': full_name,
+        'buying_power': buying_power,
+        'status': 'success'
     })

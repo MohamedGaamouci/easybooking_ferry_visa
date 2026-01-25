@@ -1,4 +1,8 @@
+from django.contrib.humanize.templatetags.humanize import intcomma
+from django.utils.dateparse import parse_date
+from django.core.paginator import Paginator
 from finance.services.wallet import execute_transaction
+from finance.models.top_up_request import TopUpRequest
 from .notifications import send_booking_notification
 from ..models import Invoice, Account, Transaction  # Ensure these are imported
 from django.db.models import Sum
@@ -8,7 +12,7 @@ from django.db.models import Q
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from ..models import Invoice, InvoiceItem, Transaction, Account
-from .account import get_account
+from .account import get_account, get_account_stats, get_transaction_ledger
 
 
 import io
@@ -175,12 +179,19 @@ def pay_invoice(invoice_id, user=None):
         if invoice.status != 'unpaid':
             return False, f"Invoice is {invoice.status}, cannot pay."
 
+        # 3. Handle the Operational Hold (Credit Limit Logic)
+        # Since execute_transaction handles the 'Balance', we manually
+        # update the 'unpaid_hold' here as it's specific to your Credit system.
+        acc_locked = invoice.agency.account
+        acc_locked.unpaid_hold -= invoice.total_amount
+        acc_locked.save()
+
         # 2. Execute the Financial Movement
         # We use our helper because it handles locking, balance checks,
         # and creating the Transaction history automatically.
         try:
             execute_transaction(
-                account_id=invoice.agency.account.id,  # Link through agency
+                account_id=acc_locked.id,  # Link through agency
                 amount=invoice.total_amount,          # Helper will flip to negative
                 trans_type='payment',
                 description=f"Settlement: Invoice {invoice.invoice_number}",
@@ -190,13 +201,6 @@ def pay_invoice(invoice_id, user=None):
         except ValidationError as e:
             # This catches "Insufficient Balance" errors from execute_transaction
             return False, str(e)
-
-        # 3. Handle the Operational Hold (Credit Limit Logic)
-        # Since execute_transaction handles the 'Balance', we manually
-        # update the 'unpaid_hold' here as it's specific to your Credit system.
-        acc_locked = invoice.agency.account
-        acc_locked.unpaid_hold -= invoice.total_amount
-        acc_locked.save()
 
         # 4. Finalize Invoice
         invoice.status = 'paid'
@@ -493,3 +497,164 @@ def bulk_pay_invoices(invoice_ids, user=None):
         invoices.update(status='paid', paid_at=now)
 
         return True, f"Successfully paid {len(invoices)} invoices totaling {total_amount:,.2f} DZD."
+
+
+# Search method and filter
+
+
+class FinanceService:
+    @staticmethod
+    def get_initial_dashboard_data(account):
+        """Logic for the initial HTML load: Stats and Top-ups."""
+        stats = get_account_stats(account)
+        pending_topups = TopUpRequest.objects.filter(
+            account=account, status='pending'
+        ).order_by('-created_at')
+        return stats, pending_topups
+
+    @staticmethod
+    def get_invoices(agency, params):
+        # 1. Sanitize numeric inputs
+        def to_int(val):
+            try:
+                return int(val)
+            except (ValueError, TypeError):
+                return None
+
+        query = params.get('q', '')
+        status = params.get('status')
+        # Use to_int for the page and amount filters
+        p_num = to_int(params.get('page')) or 1
+        min_amt = to_int(params.get('min_amt'))
+        max_amt = to_int(params.get('max_amt'))
+
+        qs = search_invoices(
+            agency=agency,
+            search_term=query,
+            status=status,
+            min_amount=min_amt,
+            max_amount=max_amt,
+            created_after=parse_date(params.get('date_from', '')),
+            created_before=parse_date(params.get('date_to', ''))
+        )
+        paginator = Paginator(qs, 10)  # Set to 10 or your preferred page size
+        return paginator.get_page(p_num)
+
+    @staticmethod
+    def get_ledger(account, params):
+        def to_int(val):
+            try:
+                return int(val)
+            except (ValueError, TypeError):
+                return None
+
+        query = params.get('q', '')
+        p_num = to_int(params.get('page')) or 1
+        min_amt = to_int(params.get('min_amt'))
+        max_amt = to_int(params.get('max_amt'))
+
+        qs = get_transaction_ledger(
+            account=account,
+            search_query=query,
+            date_from=parse_date(params.get('date_from', '')),
+            date_to=parse_date(params.get('date_to', '')),
+            min_amount=min_amt,
+            max_amount=max_amt
+        )
+        paginator = Paginator(qs, 10)
+        return paginator.get_page(p_num)
+
+    @staticmethod
+    def get_topup_history(account, params):
+        def to_int(val):
+            try:
+                return int(val)
+            except (ValueError, TypeError):
+                return None
+
+        query = params.get('q', '')
+        status = params.get('status')  # NEW
+        p_num = to_int(params.get('page')) or 1
+
+        # New: Amount Filters
+        min_amt = to_int(params.get('min_amt'))
+        max_amt = to_int(params.get('max_amt'))
+
+        date_from = parse_date(params.get('date_from', ''))
+        date_to = parse_date(params.get('date_to', ''))
+
+        qs = TopUpRequest.objects.filter(
+            account=account).order_by('-created_at')
+
+        # Apply Filters
+        if query:
+            qs = qs.filter(reference_number__icontains=query)
+        if status:  # NEW
+            qs = qs.filter(status=status)
+        if min_amt:  # NEW
+            qs = qs.filter(amount__gte=min_amt)
+        if max_amt:  # NEW
+            qs = qs.filter(amount__lte=max_amt)
+        if date_from:
+            qs = qs.filter(created_at__date__gte=date_from)
+        if date_to:
+            qs = qs.filter(created_at__date__lte=date_to)
+
+        paginator = Paginator(qs, 10)
+        return paginator.get_page(p_num)
+
+
+def serialize_invoices(page_obj):
+    """Transforms Invoice objects into a list of dictionaries."""
+    data = []
+    for inv in page_obj:
+        data.append({
+            'id': inv.id,
+            'number': inv.invoice_number,
+            'date': inv.created_at.strftime("%b %d, %Y"),
+            'amount': intcomma(inv.total_amount),
+            'status': inv.status,
+            'status_display': inv.get_status_display()
+        })
+    return data
+
+
+def serialize_ledger(page_obj):
+    """Transforms Transaction objects into a list of dictionaries."""
+    data = []
+    for t in page_obj:
+        # Determine the reference text based on which foreign key exists
+        ref = "-"
+        if t.invoice:
+            ref = f"Ref: #{t.invoice.invoice_number}"
+        elif t.top_up:
+            ref = f"Ref: #{t.top_up.reference_number or 'CASH'}"
+
+        data.append({
+            'date': t.created_at.strftime("%b %d, %Y"),
+            'time': t.created_at.strftime("%H:%M"),
+            'description': t.description,
+            'ref': ref,
+            'type': t.transaction_type,
+            'amount': intcomma(t.amount),
+            'amount_is_positive': t.amount > 0,
+            'balance_after': intcomma(t.balance_after)
+        })
+    return data
+
+
+def serialize_topups(page_obj):
+    data = []
+    for req in page_obj:
+        data.append({
+            'id': req.id,
+            'date': req.created_at.strftime("%b %d, %Y"),
+            'time': req.created_at.strftime("%H:%M"),
+            'amount': intcomma(req.amount),
+            'ref': req.reference_number or "No Ref",
+            'status': req.status,
+            'status_display': req.get_status_display(),
+            # Include receipt URL if it exists
+            'receipt_url': req.receipt_image.url if req.receipt_image else None,
+        })
+    return data

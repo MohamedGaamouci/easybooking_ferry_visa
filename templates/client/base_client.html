@@ -170,15 +170,20 @@
                 </button>
 
                 <div class="hidden sm:block text-right leading-tight">
-                    <div class="text-[10px] uppercase font-bold text-slate-400">Wallet Balance</div>
-                    <div class="text-sm font-bold text-green-600 font-mono">€ 2,450.00</div>
+                    <div class="text-[10px] uppercase font-bold text-slate-400">Buying Power</div>
+                    <div id="wallet-balance" class="text-sm font-bold text-green-600 font-mono">0.00 DA</div>
                 </div>
 
                 <div class="h-8 w-px bg-slate-200 hidden sm:block"></div>
 
                 <div class="flex items-center gap-2 sm:gap-3">
-                    <a href="{% url 'setting' %}"
-                        class="w-9 h-9 bg-brand-50 text-brand-700 rounded-full flex items-center justify-center font-bold text-xs border border-brand-200 hover:bg-brand-600 hover:text-white transition-all shadow-sm">GT</a>
+                    <a href="{% url 'setting' %}" class="group">
+                        <div id="user-initials"
+                            class="w-9 h-9 bg-brand-50 text-brand-700 rounded-full flex items-center justify-center font-bold text-xs border border-brand-200 group-hover:bg-brand-600 group-hover:text-white transition-all shadow-sm">
+                            ..
+                        </div>
+                    </a>
+
                     <form action="{% url 'logout' %}" method="post" class="inline">
                         {% csrf_token %}
                         <button type="submit" class="text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
@@ -324,6 +329,51 @@
                     document.body.style.overflow = 'auto';
                 }
             }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                updateUserInfo();
+            });
+
+            function updateUserInfo() {
+                fetch("{% url 'api_user_info' %}") // Ensure this matches your path in urls.py
+                    .then(response => {
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        return response.json();
+                    })
+                    .then(data => {
+                        // 1. Update Wallet / Buying Power
+                        const walletEl = document.getElementById('wallet-balance');
+                        if (walletEl && data.buying_power !== undefined) {
+                            // Formatting number with commas: 12500 -> 12,500.00
+                            const formattedPower = new Intl.NumberFormat('fr-FR', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            }).format(data.buying_power);
+
+                            walletEl.innerText = `${formattedPower} DA`;
+                        }
+
+                        // 2. Update Initials
+                        const initialsEl = document.getElementById('user-initials');
+                        if (initialsEl && data.full_name) {
+                            initialsEl.innerText = getInitials(data.full_name);
+                            // Optional: set title to full name so it shows on hover
+                            initialsEl.parentElement.title = data.full_name;
+                        }
+                    })
+                    .catch(error => console.error('Error fetching user info:', error));
+            }
+
+            // Helper function to turn "Houssem Khiati" into "HK"
+            function getInitials(name) {
+                return name
+                    .split(' ')
+                    .map(word => word.charAt(0))
+                    .join('')
+                    .toUpperCase()
+                    .substring(0, 2); // Limit to 2 letters max
+            }
+
         </script>
     </header>
 

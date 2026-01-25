@@ -4,7 +4,8 @@
 {% block content %}
 
 <main class="max-w-7xl mx-auto px-6 pt-24 pb-12 fade-in" x-data="{ tab: 'invoices', showFilters: false }">
-
+    <input type="hidden" id="apiUrl" value="{% url 'finance:api_router' %}">
+    <input type="hidden" id="activeTabValue" :value="tab">
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
 
         <div
@@ -104,256 +105,252 @@
     {% endif %}
 
     <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col">
-
-        <div class="border-b border-slate-200 bg-slate-50/50 p-1">
-            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-2">
-
-                <div class="flex bg-slate-200/50 p-1 rounded-xl w-fit">
-                    <button @click="tab = 'invoices'"
-                        :class="{'bg-white text-brand-700 shadow-sm ring-1 ring-black/5': tab === 'invoices', 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50': tab !== 'invoices'}"
-                        class="px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-2">
-                        <i class="ph-bold ph-receipt"></i> Invoices
-                        {% if stats.unpaid_invoices_count > 0 %}
-                        <span class="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">
-                            {{ stats.unpaid_invoices_count }}</span>
-                        {% endif %}
-                    </button>
-                    <button @click="tab = 'transactions'"
-                        :class="{'bg-white text-brand-700 shadow-sm ring-1 ring-black/5': tab === 'transactions', 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50': tab !== 'transactions'}"
-                        class="px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-2">
-                        <i class="ph-bold ph-arrows-left-right"></i> History
-                    </button>
-                </div>
-
-                <div class="flex items-center gap-2 w-full lg:w-auto">
-                    <div class="relative w-full lg:w-64 group">
-                        <i
-                            class="ph-bold ph-magnifying-glass absolute left-3 top-2.5 text-slate-400 group-focus-within:text-brand-500 transition-colors"></i>
-                        <input type="text" id="searchInput" placeholder="Search ID, service, amount..."
-                            class="pl-9 pr-4 py-2.5 text-xs font-medium bg-white border border-slate-300 rounded-xl shadow-sm focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none w-full transition-all">
-                    </div>
-                    <button @click="showFilters = !showFilters"
-                        :class="{'bg-brand-50 border-brand-200 text-brand-600': showFilters, 'bg-white border-slate-300 text-slate-600': !showFilters}"
-                        class="px-3 py-2.5 border rounded-xl shadow-sm hover:bg-slate-50 transition-colors flex items-center gap-2">
-                        <i class="ph-bold ph-faders"></i>
-                    </button>
-                </div>
-            </div>
-
-            <div x-show="showFilters" x-collapse style="display: none;"
-                class="border-t border-slate-200 bg-slate-50 p-4">
-                <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">From Date</label>
-                        <input type="date" id="filterDateFrom" onchange="triggerSearch()"
-                            class="w-full text-xs border border-slate-300 rounded-lg p-2 focus:ring-1 focus:ring-brand-500 outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">To Date</label>
-                        <input type="date" id="filterDateTo" onchange="triggerSearch()"
-                            class="w-full text-xs border border-slate-300 rounded-lg p-2 focus:ring-1 focus:ring-brand-500 outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Min Amount</label>
-                        <input type="number" id="filterMin" placeholder="0.00" onkeyup="triggerSearch()"
-                            class="w-full text-xs border border-slate-300 rounded-lg p-2 focus:ring-1 focus:ring-brand-500 outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Max Amount</label>
-                        <input type="number" id="filterMax" placeholder="Max" onkeyup="triggerSearch()"
-                            class="w-full text-xs border border-slate-300 rounded-lg p-2 focus:ring-1 focus:ring-brand-500 outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Status</label>
-                        <select id="filterStatus" onchange="triggerSearch()"
-                            class="w-full text-xs border border-slate-300 rounded-lg p-2 bg-white focus:ring-1 focus:ring-brand-500 outline-none">
-                            <option value="">All Statuses</option>
-                            <option value="unpaid">Unpaid Only</option>
-                            <option value="paid">Paid Only</option>
-                            <option value="cancelled">Cancelled</option>
-                        </select>
-                    </div>
-                </div>
+        <div class="border-b border-slate-200 bg-slate-50/50 p-3">
+            <div class="flex bg-slate-200/50 p-1 rounded-xl w-fit">
+                <button @click="tab = 'invoices'"
+                    :class="tab === 'invoices' ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-500'"
+                    class="px-4 py-2 text-xs font-bold rounded-lg transition-all">Invoices</button>
+                <button @click="tab = 'ledger'" @click.once="fetchLedger()"
+                    :class="tab === 'ledger' ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-500'"
+                    class="px-4 py-2 text-xs font-bold rounded-lg transition-all">History</button>
+                <button @click="tab = 'topups'" @click.once="fetchTopups()"
+                    :class="tab === 'topups' ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-500'"
+                    class="px-4 py-2 text-xs font-bold rounded-lg transition-all">Topups</button>
             </div>
         </div>
 
-        <div class="relative min-h-[300px]">
-            <div id="loadingIndicator"
-                class="absolute inset-0 bg-white/60 backdrop-blur-[1px] z-10 hidden flex items-center justify-center">
-                <div class="flex flex-col items-center">
-                    <i class="ph-bold ph-spinner animate-spin text-3xl text-brand-600"></i>
-                </div>
-            </div>
+        <div class="relative min-h-[400px]">
 
-            <div x-show="tab === 'invoices'" class="fade-in">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead
-                            class="bg-slate-50 text-xs uppercase text-slate-500 font-bold border-b border-slate-200 tracking-wider">
-                            <tr>
-                                <th class="px-6 py-4">Invoice ID</th>
-                                <th class="px-6 py-4">Created</th>
-                                <th class="px-6 py-4">Total Amount</th>
-                                <th class="px-6 py-4 text-center">Status</th>
-                                <th class="px-6 py-4 text-right">Receipt</th>
-                            </tr>
-                        </thead>
-                        <tbody id="invoice-body" class="divide-y divide-slate-100 text-sm">
-                            {% for invoice in invoices %}
-                            <tr onclick="openInvoiceModal({{ invoice.id }})"
-                                class="group hover:bg-slate-50 transition-colors">
-                                <td class="px-6 py-4">
-                                    <span
-                                        class="font-mono font-bold text-slate-900 bg-slate-100 px-2 py-1 rounded text-xs">#
-                                        {{invoice.invoice_number }}</span>
-                                </td>
-                                <td class="px-6 py-4 text-slate-500 text-xs font-medium">
-                                    {{ invoice.created_at|date:"M d, Y" }}</td>
-                                <td class="px-6 py-4 font-bold text-slate-900 tabular-nums">
-                                    {{invoice.total_amount|intcomma }} <span
-                                        class="text-[10px] text-slate-400 font-normal">DZD</span></td>
-                                <td class="px-6 py-4 text-center">
-                                    {% if invoice.status == 'unpaid' %}
-                                    <span
-                                        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-red-50 text-red-700 border border-red-100 uppercase tracking-wide">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span> Unpaid
-                                    </span>
-                                    {% elif invoice.status == 'paid' %}
-                                    <span
-                                        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-green-50 text-green-700 border border-green-100 uppercase tracking-wide">
-                                        <i class="ph-bold ph-check text-green-600"></i> Paid
-                                    </span>
-                                    {% else %}
-                                    <span
-                                        class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200 uppercase tracking-wide">
-                                        {{ invoice.status }}
-                                    </span>
-                                    {% endif %}
-                                </td>
-                                <td class="px-6 py-4 text-right">
-                                    <button
-                                        class="text-slate-400 hover:text-brand-600 transition-colors p-2 hover:bg-brand-50 rounded-lg">
-                                        <i class="ph-bold ph-download-simple text-lg"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="5" class="px-6 py-16 text-center text-slate-400">
-                                    <div class="flex flex-col items-center">
-                                        <div
-                                            class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-3 text-2xl text-slate-300">
-                                            <i class="ph-duotone ph-receipt"></i>
-                                        </div>
-                                        <p class="font-medium">No invoices found</p>
-                                        <p class="text-xs opacity-60">Try adjusting your filters</p>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                    <div class="p-4 border-t border-slate-200 bg-slate-50 flex justify-between items-center"
-                        id="inv-pagination-controls">
-                        <span class="text-xs text-slate-500">
-                            Page <span id="inv-current-page">{{ invoices.number }}</span> of <span
-                                id="inv-total-pages">{{ invoices.paginator.num_pages }}</span>
-                        </span>
+            <div x-show="tab === 'invoices'" class="p-4 space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:flex lg:items-center gap-3">
+                    <div class="relative lg:flex-1">
+                        <i class="ph-bold ph-magnifying-glass absolute left-3 top-2.5 text-slate-400"></i>
+                        <input type="text" id="inv-search" oninput="triggerInvoiceSearch()"
+                            placeholder="Search Invoice #..."
+                            class="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg outline-none focus:ring-1 focus:ring-brand-500">
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:items-center gap-3">
+                        <select id="inv-status" onchange="triggerInvoiceSearch()"
+                            class="w-full lg:w-44 border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white outline-none">
+                            <option value="">All Statuses</option>
+                            <option value="unpaid">Unpaid</option>
+                            <option value="paid">Paid</option>
+                            <option value="refunded">Refunded</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+
+                        <div
+                            class="flex items-center gap-2 bg-white border border-slate-300 rounded-lg px-2 py-1.5 lg:py-1">
+                            <input type="date" id="inv-date-from" onchange="triggerInvoiceSearch()"
+                                class="w-full text-xs border-none outline-none focus:ring-0 bg-transparent">
+                            <span class="text-slate-300 font-bold">/</span>
+                            <input type="date" id="inv-date-to" onchange="triggerInvoiceSearch()"
+                                class="w-full text-xs border-none outline-none focus:ring-0 bg-transparent">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border border-slate-200 rounded-xl">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse min-w-[600px]">
+                            <thead
+                                class="bg-slate-50 text-xs uppercase text-slate-500 font-bold border-b border-slate-200">
+                                <tr>
+                                    <th class="px-6 py-4">Invoice ID</th>
+                                    <th class="px-6 py-4">Created</th>
+                                    <th class="px-6 py-4">Total Amount</th>
+                                    <th class="px-6 py-4 text-center">Status</th>
+                                    <th class="px-6 py-4 text-right">Receipt</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inv-body" class="divide-y divide-slate-100 text-sm">
+                                {% for invoice in invoices %}
+                                <tr onclick="openInvoiceModal({{ invoice.id }})"
+                                    class="group hover:bg-slate-50 transition-colors cursor-pointer">
+                                    <td class="px-6 py-4"><span
+                                            class="font-mono font-bold text-slate-900 bg-slate-100 px-2 py-1 rounded text-xs">
+                                            #{{ invoice.invoice_number }}</span></td>
+                                    <td class="px-6 py-4 text-slate-500 text-xs font-medium">
+                                        {{ invoice.created_at|date:"M d, Y" }}</td>
+                                    <td class="px-6 py-4 font-bold text-slate-900 tabular-nums">
+                                        {{ invoice.total_amount|intcomma }} <span
+                                            class="text-xs text-slate-400 font-normal">DZD</span></td>
+                                    <td class="px-6 py-4 text-center">
+                                        <span
+                                            class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold {% if invoice.status == 'paid' %}bg-green-50 text-green-700{% else %}bg-red-50 text-red-700{% endif %} uppercase">
+                                            {{ invoice.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-right">
+                                        <button class="text-slate-400 hover:text-brand-600 p-2"><i
+                                                class="ph-bold ph-download-simple text-lg"></i></button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="inv-pagination"
+                        class="p-3 border-t border-slate-200 flex justify-between items-center bg-slate-50">
+                        <span class="text-xs text-slate-500">Page <span id="inv-current">{{ invoices.number }}</span> of
+                            <span id="inv-total">{{ invoices.paginator.num_pages }}</span></span>
                         <div class="flex gap-2">
-                            <button id="inv-prev-btn" onclick="changePage('inv', -1)" {% if not invoices.has_previous %}
-                                disabled {% endif %}
+                            <button {% if not invoices.has_previous %}disabled{% endif %} id="inv-prev"
+                                onclick="changeInvoicePage(-1)"
                                 class="px-3 py-1 text-xs font-bold bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50">Prev</button>
-                            <button id="inv-next-btn" onclick="changePage('inv', 1)" {% if not invoices.has_next %}
-                                disabled {% endif %}
+                            <button {% if not invoices.has_next %}disabled{% endif %} id="inv-next"
+                                onclick="changeInvoicePage(1)"
                                 class="px-3 py-1 text-xs font-bold bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50">Next</button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div x-show="tab === 'transactions'" style="display: none;" class="fade-in">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead
-                            class="bg-slate-50 text-xs uppercase text-slate-500 font-bold border-b border-slate-200 tracking-wider">
-                            <tr>
-                                <th class="px-6 py-4">Date</th>
-                                <th class="px-6 py-4">Description</th>
-                                <th class="px-6 py-4">Type</th>
-                                <th class="px-6 py-4 text-right">Amount</th>
-                                <th class="px-6 py-4 text-center">Balance</th>
-                            </tr>
-                        </thead>
-                        <tbody id="transaction-body" class="divide-y divide-slate-100 text-sm">
-                            {% for t in transactions %}
-                            <tr class="group hover:bg-slate-50 transition-colors">
-                                <td class="px-6 py-4 text-slate-500 whitespace-nowrap">
-                                    <span class="font-medium text-slate-700 block">
-                                        {{ t.created_at|date:"M d, Y" }}</span>
-                                    <span class="text-[10px] text-slate-400">{{ t.created_at|time:"H:i" }}</span>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <div class="font-bold text-slate-800">{{ t.description }}</div>
-                                    <div class="text-xs text-slate-400 font-mono mt-0.5">
-                                        {% if t.invoice %} Ref: #{{ t.invoice.invoice_number }}
-                                        {% elif t.top_up %} Ref: #{{ t.top_up.reference_number|default:"CASH" }}
-                                        {% endif %}
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4">
-                                    {% if t.transaction_type == 'deposit' %}
-                                    <span
-                                        class="text-[10px] font-bold text-green-700 bg-green-50 border border-green-100 px-2 py-1 rounded uppercase">Top
-                                        Up</span>
-                                    {% elif t.transaction_type == 'refund' %}
-                                    <span
-                                        class="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-100 px-2 py-1 rounded uppercase">Refund</span>
-                                    {% else %}
-                                    <span
-                                        class="text-[10px] font-bold text-slate-500 bg-slate-100 border border-slate-200 px-2 py-1 rounded uppercase">Payment</span>
-                                    {% endif %}
-                                </td>
-                                <td
-                                    class="px-6 py-4 text-right font-bold tabular-nums {% if t.amount > 0 %}text-green-600{% else %}text-slate-800{% endif %}">
-                                    {% if t.amount > 0 %}+{% endif %}{{ t.amount|intcomma }}
-                                </td>
-                                <td class="px-6 py-4 text-center font-mono text-xs text-slate-500 tabular-nums">
-                                    {{ t.balance_after|intcomma }}
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="5" class="px-6 py-16 text-center text-slate-400">
-                                    <div class="flex flex-col items-center">
-                                        <div
-                                            class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-3 text-2xl text-slate-300">
-                                            <i class="ph-duotone ph-list-dashes"></i>
-                                        </div>
-                                        <p class="font-medium">No transactions found</p>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                    <div class="p-4 border-t border-slate-200 bg-slate-50 flex justify-between items-center"
-                        id="trans-pagination-controls">
-                        <span class="text-xs text-slate-500">
-                            Page <span id="trans-current-page">{{ transactions.number }}</span> of <span
-                                id="trans-total-pages">{{ transactions.paginator.num_pages }}</span>
-                        </span>
+            <div x-show="tab === 'ledger'" style="display: none;" class="p-4 space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:items-center gap-3">
+                    <div class="relative flex-1 sm:col-span-2 lg:col-span-1">
+                        <i class="ph-bold ph-magnifying-glass absolute left-3 top-2.5 text-slate-400"></i>
+                        <input type="text" id="ledger-search" oninput="triggerLedgerSearch()"
+                            placeholder="Search descriptions..."
+                            class="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg outline-none focus:ring-1 focus:ring-brand-500">
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <input type="date" id="ledger-date-from" onchange="triggerLedgerSearch()"
+                            class="flex-1 border border-slate-300 rounded-lg px-2 py-1 text-xs">
+                        <span class="text-slate-400">to</span>
+                        <input type="date" id="ledger-date-to" onchange="triggerLedgerSearch()"
+                            class="flex-1 border border-slate-300 rounded-lg px-2 py-1 text-xs">
+                    </div>
+                </div>
+
+                <div class="border border-slate-200 rounded-xl">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse min-w-[700px]">
+                            <thead
+                                class="bg-slate-50 text-xs uppercase text-slate-500 font-bold border-b border-slate-200">
+                                <tr>
+                                    <th class="px-6 py-4">Date</th>
+                                    <th class="px-6 py-4">Description</th>
+                                    <th class="px-6 py-4">Type</th>
+                                    <th class="px-6 py-4 text-right">Amount</th>
+                                    <th class="px-6 py-4 text-center">Balance</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ledger-body" class="divide-y divide-slate-100 text-sm">
+                                {% for t in transactions %}
+                                <tr class="group hover:bg-slate-50 transition-colors">
+                                    <td class="px-6 py-4 text-slate-500 whitespace-nowrap">
+                                        <span class="font-medium text-slate-700 block">
+                                            {{ t.created_at|date:"M d,Y"}}</span>
+                                        <span class="text-[10px] text-slate-400">{{ t.created_at|time:"H:i" }}</span>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="font-bold text-slate-800">{{ t.description }}</div>
+                                        <div class="text-xs text-slate-400 font-mono">{% if t.invoice %}Ref:
+                                            #{{ t.invoice.invoice_number }}{% endif %}</div>
+                                    </td>
+                                    <td class="px-6 py-4"><span
+                                            class="text-[10px] font-bold bg-slate-100 px-2 py-1 rounded uppercase">
+                                            {{t.transaction_type }}</span></td>
+                                    <td
+                                        class="px-6 py-4 text-right font-bold {% if t.amount > 0 %}text-green-600{% else %}text-slate-800{% endif %}">
+                                        {{ t.amount|intcomma }}</td>
+                                    <td class="px-6 py-4 text-center font-mono text-xs text-slate-500">
+                                        {{t.balance_after|intcomma }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="ledger-pagination"
+                        class="p-3 border-t border-slate-200 flex justify-between items-center bg-slate-50">
+                        <span class="text-xs text-slate-500">Page <span id="ledger-current">{{
+                                transactions.number}}</span> of <span
+                                id="ledger-total">{{transactions.paginator.num_pages}}</span></span>
                         <div class="flex gap-2">
-                            <button id="trans-prev-btn" onclick="changePage('trans', -1)" {% if not
-                                transactions.has_previous %} disabled {% endif %}
+                            <button {% if not transactions.has_previous %}disabled{% endif %} id="ledger-prev"
+                                onclick="changeLedgerPage(-1)"
                                 class="px-3 py-1 text-xs font-bold bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50">Prev</button>
-                            <button id="trans-next-btn" onclick="changePage('trans', 1)" {% if not
-                                transactions.has_next%} disabled {% endif %}
+                            <button {% if not transactions.has_next %}disabled{% endif %} id="ledger-next"
+                                onclick="changeLedgerPage(1)"
                                 class="px-3 py-1 text-xs font-bold bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50">Next</button>
                         </div>
                     </div>
                 </div>
             </div>
 
+            <div x-show="tab === 'topups'" style="display: none;" class="p-4 space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
+                    <div class="relative lg:col-span-1">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Reference</label>
+                        <i class="ph-bold ph-magnifying-glass absolute left-3 bottom-2.5 text-slate-400"></i>
+                        <input type="text" id="topup-search" oninput="triggerTopupSearch()" placeholder="Search Ref..."
+                            class="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Status</label>
+                        <select id="topup-status" onchange="triggerTopupSearch()"
+                            class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white outline-none">
+                            <option value="">All Statuses</option>
+                            <option value="pending">Pending</option>
+                            <option value="approved">Approved</option>
+                            <option value="approved">Refused</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Amount (DZD)</label>
+                        <div class="flex items-center gap-2">
+                            <input type="number" id="topup-min-amt" oninput="triggerTopupSearch()" placeholder="Min"
+                                class="w-full border border-slate-300 rounded-lg px-2 py-2 text-xs">
+                            <input type="number" id="topup-max-amt" oninput="triggerTopupSearch()" placeholder="Max"
+                                class="w-full border border-slate-300 rounded-lg px-2 py-2 text-xs">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Date Range</label>
+                        <div class="flex items-center gap-2">
+                            <input type="date" id="topup-date-from" onchange="triggerTopupSearch()"
+                                class="w-full border border-slate-300 rounded-lg px-2 py-1 text-xs">
+                            <input type="date" id="topup-date-to" onchange="triggerTopupSearch()"
+                                class="w-full border border-slate-300 rounded-lg px-2 py-1 text-xs">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border border-slate-200 rounded-xl">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse min-w-[700px]">
+                            <thead
+                                class="bg-slate-50 text-xs uppercase text-slate-500 font-bold border-b border-slate-200">
+                                <tr>
+                                    <th class="px-6 py-4">Date</th>
+                                    <th class="px-6 py-4">Ref Number</th>
+                                    <th class="px-6 py-4 text-right">Amount</th>
+                                    <th class="px-6 py-4 text-center">Status</th>
+                                    <th class="px-6 py-4 text-right">Receipt</th>
+                                </tr>
+                            </thead>
+                            <tbody id="topup-body" class="divide-y divide-slate-100 text-sm"></tbody>
+                        </table>
+                    </div>
+                    <div id="topup-pagination"
+                        class="p-3 border-t border-slate-200 flex justify-between items-center bg-slate-50">
+                        <span class="text-xs text-slate-500">Page <span id="topup-current">1</span> of <span
+                                id="topup-total">1</span></span>
+                        <div class="flex gap-2">
+                            <button id="topup-prev" onclick="changeTopupPage(-1)"
+                                class="px-3 py-1 text-xs font-bold bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50">Prev</button>
+                            <button id="topup-next" onclick="changeTopupPage(1)"
+                                class="px-3 py-1 text-xs font-bold bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50">Next</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </main>
@@ -550,142 +547,152 @@
     }
 
     // ========================================================
-    // 2. LIVE SEARCH, FILTERING & PAGINATION ENGINE
+    // 2. STATE & TRIGGER ENGINE
     // ========================================================
-    let currentInvPage = 1;
-    let currentTransPage = 1;
-    let searchTimeout;
+    // --- STATE ---
+    let invPage = 1;
+    let ledgerPage = 1;
+    let invTimeout, ledgerTimeout;
 
-    // Inputs to watch
-    const inputs = ['searchInput', 'filterStatus', 'filterDateFrom', 'filterDateTo', 'filterMin', 'filterMax'];
-
-    inputs.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-            el.addEventListener('input', triggerSearch);
-            el.addEventListener('change', triggerSearch);
-        }
-    });
-
-    // 1. Trigger Search (Resets to Page 1)
-    function triggerSearch() {
-        clearTimeout(searchTimeout);
-        currentInvPage = 1;
-        currentTransPage = 1;
-        searchTimeout = setTimeout(performSearch, 400);
+    // --- INVOICE METHODS ---
+    function triggerInvoiceSearch() {
+        clearTimeout(invTimeout);
+        invPage = 1;
+        invTimeout = setTimeout(fetchInvoices, 400);
     }
 
-    // 2. Change Page (Next/Prev)
-    function changePage(type, delta) {
-        if (type === 'inv') currentInvPage += delta;
-        else currentTransPage += delta;
-        performSearch(); // Fetch data for new page
+    function changeInvoicePage(delta) {
+        invPage += delta;
+        fetchInvoices();
     }
 
-    // 3. Perform Fetch
-    function performSearch() {
-        const params = new URLSearchParams();
-        params.append('q', document.getElementById('searchInput').value);
-        params.append('status', document.getElementById('filterStatus').value);
-        params.append('date_from', document.getElementById('filterDateFrom').value);
-        params.append('date_to', document.getElementById('filterDateTo').value);
-        params.append('min_amount', document.getElementById('filterMin').value);
-        params.append('max_amount', document.getElementById('filterMax').value);
+    function fetchInvoices() {
+        const params = new URLSearchParams({
+            action: 'get_invoices',
+            page: invPage,
+            q: document.getElementById('inv-search').value,
+            status: document.getElementById('inv-status').value,
+            date_from: document.getElementById('inv-date-from').value,
+            date_to: document.getElementById('inv-date-to').value
+        });
 
-        // Add Pagination Params
-        params.append('p_inv', currentInvPage);
-        params.append('p_trans', currentTransPage);
-
-        const url = "{% url 'finance:dashboard' %}?" + params.toString();
-
-        const loader = document.getElementById('loadingIndicator');
-        loader.classList.remove('hidden');
-
-        fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-            .then(response => response.json())
+        fetch(`{% url 'finance:api_router' %}?${params}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(res => res.json())
             .then(data => {
-                if (data.status === 'success') {
-                    // Rebuild Tables
-                    rebuildInvoices(data.invoices);
-                    rebuildTransactions(data.transactions);
-
-                    // Update Pagination Controls
-                    updatePaginationUI('inv', data.pagination.inv);
-                    updatePaginationUI('trans', data.pagination.trans);
-                }
-            })
-            .finally(() => {
-                setTimeout(() => loader.classList.add('hidden'), 200);
+                renderInvoices(data.items);
+                updatePagination('inv', data);
             });
     }
 
-    function updatePaginationUI(type, pageData) {
-        // Safe check if elements exist (in case user switches tabs or hides controls)
-        const currentEl = document.getElementById(`${type}-current-page`);
-        if (!currentEl) return;
-
-        currentEl.innerText = pageData.current;
-        document.getElementById(`${type}-total-pages`).innerText = pageData.total_pages;
-
-        const prevBtn = document.getElementById(`${type}-prev-btn`);
-        const nextBtn = document.getElementById(`${type}-next-btn`);
-
-        prevBtn.disabled = !pageData.has_prev;
-        nextBtn.disabled = !pageData.has_next;
-
-        prevBtn.style.opacity = pageData.has_prev ? '1' : '0.5';
-        nextBtn.style.opacity = pageData.has_next ? '1' : '0.5';
+    // --- LEDGER METHODS ---
+    function triggerLedgerSearch() {
+        clearTimeout(ledgerTimeout);
+        ledgerPage = 1;
+        ledgerTimeout = setTimeout(fetchLedger, 400);
     }
 
+    function changeLedgerPage(delta) {
+        ledgerPage += delta;
+        fetchLedger();
+    }
+
+    function fetchLedger() {
+        const params = new URLSearchParams({
+            action: 'get_ledger',
+            page: ledgerPage,
+            q: document.getElementById('ledger-search').value,
+            date_from: document.getElementById('ledger-date-from').value,
+            date_to: document.getElementById('ledger-date-to').value
+        });
+
+        fetch(`{% url 'finance:api_router' %}?${params}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(res => res.json())
+            .then(data => {
+                renderLedger(data.items);
+                updatePagination('ledger', data);
+            });
+    }
+
+    // --- UTILITIES ---
+    function updatePagination(prefix, data) {
+        // prefix is 'inv' or 'ledger'
+        document.getElementById(`${prefix}-current`).innerText = data.current_page;
+        document.getElementById(`${prefix}-total`).innerText = data.total_pages;
+
+        const prevBtn = document.getElementById(`${prefix}-prev`);
+        const nextBtn = document.getElementById(`${prefix}-next`);
+
+        prevBtn.disabled = !data.has_prev;
+        nextBtn.disabled = !data.has_next;
+    }
+
+    // Re-use your existing table rendering logic here, just ensure they target 'inv-body' and 'ledger-body'
     // ========================================================
-    // 3. TABLE REBUILDERS
+    // 3. TABLE REBUILDERS (Maintaining your Design)
     // ========================================================
-    function rebuildInvoices(items) {
-        const tbody = document.getElementById('invoice-body');
+    function renderInvoices(items) {
+        // Corrected ID to match your HTML: 'inv-body'
+        const tbody = document.getElementById('inv-body');
+        if (!tbody) return;
         tbody.innerHTML = '';
 
         if (items.length === 0) {
             tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-16 text-center text-slate-400">
-                <div class="flex flex-col items-center">
-                    <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-3 text-2xl text-slate-300"><i class="ph-duotone ph-receipt"></i></div>
-                    <p class="font-medium">No invoices found</p>
-                </div>
-            </td></tr>`;
+            <div class="flex flex-col items-center">
+                <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-3 text-2xl text-slate-300"><i class="ph-duotone ph-receipt"></i></div>
+                <p class="font-medium">No invoices found</p>
+            </div></td></tr>`;
             return;
         }
 
         items.forEach(item => {
             let statusHTML = '';
+
             if (item.status === 'unpaid') {
-                statusHTML = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-red-50 text-red-700 border border-red-100 uppercase tracking-wide"><span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span> Unpaid</span>`;
+                statusHTML = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-red-50 text-red-700 border border-red-100 uppercase tracking-wide">
+                        <span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span> Unpaid
+                      </span>`;
             } else if (item.status === 'paid') {
-                statusHTML = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-green-50 text-green-700 border border-green-100 uppercase tracking-wide"><i class="ph-bold ph-check text-green-600"></i> Paid</span>`;
+                statusHTML = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-green-50 text-green-700 border border-green-100 uppercase tracking-wide">
+                        <i class="ph-bold ph-check text-green-600"></i> Paid
+                      </span>`;
+            } else if (item.status === 'refunded') {
+                statusHTML = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-100 uppercase tracking-wide">
+                        <i class="ph-bold ph-arrow-counter-clockwise text-blue-600"></i> Refunded
+                      </span>`;
+            } else if (item.status === 'cancelled') {
+                statusHTML = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200 uppercase tracking-wide">
+                        <i class="ph-bold ph-x-circle text-slate-500"></i> Cancelled
+                      </span>`;
             } else {
-                statusHTML = `<span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200 uppercase tracking-wide">${item.status_display}</span>`;
+                statusHTML = `<span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold bg-slate-50 text-slate-500 border border-slate-200 uppercase tracking-wide">
+                        ${item.status_display}
+                      </span>`;
             }
 
             tbody.innerHTML += `
-                <tr onclick="openInvoiceModal(${item.id})" class="group hover:bg-slate-50 transition-colors cursor-pointer">
-                    <td class="px-6 py-4"><span class="font-mono font-bold text-slate-900 bg-slate-100 px-2 py-1 rounded text-xs">#${item.number}</span></td>
-                    <td class="px-6 py-4 text-slate-500 text-xs font-medium">${item.date}</td>
-                    <td class="px-6 py-4 font-bold text-slate-900 tabular-nums">${item.amount} <span class="text-[10px] text-slate-400 font-normal">DZD</span></td>
-                    <td class="px-6 py-4 text-center">${statusHTML}</td>
-                    <td class="px-6 py-4 text-right"><button onclick="event.stopPropagation()" class="text-slate-400 hover:text-brand-600 transition-colors p-2 hover:bg-brand-50 rounded-lg"><i class="ph-bold ph-download-simple text-lg"></i></button></td>
-                </tr>`;
+        <tr onclick="openInvoiceModal(${item.id})" class="group hover:bg-slate-50 transition-colors cursor-pointer">
+            <td class="px-6 py-4"><span class="font-mono font-bold text-slate-900 bg-slate-100 px-2 py-1 rounded text-xs">#${item.number}</span></td>
+            <td class="px-6 py-4 text-slate-500 text-xs font-medium">${item.date}</td>
+            <td class="px-6 py-4 font-bold text-slate-900 tabular-nums">${item.amount} <span class="text-[10px] text-slate-400 font-normal">DZD</span></td>
+            <td class="px-6 py-4 text-center">${statusHTML}</td>
+            <td class="px-6 py-4 text-right"><button onclick="event.stopPropagation()" class="text-slate-400 hover:text-brand-600 transition-colors p-2 hover:bg-brand-50 rounded-lg"><i class="ph-bold ph-download-simple text-lg"></i></button></td>
+        </tr>`;
         });
     }
 
-    function rebuildTransactions(items) {
-        const tbody = document.getElementById('transaction-body');
+    function renderLedger(items) {
+        // Corrected ID to match your HTML: 'ledger-body'
+        const tbody = document.getElementById('ledger-body');
+        if (!tbody) return;
         tbody.innerHTML = '';
 
         if (items.length === 0) {
             tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-16 text-center text-slate-400">
-                <div class="flex flex-col items-center">
-                    <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-3 text-2xl text-slate-300"><i class="ph-duotone ph-list-dashes"></i></div>
-                    <p class="font-medium">No transactions found</p>
-                </div>
-            </td></tr>`;
+            <div class="flex flex-col items-center">
+                <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-3 text-2xl text-slate-300"><i class="ph-duotone ph-list-dashes"></i></div>
+                <p class="font-medium">No transactions found</p>
+            </div></td></tr>`;
             return;
         }
 
@@ -699,16 +706,49 @@
             const sign = item.amount_is_positive ? '+' : '';
 
             tbody.innerHTML += `
-                <tr class="group hover:bg-slate-50 transition-colors">
-                    <td class="px-6 py-4 text-slate-500 whitespace-nowrap"><span class="font-medium text-slate-700 block">${item.date}</span><span class="text-[10px] text-slate-400">${item.time}</span></td>
-                    <td class="px-6 py-4"><div class="font-bold text-slate-800">${item.description}</div><div class="text-xs text-slate-400 font-mono mt-0.5">${item.ref}</div></td>
-                    <td class="px-6 py-4">${typeBadge}</td>
-                    <td class="px-6 py-4 text-right font-bold tabular-nums ${amountClass}">${sign}${item.amount}</td>
-                    <td class="px-6 py-4 text-center font-mono text-xs text-slate-500 tabular-nums">${item.balance_after}</td>
-                </tr>`;
+        <tr class="group hover:bg-slate-50 transition-colors">
+            <td class="px-6 py-4 text-slate-500 whitespace-nowrap"><span class="font-medium text-slate-700 block">${item.date}</span><span class="text-[10px] text-slate-400">${item.time}</span></td>
+            <td class="px-6 py-4"><div class="font-bold text-slate-800">${item.description}</div><div class="text-xs text-slate-400 font-mono mt-0.5">${item.ref}</div></td>
+            <td class="px-6 py-4">${typeBadge}</td>
+            <td class="px-6 py-4 text-right font-bold tabular-nums ${amountClass}">${sign}${item.amount}</td>
+            <td class="px-6 py-4 text-center font-mono text-xs text-slate-500 tabular-nums">${item.balance_after}</td>
+        </tr>`;
         });
     }
+    // ========================================================
+    // 4. PAGINATION UI
+    // ========================================================
+    function updatePaginationUI(prefix, pageData) {
+        const currentEl = document.getElementById(`${prefix}-current-page`);
+        const totalEl = document.getElementById(`${prefix}-total-pages`);
+        if (!currentEl || !totalEl) return;
 
+        currentEl.innerText = pageData.current;
+        totalEl.innerText = pageData.total_pages;
+
+        const prevBtn = document.getElementById(`${prefix}-prev-btn`);
+        const nextBtn = document.getElementById(`${prefix}-next-btn`);
+
+        prevBtn.disabled = !pageData.has_prev;
+        nextBtn.disabled = !pageData.has_next;
+
+        prevBtn.style.opacity = pageData.has_prev ? '1' : '0.5';
+        nextBtn.style.opacity = pageData.has_next ? '1' : '0.5';
+    }
+
+    // ========================================================
+    // 5. EVENT LISTENERS
+    // ========================================================
+    document.addEventListener('DOMContentLoaded', () => {
+        const inputIds = ['searchInput', 'filterStatus', 'filterDateFrom', 'filterDateTo', 'filterMin', 'filterMax'];
+        inputIds.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('input', triggerSearch);
+                el.addEventListener('change', triggerSearch);
+            }
+        });
+    });
     // ========================================================
     // 4. INVOICE MODAL & PAYMENTS
     // ========================================================
@@ -838,6 +878,87 @@
                 btn.innerHTML = originalContent;
             });
     }
+
+    // ========================================================
+    // 5. TOP UP CODE
+    // ========================================================
+
+    let topupPage = 1;
+    let topupTimeout;
+
+    function triggerTopupSearch() {
+        clearTimeout(topupTimeout);
+        topupPage = 1;
+        topupTimeout = setTimeout(fetchTopups, 400);
+    }
+
+    function changeTopupPage(delta) {
+        topupPage += delta;
+        fetchTopups();
+    }
+
+    function fetchTopups() {
+        const apiUrl = document.getElementById('apiUrl').value;
+        const params = new URLSearchParams({
+            action: 'get_topups',
+            page: topupPage,
+            q: document.getElementById('topup-search').value,
+            status: document.getElementById('topup-status').value, // NEW
+            min_amt: document.getElementById('topup-min-amt').value, // NEW
+            max_amt: document.getElementById('topup-max-amt').value, // NEW
+            date_from: document.getElementById('topup-date-from').value,
+            date_to: document.getElementById('topup-date-to').value
+        });
+
+        fetch(`${apiUrl}?${params}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(res => res.json())
+            .then(data => {
+                renderTopups(data.items);
+                updatePagination('topup', data);
+            });
+    }
+
+    function renderTopups(items) {
+        const tbody = document.getElementById('topup-body');
+        tbody.innerHTML = '';
+
+        if (items.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-slate-400 italic">No top-up requests found</td></tr>';
+            return;
+        }
+
+        items.forEach(item => {
+            // Map status to Tailwind colors
+            let statusBadge = '';
+            if (item.status === 'pending') {
+                statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-100 uppercase tracking-wide">
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> Pending</span>`;
+            } else if (item.status === 'approved') {
+                statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-green-50 text-green-700 border border-green-100 uppercase tracking-wide">
+                            <i class="ph-bold ph-check"></i> Approved</span>`;
+            } else {
+                statusBadge = `<span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold bg-red-50 text-red-700 border border-red-100 uppercase tracking-wide">Rejected</span>`;
+            }
+
+            tbody.innerHTML += `
+            <tr class="group hover:bg-slate-50 transition-colors">
+                <td class="px-6 py-4 text-slate-500 whitespace-nowrap">
+                    <span class="font-medium text-slate-700 block">${item.date}</span>
+                    <span class="text-[10px] text-slate-400">${item.time}</span>
+                </td>
+                <td class="px-6 py-4">
+                    <div class="font-bold text-slate-800">Reference / CCP</div>
+                    <div class="text-xs text-slate-400 font-mono mt-0.5">${item.ref}</div>
+                </td>
+                <td class="px-6 py-4 text-right font-bold text-slate-900">${item.amount} <span class="text-xs text-slate-400 font-normal">DZD</span></td>
+                <td class="px-6 py-4 text-center">${statusBadge}</td>
+                <td class="px-6 py-4 text-right">
+                    ${item.receipt_url ? `<a href="${item.receipt_url}" target="_blank" class="text-slate-400 hover:text-brand-600 p-2 inline-block"><i class="ph-bold ph-file-image text-lg"></i></a>` : ''}
+                </td>
+            </tr>`;
+        });
+    }
+
 </script>
 
 

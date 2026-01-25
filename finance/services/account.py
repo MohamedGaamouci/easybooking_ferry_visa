@@ -74,9 +74,9 @@ def update_credit_limit(account_id, new_limit, admin_user=None):
 # 3. REPORTING & SEARCH
 # =========================================================
 
-def get_transaction_ledger(account, search_query=None, type_filter=None, start_date=None, end_date=None):
+def get_transaction_ledger(account, search_query=None, type_filter=None, date_from=None, date_to=None, min_amount=None, max_amount=None):
     """
-    Retrieves, filters, and searches the transaction history.
+    Retrieves, filters, and searches the transaction history with amount and date support.
     """
     # 1. Base Query
     qs = Transaction.objects.filter(account=account).select_related(
@@ -85,27 +85,34 @@ def get_transaction_ledger(account, search_query=None, type_filter=None, start_d
         'top_up'
     )
 
-    # 2. Apply Date Filters
-    if start_date:
-        qs = qs.filter(created_at__date__gte=start_date)
-    if end_date:
-        qs = qs.filter(created_at__date__lte=end_date)
+    # 2. Apply Date Filters (Using your new variable names)
+    if date_from:
+        qs = qs.filter(created_at__date__gte=date_from)
+    if date_to:
+        qs = qs.filter(created_at__date__lte=date_to)
 
-    # 3. Apply Type Filter
+    # 3. Apply Amount Filters (NEW logic)
+    if min_amount:
+        # We use abs() or filter carefully because some amounts might be negative (payments)
+        # Usually, for a ledger, we filter by the magnitude or the raw value
+        qs = qs.filter(amount__gte=min_amount)
+    if max_amount:
+        qs = qs.filter(amount__lte=max_amount)
+
+    # 4. Apply Type Filter
     if type_filter and type_filter not in ['all', '', None]:
         qs = qs.filter(transaction_type=type_filter)
 
-    # 4. Apply Smart Search
+    # 5. Apply Smart Search
     if search_query:
         term = search_query.strip()
-
         q_filter = Q(description__icontains=term)
-        # Fix: Ensure we use the correct field name 'invoice_number'
         q_filter |= Q(invoice__invoice_number__icontains=term)
         q_filter |= Q(top_up__reference_number__icontains=term)
 
         clean_num = term.replace(',', '.')
         if clean_num.replace('.', '', 1).isdigit():
+            # Filter by specific amount search
             q_filter |= Q(amount=clean_num)
 
         qs = qs.filter(q_filter)

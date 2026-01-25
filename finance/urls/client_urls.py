@@ -15,4 +15,6 @@ urlpatterns = [
          views.download_invoice_pdf, name='download_invoice_pdf'),
     path('api/invoice/<int:invoice_id>/pay/',
          views.pay_invoice_ajax, name='pay_invoice_ajax'),
+
+    path('api/data/', views.finance_api_router, name='api_router'),
 ]
