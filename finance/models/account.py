@@ -1,4 +1,7 @@
+from crum import get_current_user
 from django.db import models
+
+from finance.models.CreditLimitHistory import CreditLimitHistory
 
 
 class Account(models.Model):
@@ -44,7 +47,27 @@ class Account(models.Model):
         Formula: Credit Limit - Used Hold.
         (Balance is ignored here).
         """
-        return self.credit_limit - self.unpaid_hold
+        # return self.credit_limit - self.unpaid_hold
+        return self.credit_limit
 
     def __str__(self):
         return f"{self.agency}: Cash {self.balance} | Avail Vol {self.buying_power}"
+
+    def save(self, *args, **kwargs):
+        if self.pk:  # Only on update, not creation
+            try:
+                old_instance = Account.objects.get(pk=self.pk)
+                if old_instance.credit_limit != self.credit_limit:
+                    user = get_current_user()
+
+                    # Create the history record
+                    CreditLimitHistory.objects.create(
+                        account=self,
+                        old_limit=old_instance.credit_limit,
+                        new_limit=self.credit_limit,
+                        changed_by=user if user and not user.is_anonymous else None,
+                    )
+            except Account.DoesNotExist:
+                pass
+
+        super().save(*args, **kwargs)

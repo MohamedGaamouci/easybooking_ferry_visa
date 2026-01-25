@@ -33,5 +33,9 @@ urlpatterns = [
     path('api/invoices/bulk-pay/',
          views_admin.admin_bulk_pay, name='admin_bulk_pay'),
 
+    # Inside your urlpatterns list
+    path('api/finance/credit-history/',
+         views_admin.get_all_credit_history, name='get_credit_history'),
+
 
 ]

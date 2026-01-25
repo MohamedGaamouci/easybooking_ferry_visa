@@ -242,38 +242,38 @@ def cancel_invoice(invoice_id, user):
 # 4. AUTO-SETTLEMENT (SMART LOGIC)
 # =========================================================
 
-def auto_settle_invoices(account):
-    """
-    Called after a Top-Up.
-    Loops through unpaid invoices (Oldest First) and pays them
-    using the newly available Balance.
-    """
-    # 1. Get all unpaid invoices, oldest first (FIFO)
-    unpaid_invoices = Invoice.objects.filter(
-        agency=account.agency,
-        status='unpaid'
-    ).order_by('created_at')
+# def auto_settle_invoices(account):
+#     """
+#     Called after a Top-Up.
+#     Loops through unpaid invoices (Oldest First) and pays them
+#     using the newly available Balance.
+#     """
+#     # 1. Get all unpaid invoices, oldest first (FIFO)
+#     unpaid_invoices = Invoice.objects.filter(
+#         agency=account.agency,
+#         status='unpaid'
+#     ).order_by('created_at')
 
-    results = []
+#     results = []
 
-    for invoice in unpaid_invoices:
-        # Refresh account data in every loop iteration to get accurate balance
-        # (Since we just deducted money in the previous loop)
-        account.refresh_from_db()
+#     for invoice in unpaid_invoices:
+#         # Refresh account data in every loop iteration to get accurate balance
+#         # (Since we just deducted money in the previous loop)
+#         account.refresh_from_db()
 
-        # Check strict Gate 2 (Does Balance cover this invoice?)
-        if account.balance >= invoice.total_amount:
-            # Pay it!
-            # We pass None as user since this is a system action
-            success, msg = pay_invoice(invoice.id, user=None)
-            if success:
-                results.append(f"#{invoice.invoice_number}")
-        else:
-            # If we can't afford the oldest invoice, we stop.
-            # This prevents paying new small invoices while leaving old big ones.
-            break
+#         # Check strict Gate 2 (Does Balance cover this invoice?)
+#         if account.balance >= invoice.total_amount:
+#             # Pay it!
+#             # We pass None as user since this is a system action
+#             success, msg = pay_invoice(invoice.id, user=None)
+#             if success:
+#                 results.append(f"#{invoice.invoice_number}")
+#         else:
+#             # If we can't afford the oldest invoice, we stop.
+#             # This prevents paying new small invoices while leaving old big ones.
+#             break
 
-    return results
+#     return results
 
 
 # ... (Previous create/pay/cancel functions) ...

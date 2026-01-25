@@ -698,10 +698,22 @@
 
         items.forEach(item => {
             let typeBadge = '';
-            if (item.type === 'deposit') typeBadge = '<span class="text-[10px] font-bold text-green-700 bg-green-50 border border-green-100 px-2 py-1 rounded uppercase">Top Up</span>';
-            else if (item.type === 'refund') typeBadge = '<span class="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-100 px-2 py-1 rounded uppercase">Refund</span>';
-            else typeBadge = '<span class="text-[10px] font-bold text-slate-500 bg-slate-100 border border-slate-200 px-2 py-1 rounded uppercase">Payment</span>';
-
+            if (item.type === 'deposit') {
+                // Money In: Green
+                typeBadge = '<span class="text-[10px] font-bold text-green-700 bg-green-50 border border-green-100 px-2 py-1 rounded uppercase">Top Up</span>';
+            }
+            else if (item.type === 'refund') {
+                // Money Back: Blue
+                typeBadge = '<span class="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-100 px-2 py-1 rounded uppercase">Refund</span>';
+            }
+            else if (item.type === 'payment') {
+                // Money Out: Red (This is the specific edit you requested)
+                typeBadge = '<span class="text-[10px] font-bold text-red-700 bg-red-50 border border-red-100 px-2 py-1 rounded uppercase">Payment</span>';
+            }
+            else {
+                // Adjustments/Others: Neutral Slate
+                typeBadge = '<span class="text-[10px] font-bold text-slate-500 bg-slate-100 border border-slate-200 px-2 py-1 rounded uppercase">Adjustment</span>';
+            }
             const amountClass = item.amount_is_positive ? 'text-green-600' : 'text-slate-800';
             const sign = item.amount_is_positive ? '+' : '';
 

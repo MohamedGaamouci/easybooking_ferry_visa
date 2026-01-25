@@ -1,6 +1,7 @@
 # <--- Make sure you import this
+from django.contrib.humanize.templatetags.humanize import intcomma
 from django.forms import ValidationError
-from finance.services.invoice import bulk_pay_invoices
+from finance.services.invoice import FinanceService, bulk_pay_invoices
 from django.template.loader import get_template
 from finance.services.invoice import pay_invoice
 from django.http import HttpResponse
@@ -25,7 +26,7 @@ from django.utils.dateparse import parse_date
 
 from agencies.models import Agency
 from finance.models import Account, Transaction, TopUpRequest
-from finance.services.account import get_account
+from finance.services.account import get_account, get_global_credit_history
 from finance.services.wallet import execute_transaction
 
 # Check if user is Admin/Staff
@@ -281,7 +282,7 @@ def admin_agency_api(request):
     if query:
         qs = qs.filter(
             Q(company_name__icontains=query) |
-            Q(email__icontains=query) |
+            Q(manager__email__icontains=query) |
             Q(phone__icontains=query)
         )
 
@@ -660,3 +661,36 @@ def admin_bulk_pay(request):
     except Exception as e:
         # Unexpected System Errors
         return JsonResponse({'status': 'error', 'msg': str(e)}, status=500)
+
+
+# credit history
+
+@login_required
+def get_all_credit_history(request):
+    """
+    Global endpoint to fetch ALL credit limit history across the platform.
+    """
+    # 1. Call the global service (no account object needed)
+    page = get_global_credit_history(request.GET)
+
+    # 2. Serialize
+    items = []
+    for log in page:
+        items.append({
+            'agency_name': log.account.agency.company_name,  # Added this for the global view
+            'date': log.created_at.strftime("%b %d, %Y"),
+            'time': log.created_at.strftime("%H:%M"),
+            'old_limit': intcomma(log.old_limit),
+            'new_limit': intcomma(log.new_limit),
+            'changed_by': log.changed_by.get_full_name() if log.changed_by else "System",
+            'is_increase': log.new_limit > log.old_limit
+        })
+
+    return JsonResponse({
+        'status': 'success',
+        'items': items,
+        'current_page': page.number,
+        'total_pages': page.paginator.num_pages,
+        'has_next': page.has_next(),
+        'has_prev': page.has_previous(),
+    })

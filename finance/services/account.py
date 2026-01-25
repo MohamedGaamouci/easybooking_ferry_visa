@@ -1,7 +1,12 @@
+from django.core.paginator import Paginator
 from decimal import Decimal
 from django.db.models import Sum, Q
 from django.core.exceptions import ValidationError
 from ..models import Account, Transaction, Invoice
+from finance.models.CreditLimitHistory import CreditLimitHistory
+from django.utils.dateparse import parse_date
+from django.db import models
+from django.contrib.humanize.templatetags.humanize import intcomma
 
 # =========================================================
 # 1. RETRIEVAL & CHECKS (STRICT LOGIC APPLIED HERE)
@@ -170,3 +175,38 @@ def get_statement_export_data(account, start_date=None, end_date=None):
     }
 
     return summary, export_rows
+
+
+def get_global_credit_history(params):
+    # 1. Sanitize inputs
+    query = params.get('q', '')
+    try:
+        p_num = int(params.get('page', 1))
+    except (ValueError, TypeError):
+        p_num = 1
+
+    date_from = parse_date(params.get('date_from', ''))
+    date_to = parse_date(params.get('date_to', ''))
+
+    # 2. Base Query (All records in DB)
+    qs = CreditLimitHistory.objects.all().order_by('-created_at')
+
+    # 3. Apply Date & Search Filters
+    if date_from:
+        qs = qs.filter(created_at__date__gte=date_from)
+    if date_to:
+        qs = qs.filter(created_at__date__lte=date_to)
+
+    if query:
+        # Search by Agency Name OR Admin Name
+        qs = qs.filter(
+            Q(account__agency__company_name__icontains=query) |
+            Q(changed_by__first_name__icontains=query) |
+            Q(changed_by__last_name__icontains=query)
+        )
+
+    paginator = Paginator(qs, 10)
+    return paginator.get_page(p_num)
+
+
+# The Router logic remains the same, just calling the updated Service

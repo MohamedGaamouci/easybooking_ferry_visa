@@ -171,7 +171,7 @@
 
                 <div class="hidden sm:block text-right leading-tight">
                     <div class="text-[10px] uppercase font-bold text-slate-400">Buying Power</div>
-                    <div id="wallet-balance" class="text-sm font-bold text-green-600 font-mono">0.00 DA</div>
+                    <div id="wallet-balance-bigscreen" class="text-sm font-bold text-green-600 font-mono"></div>
                 </div>
 
                 <div class="h-8 w-px bg-slate-200 hidden sm:block"></div>
@@ -253,8 +253,9 @@
             <div class="p-6 bg-slate-50 border-t border-slate-100 shrink-0">
                 <div class="flex items-center justify-between">
                     <div class="leading-tight">
-                        <div class="text-[10px] uppercase font-black text-slate-400 mb-0.5">Wallet Balance</div>
-                        <div class="text-lg font-bold text-green-600 font-mono">€ 2,450.00</div>
+                        <div class="text-[10px] uppercase font-black text-slate-400 mb-0.5">Buying
+                            Power</div>
+                        <div class="text-lg font-bold text-green-600 font-mono" id="wallet-balance2"></div>
                     </div>
                     <a href="{% url 'setting' %}"
                         class="w-10 h-10 bg-white text-brand-700 rounded-full flex items-center justify-center font-bold text-xs border border-slate-200 shadow-sm">GT</a>
@@ -342,15 +343,14 @@
                     })
                     .then(data => {
                         // 1. Update Wallet / Buying Power
-                        const walletEl = document.getElementById('wallet-balance');
-                        if (walletEl && data.buying_power !== undefined) {
-                            // Formatting number with commas: 12500 -> 12,500.00
-                            const formattedPower = new Intl.NumberFormat('fr-FR', {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2
-                            }).format(data.buying_power);
+                        const walletEl = document.getElementById('wallet-balance-bigscreen');
+                        const walletEl_mobile = document.getElementById('wallet-balance2');
+                        if (data.buying_power !== undefined) {
+                            const formattedPower = data.buying_power
+                            console.log("buting power:", data.buying_power)
 
                             walletEl.innerText = `${formattedPower} DA`;
+                            walletEl_mobile.innerText = `${formattedPower} DA`;
                         }
 
                         // 2. Update Initials

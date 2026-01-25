@@ -19,7 +19,7 @@ def agency_management_view(request):
     pending_qs = base_qs.filter(status='pending')
     pending_count = pending_qs.count()
 
-    pending_paginator = Paginator(pending_qs, 2)  # <--- Limit 4
+    pending_paginator = Paginator(pending_qs, 4)  # <--- Limit 4
     pending_page_num = request.GET.get('pending_page')
     pending_page_obj = pending_paginator.get_page(pending_page_num)
 
@@ -52,11 +52,6 @@ def agency_management_view(request):
         tags_list = [t.strip() for t in tag_input.split(',') if t.strip()]
         for t_name in tags_list:
             agencies = agencies.filter(tags__name__icontains=t_name)
-
-    if balance_filter == 'overdraft':
-        agencies = agencies.filter(balance__lt=0)
-    elif balance_filter == 'positive':
-        agencies = agencies.filter(balance__gte=0)
 
     # Main Pagination (10 per page)
     paginator = Paginator(agencies, 10)
@@ -100,9 +95,6 @@ def agency_create_api(request):
                 logo=request.FILES.get('logo'),
                 rc_document=request.FILES.get('rc_document'),
                 status=data.get('status', 'pending'),
-                # credit_limit=data.get('credit_limit', 0.00),
-                # Balance usually starts at 0, but if migration:
-                # balance=data.get('balance', 0.00)
             )
 
             # 2. Handle Tags

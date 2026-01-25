@@ -39,6 +39,11 @@
                 class="pb-3 border-b-2 font-medium text-sm transition-colors flex items-center gap-2">
                 <i class="ph-bold ph-list-dashes"></i> Global Ledger
             </button>
+            <button @click="tab = 'credit-history'; loadCreditHistory(1);"
+                :class="{'border-brand-600 text-brand-600': tab === 'credit-history', 'border-transparent text-slate-500 hover:text-slate-700': tab !== 'credit-history'}"
+                class="pb-3 border-b-2 font-medium text-sm transition-colors flex items-center gap-2">
+                <i class="ph-bold ph-history"></i> Credit History
+            </button>
         </div>
     </div>
 
@@ -296,6 +301,52 @@
                             <button id="inv-btn-prev" onclick="changeInvoicePage(-1)"
                                 class="px-3 py-1 text-xs font-bold bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50">Prev</button>
                             <button id="inv-btn-next" onclick="changeInvoicePage(1)"
+                                class="px-3 py-1 text-xs font-bold bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50">Next</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div x-show="tab === 'credit-history'" class="p-4 space-y-4" style="display: none;">
+                <div class="flex flex-wrap items-center gap-3">
+                    <div class="flex-1 relative min-w-[200px]">
+                        <i class="ph-bold ph-magnifying-glass absolute left-3 top-2.5 text-slate-400"></i>
+                        <input type="text" id="credit-search" oninput="triggerCreditSearch()"
+                            placeholder="Search Agency or Admin..."
+                            class="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg outline-none focus:ring-1 focus:ring-brand-500">
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <input type="date" id="credit-date-from" onchange="triggerCreditSearch()"
+                            class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs outline-none">
+                        <span class="text-slate-400 text-xs">to</span>
+                        <input type="date" id="credit-date-to" onchange="triggerCreditSearch()"
+                            class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs outline-none">
+                    </div>
+                </div>
+
+                <div class="border border-slate-200 rounded-xl overflow-hidden bg-white">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-slate-50 text-xs uppercase text-slate-500 font-bold border-b border-slate-200">
+                            <tr>
+                                <th class="px-6 py-4">Agency</th>
+                                <th class="px-6 py-4">Date & Time</th>
+                                <th class="px-6 py-4">Old Limit</th>
+                                <th class="px-6 py-4">New Limit</th>
+                                <th class="px-6 py-4">Changed By</th>
+                            </tr>
+                        </thead>
+                        <tbody id="credit-history-body" class="divide-y divide-slate-100 text-sm">
+                        </tbody>
+                    </table>
+
+                    <div class="p-3 border-t border-slate-200 flex justify-between items-center bg-slate-50">
+                        <span class="text-xs text-slate-500">Page <span id="credit-current">1</span> of <span
+                                id="credit-total">1</span></span>
+                        <div class="flex gap-2">
+                            <button id="credit-prev" onclick="changeCreditPage(-1)" disabled
+                                class="px-3 py-1 text-xs font-bold bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50">Prev</button>
+                            <button id="credit-next" onclick="changeCreditPage(1)" disabled
                                 class="px-3 py-1 text-xs font-bold bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50">Next</button>
                         </div>
                     </div>
@@ -723,21 +774,29 @@
                         tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-12 text-center text-slate-400">No transactions found.</td></tr>`;
                     } else {
                         data.transactions.forEach(t => {
-                            // 1. Logic for the Amount Color (Red/Green)
-                            const val = parseFloat(t.amount);
+                            // 1. Perspective Logic: In Admin View, Payments and Deposits are POSITIVE events
+                            let val = parseFloat(t.amount);
+
+                            // IF it's a payment, it's likely stored as negative in DB to subtract from client balance.
+                            // For Admin, we show it as positive.
+                            if (t.type === 'payment' || t.type === 'deposit') {
+                                val = Math.abs(val);
+                            } else if (t.type === 'refund') {
+                                val = -Math.abs(val); // Refund is money leaving the Admin's pocket
+                            }
+
                             const amountClass = val > 0 ? 'text-green-600' : (val < 0 ? 'text-red-600' : 'text-slate-600');
                             const sign = val > 0 ? '+' : '';
 
-                            // 2. Logic for the Transaction Type Badge
-                            // We map each type to a specific Tailwind CSS color scheme
+                            // 2. Updated Badge Config for Admin
+                            // Using Green for Payments/Deposits because they are "Success/In" events
                             const badgeConfig = {
-                                'deposit': 'bg-blue-100 text-blue-700 border-blue-200',
-                                'payment': 'bg-amber-100 text-amber-700 border-amber-200',
-                                'refund': 'bg-purple-100 text-purple-700 border-purple-200',
+                                'deposit': 'bg-green-100 text-green-700 border-green-200',  // Cash Received
+                                'payment': 'bg-emerald-100 text-emerald-700 border-emerald-200', // Debt Cleared
+                                'refund': 'bg-red-100 text-red-700 border-red-200',      // Cash Returned
                                 'adjustment': 'bg-slate-100 text-slate-700 border-slate-200'
                             };
 
-                            // Fallback if type is unknown
                             const badgeClass = badgeConfig[t.type] || 'bg-gray-100 text-gray-700 border-gray-200';
 
                             tbody.innerHTML += `
@@ -749,26 +808,22 @@
                                         <div class="text-xs text-slate-400 font-mono">${t.account_id || ''}</div>
                                     </td>
                                     <td class="px-6 py-4">
-                                        <div class="flex items-center gap-2">
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${badgeClass} uppercase">
-                                                ${t.type}
-                                            </span>
-                                        </div>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${badgeClass} uppercase">
+                                            ${t.type}
+                                        </span>
                                     </td>
                                     <td class="px-6 py-4">
-                                        <div class="flex items-center gap-2">
-                                            <span class="text-sm text-slate-600">${t.description}</span>
-                                        </div>
+                                        <span class="text-sm text-slate-600">${t.description}</span>
                                     </td>
                                     <td class="px-6 py-4 text-right">
-                                        <span class="font-bold ${amountClass}">${sign}${t.amount.toLocaleString()}</span>
+                                        <span class="font-bold ${amountClass}">${sign}${val.toLocaleString()}</span>
                                         <div class="text-[10px] text-slate-400 uppercase">DZD</div>
                                     </td>
                                     <td class="px-6 py-4 text-right">
                                         <span class="font-mono text-sm text-slate-500">${t.balance_after.toLocaleString()}</span>
                                     </td>
                                 </tr>
-                                `;
+                            `;
                         });
                     }
 
@@ -965,7 +1020,7 @@
                         document.getElementById('topup-pagination').classList.remove('hidden');
                         document.getElementById('topup-pulse').classList.remove('hidden');
                         document.getElementById('pending-badge').classList.remove('hidden');
-                        document.getElementById('pending-badge').innerText = data.pagination.total * 5; // Approx count or pass real count from backend
+                        // document.getElementById('pending-badge').innerText = data.pagination.total * 5; // Approx count or pass real count from backend
 
                         data.topups.forEach(t => {
                             // Logic for Receipt Button
@@ -1525,6 +1580,101 @@
     }
 
 
+    /**
+ * CREDIT LIMIT HISTORY MODULE
+ * Handles the state and rendering for the audit log of credit changes.
+ */
+    const CREDIT_HISTORY_URL = "{% url 'get_credit_history' %}";
+    let creditPage = 1;
+    let creditSearchTimeout = null;
+
+    function triggerCreditSearch() {
+        clearTimeout(creditSearchTimeout);
+        creditSearchTimeout = setTimeout(() => {
+            creditPage = 1;
+            loadCreditHistory(1);
+        }, 400);
+    }
+
+    function changeCreditPage(delta) {
+        creditPage += delta;
+        loadCreditHistory(creditPage);
+    }
+
+    function loadCreditHistory(page) {
+        creditPage = page;
+        const tbody = document.getElementById('credit-history-body');
+        if (tbody) tbody.style.opacity = '0.5';
+
+        // Build params - No account_id needed for Global View
+        const params = new URLSearchParams({
+            page: creditPage,
+            q: document.getElementById('credit-search')?.value || '',
+            date_from: document.getElementById('credit-date-from')?.value || '',
+            date_to: document.getElementById('credit-date-to')?.value || ''
+        });
+
+        fetch(`${CREDIT_HISTORY_URL}?${params}`)
+            .then(res => res.json())
+            .then(data => {
+                if (tbody) tbody.style.opacity = '1';
+                if (data.status === 'success') {
+                    renderCreditTable(data.items);
+                    updateCreditPagination(data);
+                }
+            })
+            .catch(err => {
+                if (tbody) tbody.style.opacity = '1';
+                console.error("Fetch error:", err);
+            });
+    }
+
+    function renderCreditTable(items) {
+        const tbody = document.getElementById('credit-history-body');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+
+        if (!items || items.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-12 text-center text-slate-400 italic">No history found.</td></tr>';
+            return;
+        }
+
+        items.forEach(item => {
+            const trendIcon = item.is_increase ? 'ph-trend-up text-green-500' : 'ph-trend-down text-red-500';
+            const amountColor = item.is_increase ? 'text-green-700' : 'text-red-700';
+
+            tbody.innerHTML += `
+            <tr class="hover:bg-slate-50 transition-colors">
+                <td class="px-6 py-4 font-bold text-slate-700">${item.agency_name}</td>
+                <td class="px-6 py-4 text-xs">
+                    <span class="block font-medium">${item.date}</span>
+                    <span class="text-slate-400">${item.time}</span>
+                </td>
+                <td class="px-6 py-4 text-slate-400 line-through text-xs">${item.old_limit}</td>
+                <td class="px-6 py-4">
+                    <div class="flex items-center gap-2">
+                        <i class="ph-bold ${trendIcon}"></i>
+                        <span class="font-bold ${amountColor}">${item.new_limit}</span>
+                    </div>
+                </td>
+                <td class="px-6 py-4 text-xs text-slate-600">
+                    <i class="ph-fill ph-user-circle"></i> ${item.changed_by}
+                </td>
+            </tr>`;
+        });
+    }
+
+    function updateCreditPagination(data) {
+        const current = document.getElementById('credit-current');
+        const total = document.getElementById('credit-total');
+        if (current) current.innerText = data.current_page;
+        if (total) total.innerText = data.total_pages;
+
+        const prevBtn = document.getElementById('credit-prev');
+        const nextBtn = document.getElementById('credit-next');
+        if (prevBtn) prevBtn.disabled = !data.has_prev;
+        if (nextBtn) nextBtn.disabled = !data.has_next;
+    }
 </script>
 
 <script>

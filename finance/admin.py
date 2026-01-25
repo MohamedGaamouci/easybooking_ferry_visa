@@ -1,6 +1,8 @@
 from django.contrib import admin
 from django.contrib import messages
 from django.utils.html import format_html
+
+from finance.models.CreditLimitHistory import CreditLimitHistory
 from .models import Account, TopUpRequest, Invoice, InvoiceItem, Transaction
 from .services.topup import approve_topup_request, reject_topup_request
 from .services.invoice import pay_invoice
@@ -155,3 +157,20 @@ class TransactionAdmin(admin.ModelAdmin):
         color = "green" if obj.amount > 0 else "red"
         return format_html('<span style="color: {};">{}</span>', color, obj.get_transaction_type_display())
     type_colored.short_description = "Type"
+
+
+@admin.register(CreditLimitHistory)
+class CreditLimitHistoryAdmin(admin.ModelAdmin):
+    # What columns to show in the list
+    list_display = ('account', 'old_limit', 'new_limit',
+                    'changed_by', 'created_at')
+
+    # Add filters for easier searching
+    list_filter = ('created_at', 'changed_by')
+
+    # Make everything read-only so the history remains "True"
+    readonly_fields = ('account', 'old_limit', 'new_limit',
+                       'changed_by', 'created_at')
+
+    # Search by agency name or reference
+    search_fields = ('account__agency__name', 'reason')

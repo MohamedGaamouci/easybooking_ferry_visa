@@ -7,11 +7,9 @@ from .forms import (
     VisaApplicationAnswerForm,
     VisaApplicationDocumentForm, UpdateVisaStatusForm, VisaDestinationForm, VisaRequiredDocumentForm, VisaFormFieldForm
 )
-from django.views.decorators.http import require_POST
 from django.shortcuts import reverse
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
-from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_GET, require_POST
 from django.db import transaction
 from django.shortcuts import render
