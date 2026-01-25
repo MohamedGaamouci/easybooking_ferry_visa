@@ -27,8 +27,10 @@ class KPI:
             today = timezone.now().date()
             first_day_curr_month = today.replace(day=1)
             # Last day of prev month is 1 day before the 1st of current month
-            end_date = first_day_curr_month - timedelta(days=1)
-            start_date = end_date.replace(day=1)
+            # end_date = first_day_curr_month - timedelta(days=1)
+            # start_date = end_date.replace(day=1)
+            start_date = today
+            end_date = first_day_curr_month
 
         # Query Invoices within the range
         invoices_in_range = Invoice.objects.filter(

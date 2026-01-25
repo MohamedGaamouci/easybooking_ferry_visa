@@ -60,6 +60,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     'crum.CurrentRequestUserMiddleware',
+    'users.middlewares.role_middleware.RoleAccessMiddleware',
 ]
 
 ROOT_URLCONF = "future_easy_booking.urls"
@@ -165,7 +166,7 @@ EMAIL_PORT = config("EMAIL_PORT", cast=int)
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = config("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")
-DEFAULT_FROM_EMAIL = config("EMAIL_HOST_USER")
+DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL")
 
 SECRET_KEY = config("SECRET_KEY")
 

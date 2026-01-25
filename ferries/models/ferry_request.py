@@ -2,6 +2,7 @@ import random
 import string
 from django.db import models
 from .provider_route import ProviderRoute
+from finance.services.notifications import notify_status_change, notify_new_request_received
 
 
 def generate_reference():
@@ -147,3 +148,34 @@ class FerryRequest(models.Model):
             'rejected': 'Rejected'
         }
         return labels.get(self.status, self.status)
+
+    def save(self, *args, **kwargs):
+        # 1. Identify if this is a new creation or an edit
+        is_new = self._state.adding
+
+        # 2. Capture the current status from the DB before overwriting it
+        old_status = None
+        if not is_new:
+            # We use type(self) to make this snippet reusable across different models
+            old_instance = type(self).objects.get(pk=self.pk)
+            old_status = old_instance.status
+
+        # 3. Commit the changes to the database
+        super().save(*args, **kwargs)
+
+        # 4. Handle Notifications with a safety net
+        try:
+            # Local imports prevent circular dependency errors in Django
+
+            if is_new:
+                # Triggers the "Reservation Received" email
+                notify_new_request_received(self)
+
+            elif old_status != self.status:
+                # Triggers the "Status Update" email
+                notify_status_change(self, old_status)
+
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Notification error for {self.reference}: {e}")

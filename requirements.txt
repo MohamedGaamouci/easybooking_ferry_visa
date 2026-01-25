@@ -10,3 +10,4 @@ zopfli==0.4.0
 python-decouple==3.8
 gunicorn==21.2.0
 django-crum
+waitress==3.0.2

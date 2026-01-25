@@ -5,6 +5,8 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.conf import settings
 
+logger = logging.getLogger(__name__)
+
 
 def send_booking_notification(agency_name, manager_email, booking_ref, service_name, amount, invoice_pdf=None):
     subject = f"Easy Booking Confirmation: {booking_ref}"
@@ -36,7 +38,7 @@ def send_booking_notification(agency_name, manager_email, booking_ref, service_n
             msg.attach_alternative(html_content, "text/html")
 
             # Attach invoice ONLY for agency manager
-            if invoice_pdf and email == manager_email:
+            if invoice_pdf:
                 msg.attach(
                     f"Invoice_{booking_ref}.pdf",
                     invoice_pdf,
@@ -44,14 +46,11 @@ def send_booking_notification(agency_name, manager_email, booking_ref, service_n
                 )
 
             msg.send(fail_silently=True)
-
+            logger.info(f"notificaiton was sent to: {email}")
         except Exception as e:
             logger.error(
                 f"Booking notification email failed for {email}: {e}"
             )
-
-
-logger = logging.getLogger(__name__)
 
 
 def notify_balance_change(account, amount, change_type, reason):
@@ -86,5 +85,105 @@ def notify_balance_change(account, amount, change_type, reason):
             )
             msg.attach_alternative(html_content, "text/html")
             msg.send(fail_silently=True)
+            logger.info(f"notificaiton was sent to: {email}")
         except Exception as e:
             logger.error(f"Email failed for {email}: {e}")
+
+
+def notify_status_change(booking_obj, old_status):
+    """
+    General notification for status changes (Visa or Ferry).
+    """
+    # 1. Determine the service name dynamically
+    if hasattr(booking_obj, 'route'):
+        service_label = f"Ferry: {booking_obj.route.__str__()}"
+    elif hasattr(booking_obj, 'destination'):
+        service_label = f"Visa: {booking_obj.destination.visa_type}"
+
+    subject = f"Booking Status Update: {booking_obj.reference}"
+
+    # 2. Prepare Context using human-readable labels
+    context = {
+        'agency_name': booking_obj.agency.company_name,
+        'booking_ref': booking_obj.reference,
+        'service_name': service_label,
+        # We use Django's get_status_display to get "Ready for Collection" instead of "ready"
+        'old_status': old_status.replace('_', ' ').capitalize(),
+        'new_status': booking_obj.get_status_display(),
+        'updated_at': booking_obj.updated_at,
+    }
+
+    html_content = render_to_string('emails/status_update.html', context)
+    text_content = strip_tags(html_content)
+
+    recipients = [
+        booking_obj.agency.manager.email,
+        settings.DEFAULT_FROM_EMAIL,
+        # "gaamoucimohamed@gmail.com",
+        # 'crm.easybooking@gmail.com'
+    ]
+
+    for email in recipients:
+        try:
+            msg = EmailMultiAlternatives(
+                subject=subject,
+                body=text_content,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[email],
+            )
+            msg.attach_alternative(html_content, "text/html")
+
+            # Attachment logic: if status is 'ready' for Visa or 'confirmed' for Ferry,
+            # and there is a file, you could attach it here.
+            if hasattr(booking_obj, 'visa_doc') and booking_obj.visa_doc and booking_obj.status == 'ready':
+                msg.attach_file(booking_obj.visa_doc.path)
+            elif hasattr(booking_obj, 'voucher') and booking_obj.voucher and booking_obj.status == 'confirmed':
+                msg.attach_file(booking_obj.voucher.path)
+
+            msg.send(fail_silently=True)
+            logger.info(f"notificaiton was sent to: {email}")
+
+        except Exception as e:
+            logger.error(f"Status update email failed for {email}: {e}")
+
+
+def notify_new_request_received(request_obj):
+    """
+    General notification for any new service request (Visa, Ferry, etc.)
+    """
+    # Determine the service name dynamically
+    if hasattr(request_obj, 'route'):  # It's a Ferry
+        service_label = f"Ferry: {request_obj.route}"
+    elif hasattr(request_obj, 'visa_type'):  # Assuming Visa model has this
+        service_label = f"Visa: {request_obj.visa_type}"
+
+    subject = f"New Reservation Received: {request_obj.reference}"
+
+    context = {
+        'agency_name': request_obj.agency.company_name,
+        'booking_ref': request_obj.reference,
+        'service_name': service_label,
+        'amount': "{:,.2f}".format(request_obj.selling_price),
+    }
+
+    html_content = render_to_string('emails/new_booking.html', context)
+    text_content = strip_tags(html_content)
+
+    recipients = [
+        request_obj.agency.manager.email,
+        settings.DEFAULT_FROM_EMAIL,
+    ]
+
+    for email in recipients:
+        try:
+            msg = EmailMultiAlternatives(
+                subject=subject,
+                body=text_content,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[email],
+            )
+            msg.attach_alternative(html_content, "text/html")
+            msg.send(fail_silently=True)
+            logger.info(f"notificaiton was sent to: {email}")
+        except Exception as e:
+            logger.error(f"General notification failed for {email}: {e}")

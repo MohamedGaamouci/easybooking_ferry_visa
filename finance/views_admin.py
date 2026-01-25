@@ -56,12 +56,15 @@ def admin_accounting_dashboard(request):
     agencies = Agency.objects.select_related(
         'account').all().order_by('-account__balance')
 
+    Unpaid_inv = Invoice.objects.filter(
+        status='unpaid').count()
     context = {
         'total_balance': total_balance,
         'total_debt': total_debt,
         'pending_total': pending_total,
         'pending_topups': pending_topups,
         'agencies': agencies,
+        "unpaid_inv_count": Unpaid_inv
     }
     return render(request, 'admin/accounting.html', context)
 
@@ -99,6 +102,7 @@ def admin_ledger_api(request):
             'id': t.id,
             'date': t.created_at.strftime("%b %d, %H:%M"),
             'agency': agency_name,
+            'Agent': t.created_by.first_name if t.created_by else "System",
             'description': t.description,
             'amount': float(t.amount),
             'balance_after': float(t.balance_after),
@@ -274,6 +278,12 @@ def admin_agency_api(request):
     query = request.GET.get('q', '')
     page_num = request.GET.get('page', 1)
 
+    # Get the new numeric range parameters
+    min_bal = request.GET.get('min_bal')
+    max_bal = request.GET.get('max_bal')
+    min_credit = request.GET.get('min_credit')
+    max_credit = request.GET.get('max_credit')
+
     # Base Query
     qs = Agency.objects.select_related(
         'account').all().order_by('-account__balance')
@@ -285,6 +295,18 @@ def admin_agency_api(request):
             Q(manager__email__icontains=query) |
             Q(phone__icontains=query)
         )
+
+    # 2. Balance Range Filters
+    if min_bal:
+        qs = qs.filter(account__balance__gte=min_bal)
+    if max_bal:
+        qs = qs.filter(account__balance__lte=max_bal)
+
+    # 3. Credit Limit Range Filters
+    if min_credit:
+        qs = qs.filter(account__credit_limit__gte=min_credit)
+    if max_credit:
+        qs = qs.filter(account__credit_limit__lte=max_credit)
 
     # Pagination (10 per page)
     paginator = Paginator(qs, 10)

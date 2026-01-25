@@ -49,6 +49,7 @@ def agency_management_view(request):
         agencies = agencies.filter(status=status)
 
     if tag_input:
+        print(tag_input)
         tags_list = [t.strip() for t in tag_input.split(',') if t.strip()]
         for t_name in tags_list:
             agencies = agencies.filter(tags__name__icontains=t_name)

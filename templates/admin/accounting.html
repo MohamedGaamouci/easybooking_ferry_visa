@@ -33,6 +33,12 @@
                 :class="{'border-brand-600 text-brand-600': tab === 'invoices', 'border-transparent text-slate-500 hover:text-slate-700': tab !== 'invoices'}"
                 class="pb-3 border-b-2 font-medium text-sm transition-colors flex items-center gap-2">
                 <i class="ph-bold ph-receipt"></i> Invoices
+                {% if unpaid_inv_count != 0%}
+                <span id="pending-badge"
+                    class="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full {% if pending_topups.count == 0 %}hidden{% endif %}">
+                    {{unpaid_inv_count }}</span>
+                {% endif %}
+
             </button>
             <button @click="tab = 'ledger'; loadLedger(1);"
                 :class="{'border-brand-600 text-brand-600': tab === 'ledger', 'border-transparent text-slate-500 hover:text-slate-700': tab !== 'ledger'}"
@@ -127,11 +133,29 @@
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-sm font-bold text-slate-900 uppercase">Partner Agencies</h3>
 
-                        <div class="relative w-64">
-                            <i class="ph-bold ph-magnifying-glass absolute left-3 top-2.5 text-slate-400"></i>
-                            <input type="text" id="agency-search" oninput="triggerAgencySearch()"
-                                placeholder="Search agencies..."
-                                class="w-full pl-9 pr-4 py-2 text-xs border border-slate-300 rounded-lg outline-none focus:ring-1 focus:ring-brand-500 bg-white">
+                        <div class="flex flex-wrap items-center gap-3">
+                            <div class="relative w-64">
+                                <i class="ph-bold ph-magnifying-glass absolute left-3 top-2.5 text-slate-400"></i>
+                                <input type="text" id="agency-search" oninput="triggerAgencySearch()"
+                                    placeholder="Search agencies..."
+                                    class="w-full pl-9 pr-4 py-2 text-xs border border-slate-300 rounded-lg outline-none focus:ring-1 focus:ring-brand-500 bg-white">
+                            </div>
+
+                            <div class="flex items-center gap-2 bg-slate-100 p-1 rounded-lg border border-slate-200">
+                                <span class="text-[10px] font-bold text-slate-500 px-1 uppercase">Balance</span>
+                                <input type="number" id="min-balance" oninput="triggerAgencySearch()" placeholder="Min"
+                                    class="w-20 px-2 py-1 text-xs border border-slate-300 rounded outline-none focus:border-brand-500">
+                                <input type="number" id="max-balance" oninput="triggerAgencySearch()" placeholder="Max"
+                                    class="w-20 px-2 py-1 text-xs border border-slate-300 rounded outline-none focus:border-brand-500">
+                            </div>
+
+                            <div class="flex items-center gap-2 bg-slate-100 p-1 rounded-lg border border-slate-200">
+                                <span class="text-[10px] font-bold text-slate-500 px-1 uppercase">Credit</span>
+                                <input type="number" id="min-credit" oninput="triggerAgencySearch()" placeholder="Min"
+                                    class="w-20 px-2 py-1 text-xs border border-slate-300 rounded outline-none focus:border-brand-500">
+                                <input type="number" id="max-credit" oninput="triggerAgencySearch()" placeholder="Max"
+                                    class="w-20 px-2 py-1 text-xs border border-slate-300 rounded outline-none focus:border-brand-500">
+                            </div>
                         </div>
                     </div>
 
@@ -200,6 +224,7 @@
                                 <th class="px-6 py-4">ID</th>
                                 <th class="px-6 py-4">Date</th>
                                 <th class="px-6 py-4">Agency</th>
+                                <th class="px-6 py-4">Agent</th>
                                 <th class="px-6 py-4">Trx Type</th>
                                 <th class="px-6 py-4">Description</th>
                                 <th class="px-6 py-4 text-right">Amount</th>
@@ -808,6 +833,9 @@
                                         <div class="text-xs text-slate-400 font-mono">${t.account_id || ''}</div>
                                     </td>
                                     <td class="px-6 py-4">
+                                        <div class="text-sm font-bold text-slate-900">${t.Agent}</div>
+                                    </td>
+                                    <td class="px-6 py-4">
                                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${badgeClass} uppercase">
                                             ${t.type}
                                         </span>
@@ -822,6 +850,7 @@
                                     <td class="px-6 py-4 text-right">
                                         <span class="font-mono text-sm text-slate-500">${t.balance_after.toLocaleString()}</span>
                                     </td>
+
                                 </tr>
                             `;
                         });
@@ -910,13 +939,27 @@
     }
 
     function loadAgencies(page) {
+        // 1. Collect all filter values
         const query = document.getElementById('agency-search').value;
+        const minBal = document.getElementById('min-balance').value;
+        const maxBal = document.getElementById('max-balance').value;
+        const minCredit = document.getElementById('min-credit').value;
+        const maxCredit = document.getElementById('max-credit').value;
         const tbody = document.getElementById('agency-body');
 
         // Optional: Show loading spinner if it takes time
         // tbody.innerHTML = '<tr><td colspan="4" class="p-6 text-center">Loading...</td></tr>';
+        // 2. Build the URL with all parameters
+        const params = new URLSearchParams({
+            page: page,
+            q: query,
+            min_bal: minBal,
+            max_bal: maxBal,
+            min_credit: minCredit,
+            max_credit: maxCredit
+        });
 
-        fetch(`{% url "admin_agency_api" %}?page=${page}&q=${query}`, {
+        fetch(`{% url "admin_agency_api" %}?${params.toString()}`, {
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
             .then(res => res.json())

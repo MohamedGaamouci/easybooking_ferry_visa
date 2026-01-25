@@ -2,6 +2,7 @@ import random
 import string
 from django.db import models
 from .visa_destination import VisaDestination
+from finance.services.notifications import notify_new_request_received, notify_status_change
 
 
 def generate_visa_ref():
@@ -84,3 +85,32 @@ class VisaApplication(models.Model):
 
     def __str__(self):
         return f"{self.reference} - {self.last_name}"
+
+    def save(self, *args, **kwargs):
+        # 1. Check if this is a new application or an update
+        is_new = self._state.adding
+
+        # 2. Capture old status for comparison
+        old_status = None
+        if not is_new:
+            # Dynamically fetches the current record from DB
+            old_instance = type(self).objects.get(pk=self.pk)
+            old_status = old_instance.status
+
+        # 3. Commit to database
+        super().save(*args, **kwargs)
+
+        # 4. Fire notifications
+        try:
+            if is_new:
+                # Sends the "Reservation Received" email for Visa
+                notify_new_request_received(self)
+
+            elif old_status != self.status:
+                # Sends the "Status Update" email (e.g., New -> Under Review)
+                notify_status_change(self, old_status)
+
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Visa Notification Error [{self.reference}]: {e}")
