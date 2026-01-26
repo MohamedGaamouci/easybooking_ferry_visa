@@ -1048,9 +1048,6 @@ def admin_manage_schedule_api(request, route_id):
     API: Bulk add dates to a route schedule.
     Expects JSON: {"dates": ["2026-06-01", "2026-06-08"]}
     """
-    # if hasattr(request.user, 'agency'):  # Security: Prevent non-staff from access
-    #     return JsonResponse({'status': 'error', 'message': 'Unauthorized'}, status=403)
-
     try:
         data = json.loads(request.body)
         dates = data.get('dates', [])  # This is your array from selectedDates

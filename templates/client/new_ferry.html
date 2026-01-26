@@ -370,26 +370,54 @@
             getRoutes: () => providerRoutes,
             getPickers: () => ({ dep: depPicker, ret: retPicker }),
             fetchPricing: async id => {
-                const outRes = await fetch(`/admin_panel/api/admin/route/${id}/pricing/`);
-                const out = await outRes.json(); if (out.status === 'success') outboundPricing = out.data;
-                const isR = document.querySelector('input[name="triptype"]:checked').value === 'round';
-                if (isR) {
-                    const f = providerRoutes.find(r => r.route_id == id);
-                    const rr = providerRoutes.find(r => r.origin_name === f.dest_name && r.dest_name === f.origin_name);
-                    if (rr) {
-                        const rRes = await fetch(`/admin_panel/api/admin/route/${rr.route_id}/pricing/`);
-                        const rD = await rRes.json(); if (rD.status === 'success') {
-                            returnPricing = rD.data;
-                            returnOptions.accommodations = [...new Set(returnPricing.filter(i => i.category === 'accommodation').map(i => i.item_name))];
+                try {
+                    // Reset pricing arrays to ensure old data doesn't persist on error
+                    outboundPricing = [];
+                    returnPricing = [];
+
+                    const outRes = await fetch(`/ferries/api/admin/route/${id}/pricing/`);
+
+                    // FAIL-SAFE: If redirect (302) or error (404/500)
+                    if (!outRes.ok || outRes.redirected) {
+                        console.error("Pricing API Error: Unauthorized or Route not found.");
+                        return null;
+                    }
+
+                    const out = await outRes.json();
+                    if (out.status === 'success') outboundPricing = out.data;
+
+                    const isR = document.querySelector('input[name="triptype"]:checked').value === 'round';
+                    if (isR) {
+                        const f = providerRoutes.find(r => r.route_id == id);
+                        const rr = providerRoutes.find(r => r.origin_name === f.dest_name && r.dest_name === f.origin_name);
+                        if (rr) {
+                            const rRes = await fetch(`/ferries/api/admin/route/${rr.route_id}/pricing/`);
+
+                            if (rRes.ok && !rRes.redirected) {
+                                const rD = await rRes.json();
+                                if (rD.status === 'success') {
+                                    returnPricing = rD.data;
+                                    returnOptions.accommodations = [...new Set(returnPricing.filter(i => i.category === 'accommodation').map(i => i.item_name))];
+                                }
+                            }
                         }
                     }
+
+                    outboundOptions = {
+                        accommodations: [...new Set(outboundPricing.filter(i => i.category === 'accommodation').map(i => i.item_name))],
+                        passenger_types: [...new Set(outboundPricing.filter(i => i.category === 'pax').map(i => i.item_name))],
+                        vehicles: [...new Set(outboundPricing.filter(i => i.category === 'vehicle').map(i => i.item_name))]
+                    };
+
+                    // If we have no pricing data, treat it as a failure
+                    if (outboundPricing.length === 0) return null;
+
+                    return outboundOptions;
+
+                } catch (error) {
+                    console.error("Fetch Pricing Exception:", error);
+                    return null; // Signals updateCalendarsAndOptions to disable dates
                 }
-                outboundOptions = {
-                    accommodations: [...new Set(outboundPricing.filter(i => i.category === 'accommodation').map(i => i.item_name))],
-                    passenger_types: [...new Set(outboundPricing.filter(i => i.category === 'pax').map(i => i.item_name))],
-                    vehicles: [...new Set(outboundPricing.filter(i => i.category === 'vehicle').map(i => i.item_name))]
-                };
-                return outboundOptions;
             },
             getOptions: () => outboundOptions,
             getReturnOptions: () => returnOptions,

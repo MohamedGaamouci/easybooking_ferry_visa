@@ -27,6 +27,9 @@ urlpatterns = [
     path('api/pricing/calculate/', validate_and_calculate_price_api,
          name='api_calculate_price'),
     path('api/route/<int:route_id>/options/',
-         get_route_options_api, name='api_route_options')
+         get_route_options_api, name='api_route_options'),
+    # 1st Endpoint: List Prices
+    path('api/admin/route/<int:route_id>/pricing/',
+         get_route_pricing_api, name='api_get_pricing_client'),
 
 ]
