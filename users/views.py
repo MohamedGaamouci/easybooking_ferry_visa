@@ -1,3 +1,5 @@
+from .permissions_utils import ADMIN_ENDPOINTS, CLIENT_ENDPOINTS
+from django.db import models
 from django.shortcuts import redirect
 from django.shortcuts import render
 from django.contrib.auth import get_user_model
@@ -131,90 +133,6 @@ def user_save_view(request, pk=None):
 
 
 @login_required
-def role_management_view(request):
-    # 'models.Count' requires the 'from django.db import models' import above
-    roles = Role.objects.annotate(user_count=models.Count('customuser')).all()
-
-    all_permissions = {}
-
-    # 1. Fetch ALL permissions in one go
-    # select_related('content_type') fetches the App name efficiently
-    perms = Permission.objects.select_related(
-        'content_type').order_by('content_type__app_label')
-
-    for p in perms:
-        # 2. Get the App Name dynamically (e.g., 'Ferries', 'Auth', 'Sessions')
-        app_label = p.content_type.app_label.capitalize()
-
-        # 3. Create the group if it doesn't exist yet
-        if app_label not in all_permissions:
-            all_permissions[app_label] = []
-
-        # 4. Format the name nicely
-        name = p.name.replace('Can add ', 'Add ').replace('Can change ', 'Edit ')\
-                     .replace('Can delete ', 'Delete ').replace('Can view ', 'View ')
-
-        # 5. Add to the group
-        all_permissions[app_label].append({
-            'id': p.id,
-            'name': name,
-            'codename': p.codename
-        })
-
-    context = {
-        'roles': roles,
-        'grouped_permissions': all_permissions
-    }
-    return render(request, 'admin/roles.html', context)
-
-
-@login_required
-def role_detail_api(request, pk):
-    role = get_object_or_404(Role, pk=pk)
-    data = {
-        'status': 'success',
-        'role': {
-            'id': role.id,
-            'name': role.name,
-            'description': role.description,
-            # Return list of permission IDs this role currently has
-            'permissions': list(role.permissions.values_list('id', flat=True))
-        }
-    }
-    return JsonResponse(data)
-
-# --- API: CREATE / UPDATE ROLE ---
-
-
-@login_required
-@require_POST
-def role_save_view(request, pk=None):
-    try:
-        data = request.POST
-        name = data.get('name')
-        description = data.get('description')
-        perm_ids = data.getlist('permissions[]')  # List of IDs
-
-        if pk:
-            role = get_object_or_404(Role, pk=pk)
-            role.name = name
-            role.description = description
-            role.save()
-        else:
-            role = Role.objects.create(name=name, description=description)
-
-        # Set Permissions
-        if perm_ids:
-            role.permissions.set(perm_ids)
-        else:
-            role.permissions.clear()
-
-        return JsonResponse({'status': 'success', 'message': 'Role saved successfully!'})
-    except Exception as e:
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
-
-
-@login_required
 def login_success_router(request):
     """
     Redirects users based on their assigned Role name.
@@ -227,3 +145,94 @@ def login_success_router(request):
 
     # 3. Fallback: Everyone else (Platform Manager, Finance, Superuser) -> Admin Panel
     return redirect('admin_dashboard')
+
+
+def sync_permissions_to_db():
+    """Helper to ensure every endpoint in utils.py exists as a Permission in DB"""
+    content_type = ContentType.objects.get_for_model(Role)
+    for mapping in [ADMIN_ENDPOINTS, CLIENT_ENDPOINTS]:
+        for category, url_names in mapping.items():
+            for url_name in url_names:
+                codename = f"access_{url_name}"
+                Permission.objects.get_or_create(
+                    codename=codename,
+                    content_type=content_type,
+                    defaults={
+                        'name': f"Access {url_name.replace('_', ' ').title()}"}
+                )
+
+
+@login_required
+def role_management_view(request):
+    # Determine if we are looking at ADMIN roles or AGENCY roles
+    # Use: /admin_panel/roles/?side=ADMIN
+    side = request.GET.get('side', 'ADMIN')
+
+    # 1. Sync dictionary to DB
+    sync_permissions_to_db()
+
+    # 2. Get roles belonging to this side only
+    roles = Role.objects.filter(category=side).annotate(
+        user_count=models.Count('customuser')
+    )
+
+    # 3. Get the correct dictionary from your utils.py
+    endpoint_map = ADMIN_ENDPOINTS if side == 'ADMIN' else CLIENT_ENDPOINTS
+
+    # 4. Group the database Permission objects for the template checkboxes
+    grouped_permissions = {}
+    for category, url_names in endpoint_map.items():
+        codenames = [f"access_{name}" for name in url_names]
+        # Fetch the actual Permission objects so we have their IDs
+        perms = Permission.objects.filter(codename__in=codenames)
+        grouped_permissions[category] = perms
+
+    context = {
+        'roles': roles,
+        'grouped_permissions': grouped_permissions,
+        'current_side': side
+    }
+    return render(request, 'admin/roles.html', context)
+
+
+@login_required
+def role_detail_api(request, pk):
+    role = get_object_or_404(Role, pk=pk)
+    return JsonResponse({
+        'status': 'success',
+        'role': {
+            'id': role.id,
+            'name': role.name,
+            'description': role.description,
+            'permissions': list(role.permissions.values_list('id', flat=True))
+        }
+    })
+
+
+@login_required
+@require_POST
+def role_save_view(request, pk=None):
+    try:
+        data = request.POST
+        name = data.get('name')
+        description = data.get('description')
+        # This category field is crucial for the "Derived" logic
+        category = data.get('category', 'AGENCY')
+        perm_ids = data.getlist('permissions[]')
+
+        if pk:
+            role = get_object_or_404(Role, pk=pk)
+            role.name = name
+            role.description = description
+            role.save()
+        else:
+            role = Role.objects.create(
+                name=name,
+                description=description,
+                category=category
+            )
+
+        role.permissions.set(perm_ids)
+        return JsonResponse({'status': 'success', 'message': 'Role saved successfully!'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)

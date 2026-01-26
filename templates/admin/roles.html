@@ -5,16 +5,27 @@
 <main class="flex-1 flex flex-col h-screen overflow-hidden">
 
     <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
-        <h1 class="text-xl font-bold text-slate-900">Roles & Permissions</h1>
+        <div>
+            <h1 class="text-xl font-bold text-slate-900">Roles & Permissions</h1>
+            <p class="text-xs font-bold text-blue-600 uppercase tracking-wider">{{ current_side }} Side</p>
+        </div>
         <button onclick="openRoleModal('new')"
             class="bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md hover:bg-slate-800 transition-colors flex items-center gap-2">
-            <i class="ph-bold ph-shield-plus"></i> Create New Role
+            <i class="ph-bold ph-shield-plus"></i> Create New {{ current_side|title }} Role
         </button>
     </header>
 
     <div class="p-8 overflow-y-auto">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="flex gap-4 mb-6 border-b border-slate-200">
+            <a href="?side=ADMIN"
+                class="pb-2 px-1 text-sm font-bold {% if current_side == 'ADMIN' %}text-blue-600 border-b-2 border-blue-600{% else %}text-slate-400{% endif %}">Platform
+                Admin</a>
+            <a href="?side=AGENCY"
+                class="pb-2 px-1 text-sm font-bold {% if current_side == 'AGENCY' %}text-blue-600 border-b-2 border-blue-600{% else %}text-slate-400{% endif %}">Agency
+                Client</a>
+        </div>
 
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {% for role in roles %}
             <div
                 class="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow p-6 flex flex-col h-full">
@@ -24,8 +35,9 @@
                     </div>
                     <div class="flex gap-2">
                         <button onclick="openRoleModal('edit', '{{ role.id }}')"
-                            class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"><i
-                                class="ph-bold ph-pencil-simple"></i></button>
+                            class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors">
+                            <i class="ph-bold ph-pencil-simple"></i>
+                        </button>
                     </div>
                 </div>
 
@@ -38,8 +50,9 @@
                     <span class="bg-slate-100 text-slate-600 px-2 py-1 rounded-full">{{ role.user_count }} Users</span>
                 </div>
             </div>
+            {% empty %}
+            <div class="col-span-full py-12 text-center text-slate-400 font-medium">No roles found for this side.</div>
             {% endfor %}
-
         </div>
     </div>
 </main>
@@ -57,7 +70,10 @@
 
         <form id="role-form" onsubmit="event.preventDefault(); saveRole();"
             class="flex-1 flex flex-col overflow-hidden">
-            {% csrf_token %} <div class="flex-1 overflow-y-auto p-6">
+            {% csrf_token %}
+            <input type="hidden" name="category" value="{{ current_side }}">
+
+            <div class="flex-1 overflow-y-auto p-6">
                 <div class="grid grid-cols-2 gap-6 mb-8">
                     <div>
                         <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Role Name</label>
@@ -71,13 +87,14 @@
                     </div>
                 </div>
 
-                <h4 class="text-sm font-bold text-slate-800 border-b border-slate-200 pb-2 mb-4">Access Permissions</h4>
+                <h4 class="text-sm font-bold text-slate-800 border-b border-slate-200 pb-2 mb-4">Access Permissions
+                    ({{ current_side }} Endpoints)</h4>
 
                 <div class="grid grid-cols-2 gap-6">
                     {% for category, perms in grouped_permissions.items %}
                     <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
                         <div class="flex items-center justify-between mb-3">
-                            <h5 class="font-bold text-slate-700 text-sm">{{ category }} Management</h5>
+                            <h5 class="font-bold text-slate-700 text-sm">{{ category }}</h5>
                             <button type="button" onclick="toggleGroup(this)"
                                 class="text-[10px] font-bold text-blue-600 hover:underline">Select All</button>
                         </div>
@@ -106,10 +123,10 @@
         </form>
     </div>
 </div>
+
 <script>
     let editingRoleId = null;
 
-    // ... openRoleModal / closeRoleModal / toggleGroup (Keep these same) ...
     function openRoleModal(mode, id = null) {
         const modal = document.getElementById('role-modal');
         const form = document.getElementById('role-form');
@@ -120,7 +137,7 @@
 
         if (mode === 'new') {
             editingRoleId = null;
-            title.innerText = "Create New Role";
+            title.innerText = "Create New {{ current_side|title }} Role";
         } else {
             editingRoleId = id;
             title.innerText = "Edit Role";
@@ -159,14 +176,12 @@
         btn.innerText = 'Saving...';
         btn.disabled = true;
 
-        // FIXED: URL Logic matched to new urls.py
         let url = "{% url 'role_create' %}";
         if (editingRoleId) url = `/admin_panel/api/role/update/${editingRoleId}/`;
 
         fetch(url, {
             method: "POST",
             body: formData,
-            // FIXED: Use DOM selector for CSRF token
             headers: { "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value }
         })
             .then(res => res.json())

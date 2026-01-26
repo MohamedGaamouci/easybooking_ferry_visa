@@ -1,8 +1,5 @@
 from django.urls import path
 from ..views import *
-from django.contrib.auth import views as auth_views
-from .. import views
-
 
 urlpatterns = [
 
@@ -14,10 +11,8 @@ urlpatterns = [
     # ROLES (Fixed)
     path('roles/', role_management_view, name='role_management'),
     path('api/role/create/', role_save_view,
-         name='role_create'),          # <--- Added this
+         name='role_create'),
     path('api/role/update/<int:pk>/', role_save_view,
-         name='role_update'),  # <--- Renamed this
+         name='role_update'),
     path('api/role/<int:pk>/', role_detail_api, name='role_detail'),
-
-
 ]

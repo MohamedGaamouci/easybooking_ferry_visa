@@ -24,15 +24,24 @@ def admin_setting_view(request):
 def setting_view(request):
     return render(request, 'client/setting.html')
 
+# ======================
+# 403 page
+# ======================
 
+
+def unauthorized_view(request):
+    return render(request, 'errors/403.html', status=403)
 # ======================
 # URL Patterns
 # ======================
+
 
 urlpatterns = [
     # Django admin
     path("admin/", admin.site.urls),
     path("", RedirectView.as_view(url='dashboard/', permanent=False)),
+    path('unauthorized/', unauthorized_view, name='unauthorized'),
+
 ]
 
 admin_urls = [
