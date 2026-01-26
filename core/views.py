@@ -6,7 +6,7 @@ from agencies.models.agency import Agency
 from finance.services.account import get_account_stats
 # Make sure KPI is imported from your services file
 from .services import KPI, DashboardService, ClientKPIService
-from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db.models import Q
 from django.shortcuts import render
@@ -22,33 +22,7 @@ from django.views.decorators.http import require_GET
 
 # core/views.py
 
-def is_admin(user):
-    # Ensure user is authenticated first
-    if not user.is_authenticated:
-        return False
-
-    # In your logic, a Master Admin is a user WITHOUT an agency attached
-    # We use 'hasattr' to safely check if the agency relation exists
-    if hasattr(user, 'agency') and user.agency is not None:
-        return False  # They are an agency, not Master Admin
-
-    # If they are superuser or staff, they are definitely admin
-    # Or if they simply don't have an agency attribute
-    return user.is_staff or user.is_superuser or not hasattr(user, 'agency')
-
-
-def is_agency(user):
-    # Ensure user is authenticated first
-    if not user.is_authenticated:
-        return False
-
-    if hasattr(user, 'agency') and user.agency is not None:
-        return True
-    else:
-        return False
-
-
-# @user_passes_test(is_admin)
+@login_required
 @require_GET
 def cms_dashboard_view(request):
     # --- 1. VISA DESTINATIONS QUERY ---
@@ -103,13 +77,13 @@ def cms_dashboard_view(request):
 # Your existing admin check
 
 
-# @user_passes_test(is_admin)
+@login_required
 def admin_dashboard(request):
     """Returns only the static HTML shell."""
     return render(request, 'admin/dashboard.html')
 
 
-# @user_passes_test(is_admin)
+@login_required
 def api_dashboard_kpis(request):
     """The JSON endpoint for Ajax."""
     start_date = request.GET.get('start_date')
@@ -159,7 +133,7 @@ def api_dashboard_kpis(request):
     })
 
 
-# @user_passes_test(is_admin)
+@login_required
 def api_performance_chart(request):
     """
     Dedicated endpoint for the Weekly/Date-Range Performance Chart.
@@ -201,13 +175,13 @@ def api_performance_chart(request):
 # ------------------- client Side -----------------------
 # -------------------------------------------------------
 
-# @user_passes_test(is_agency)
+@login_required
 def client_dashboard(request):
     """Returns only the static HTML shell."""
     return render(request, 'client/dashboard.html')
 
 
-# @user_passes_test(is_agency)
+@login_required
 def api_agency_performance_chart(request):
     """
     Client-side endpoint: Strictly filtered to the logged-in agency.
@@ -240,7 +214,7 @@ def api_agency_performance_chart(request):
     })
 
 
-# @user_passes_test(is_agency)
+@login_required
 def api_agency_kpis(request):
     """
     Endpoint to retrieve financial, ferry, visa, and spending KPIs
@@ -286,7 +260,7 @@ def api_agency_kpis(request):
     })
 
 
-# @user_passes_test(is_agency)
+@login_required
 def api_get_my_info(request):
     user = request.user
 

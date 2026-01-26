@@ -25,7 +25,7 @@ class RoleAccessMiddleware:
             is_admin_path = path.startswith('/admin_panel/')
 
             # 3. CRITICAL BYPASS: Don't block logout or the unauthorized page itself
-            if url_name in ['unauthorized', 'logout', 'login']:
+            if url_name in ['unauthorized', 'logout', 'login', 'login_success']:
                 return self.get_response(request)
 
         except Resolver404:
@@ -42,6 +42,8 @@ class RoleAccessMiddleware:
             if is_admin_path:
                 return redirect('/dashboard/')
 
+        if not url_name:
+            return self.get_response(request)
         # 5. DYNAMIC PERMISSION CHECK
         # This matches the 'access_url_name' pattern we built in the Roles view
         permission_codename = f"access_{url_name}"
