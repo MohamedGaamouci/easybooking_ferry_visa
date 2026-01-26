@@ -107,6 +107,7 @@ def user_save_view(request, pk=None):
         if pk:
             user = get_object_or_404(CustomUser, pk=pk)
             form = UserForm(request.POST, instance=user)
+            agency = user.agency
         else:
             user = None
             form = UserForm(request.POST)
@@ -121,6 +122,8 @@ def user_save_view(request, pk=None):
 
             # Username = Email
             user_obj.username = user_obj.email
+            if pk:
+                user_obj.agency = agency
             user_obj.save()
 
             action = "updated" if pk else "created"

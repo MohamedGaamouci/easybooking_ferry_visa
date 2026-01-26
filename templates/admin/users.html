@@ -202,23 +202,13 @@
                 <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
                     <h4 class="text-xs font-bold text-slate-900 mb-3 uppercase flex items-center gap-2"><i
                             class="ph-fill ph-lock-key-open text-brand-500"></i> Access & Permissions</h4>
-                    <div class="grid grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 gap-4">
                         <div>
                             <label class="block text-[10px] text-slate-500 mb-1">Role</label>
                             <select name="role" class="w-full border border-slate-300 rounded-lg p-2 text-sm bg-white">
                                 <option value="">Select Role...</option>
                                 {% for role in roles %}
                                 <option value="{{ role.id }}">{{ role.name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-[10px] text-slate-500 mb-1">Agency (Optional)</label>
-                            <select name="agency"
-                                class="w-full border border-slate-300 rounded-lg p-2 text-sm bg-white">
-                                <option value="">None (Platform Staff)</option>
-                                {% for agency in agencies %}
-                                <option value="{{ agency.id }}">{{ agency.company_name }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -308,7 +298,6 @@
                     userForm.querySelector('[name="phone"]').value = u.phone;
                     userForm.querySelector('[name="state"]').value = u.state;
                     userForm.querySelector('[name="role"]').value = u.role_id;
-                    userForm.querySelector('[name="agency"]').value = u.agency_id;
                     userForm.querySelector('[name="is_active"]').checked = u.is_active;
 
                     // Update UI for Edit Mode
