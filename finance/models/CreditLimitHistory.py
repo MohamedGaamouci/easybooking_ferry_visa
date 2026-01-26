@@ -10,6 +10,8 @@ class CreditLimitHistory(models.Model):
         'users.CustomUser', on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    reason = models.CharField(max_length=255, blank=True, null=True)
+
     class Meta:
         verbose_name_plural = "Credit Limit History"
         ordering = ['-created_at']

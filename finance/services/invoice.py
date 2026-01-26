@@ -98,7 +98,7 @@ def create_invoice(agency, items_data, user=None, due_date=None):
         # 3. RESERVE THE FUNDS (Increase Hold)
         acc_locked.unpaid_hold += total_cost
         acc_locked.credit_limit -= total_cost
-        acc_locked.save()
+        acc_locked.save(reason=items_data[0].get('description', 'Service Fee'))
 
         # 4. CREATE INVOICE RECORD
         invoice = Invoice.objects.create(

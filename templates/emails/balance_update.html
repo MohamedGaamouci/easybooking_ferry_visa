@@ -1,70 +1,80 @@
 <!DOCTYPE html>
 <html>
 
-<head>
-    <style>
-        .wrapper {
-            font-family: 'Segoe UI', sans-serif;
-            background-color: #f8fafc;
-            padding: 40px 10px;
-        }
+<body
+    style="margin:0; padding:0; background-color:#f8fafc; font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#f8fafc; padding:40px 10px;">
+        <tr>
+            <td align="center">
+                <table border="0" cellpadding="0" cellspacing="0" width="100%"
+                    style="max-width:500px; background-color:#ffffff; border-radius:24px; overflow:hidden; border: 1px solid #e2e8f0; box-shadow:0 10px 15px rgba(0,0,0,0.05); padding: 40px; text-align: center;">
 
-        .card {
-            max-width: 500px;
-            margin: auto;
-            background: white;
-            border-radius: 20px;
-            border-top: 4px solid #0f172a;
-            padding: 30px;
-            text-align: center;
-        }
+                    <tr>
+                        <td align="center" style="padding-bottom: 25px;">
+                            <img src="https://easybooking.pro/Images/Logo2.png" alt="Easy Booking Logo" width="100"
+                                style="display:block; margin-bottom:10px; border:0; opacity: 0.9;">
+                            <div
+                                style="font-size: 11px; font-weight: bold; color: #94a3b8; letter-spacing: 3px; text-transform: uppercase;">
+                                Easy Booking
+                            </div>
+                        </td>
+                    </tr>
 
-        .icon {
-            font-size: 48px;
-            margin-bottom: 20px;
-        }
+                    <tr>
+                        <td align="center">
+                            <div style="font-size: 48px; margin-bottom: 15px;">💳</div>
+                            <h2 style="color: #0f172a; margin: 0; font-size: 24px; font-weight: 800;">Wallet Updated
+                            </h2>
+                            <p style="color: #64748b; font-size: 14px; margin-top: 10px;">
+                                A new transaction has been recorded for <br><strong>{{ agency_name }}</strong>.
+                            </p>
+                        </td>
+                    </tr>
 
-        .amount-circle {
-            width: 120px;
-            height: 120px;
-            background: #f1f5f9;
-            border-radius: 50%;
-            line-height: 120px;
-            margin: 20px auto;
-            font-size: 20px;
-            font-weight: bold;
-            color: #0f172a;
-            border: 2px dashed #cbd5e1;
-        }
+                    <tr>
+                        <td align="center">
+                            <table border="0" cellpadding="0" cellspacing="0" style="margin: 25px auto;">
+                                <tr>
+                                    <td align="center"
+                                        style="width: 140px; height: 140px; background-color: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 50%; color: #0f172a; font-size: 20px; font-weight: 800; vertical-align: middle;">
+                                        {{ amount }}<br>
+                                        <span style="font-size: 10px; font-weight: normal; color: #64748b;">DZD</span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
 
-        .balance-text {
-            font-size: 14px;
-            color: #64748b;
-            margin-top: 20px;
-        }
-    </style>
-</head>
+                    <tr>
+                        <td align="center" style="padding: 0 20px;">
+                            <p style="font-size: 15px; font-weight: bold; color: #334155; margin: 0;">{{ reason }}</p>
+                        </td>
+                    </tr>
 
-<body>
-    <div class="wrapper">
-        <div class="card">
-            <div style="font-weight: bold; color: #0f172a; margin-bottom: 20px;">EASY BOOKING</div>
-            <div class="icon">💰</div>
-            <h2 style="margin: 0;">Wallet Updated</h2>
-            <p style="color: #64748b; font-size: 14px;">A new transaction has been recorded for {{ agency_name }}.</p>
+                    <tr>
+                        <td align="center" style="margin-top: 30px; padding-top: 30px; border-top: 1px solid #f1f5f9;">
+                            <div
+                                style="font-size: 13px; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">
+                                Current Wallet Balance
+                            </div>
+                            <div style="font-size: 22px; font-weight: 900; color: #0f172a;">
+                                {{ new_balance }} <span style="font-size: 14px; font-weight: 400;">DZD</span>
+                            </div>
+                        </td>
+                    </tr>
 
-            <div class="amount-circle">
-                {{ amount }}
-            </div>
-
-            <p style="font-size: 15px; font-weight: bold; color: #334155;">{{ reason }}</p>
-
-            <div class="balance-text">
-                Current Wallet Balance:<br>
-                <strong style="font-size: 18px; color: #0f172a;">{{ new_balance }} DZD</strong>
-            </div>
-        </div>
-    </div>
+                    <tr>
+                        <td align="center" style="padding-top: 40px;">
+                            <p
+                                style="font-size: 11px; color: #cbd5e1; text-transform: uppercase; letter-spacing: 1px; margin: 0;">
+                                &copy; 2026 Easy Booking Platform
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
 </body>
 
 </html>

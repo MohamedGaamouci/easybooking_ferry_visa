@@ -704,6 +704,7 @@ def get_all_credit_history(request):
             'time': log.created_at.strftime("%H:%M"),
             'old_limit': intcomma(log.old_limit),
             'new_limit': intcomma(log.new_limit),
+            'reason': log.reason,
             'changed_by': log.changed_by.get_full_name() if log.changed_by else "System",
             'is_increase': log.new_limit > log.old_limit
         })

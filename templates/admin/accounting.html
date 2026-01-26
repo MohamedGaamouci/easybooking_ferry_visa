@@ -358,6 +358,7 @@
                                 <th class="px-6 py-4">Date & Time</th>
                                 <th class="px-6 py-4">Old Limit</th>
                                 <th class="px-6 py-4">New Limit</th>
+                                <th class="px-6 py-4">reason</th>
                                 <th class="px-6 py-4">Changed By</th>
                             </tr>
                         </thead>
@@ -1699,6 +1700,9 @@
                         <i class="ph-bold ${trendIcon}"></i>
                         <span class="font-bold ${amountColor}">${item.new_limit}</span>
                     </div>
+                </td>
+                <td class="px-6 py-4 text-xs text-slate-600">
+                    <i class="ph-fill ph-user-circle"></i> ${item.reason}
                 </td>
                 <td class="px-6 py-4 text-xs text-slate-600">
                     <i class="ph-fill ph-user-circle"></i> ${item.changed_by}

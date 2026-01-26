@@ -53,7 +53,7 @@ class Account(models.Model):
     def __str__(self):
         return f"{self.agency}: Cash {self.balance} | Avail Vol {self.buying_power}"
 
-    def save(self, *args, **kwargs):
+    def save(self, reason=None, *args, **kwargs):
         if self.pk:  # Only on update, not creation
             try:
                 old_instance = Account.objects.get(pk=self.pk)
@@ -66,6 +66,7 @@ class Account(models.Model):
                         old_limit=old_instance.credit_limit,
                         new_limit=self.credit_limit,
                         changed_by=user if user and not user.is_anonymous else None,
+                        reason=reason
                     )
             except Account.DoesNotExist:
                 pass

@@ -147,15 +147,17 @@ def notify_status_change(booking_obj, old_status):
             logger.error(f"Status update email failed for {email}: {e}")
 
 
-def notify_new_request_received(request_obj):
+def notify_new_request_received(request_obj, Type=None):
     """
     General notification for any new service request (Visa, Ferry, etc.)
     """
     # Determine the service name dynamically
-    if hasattr(request_obj, 'route'):  # It's a Ferry
+    if Type == 'Ferry':  # It's a Ferry
         service_label = f"Ferry: {request_obj.route}"
-    elif hasattr(request_obj, 'visa_type'):  # Assuming Visa model has this
+    elif Type == 'Visa':  # Assuming Visa model has this
         service_label = f"Visa: {request_obj.visa_type}"
+    else:
+        service_label = request_obj.__class__.__name__
 
     subject = f"New Reservation Received: {request_obj.reference}"
 

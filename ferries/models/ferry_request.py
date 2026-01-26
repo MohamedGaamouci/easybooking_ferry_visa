@@ -169,7 +169,7 @@ class FerryRequest(models.Model):
 
             if is_new:
                 # Triggers the "Reservation Received" email
-                notify_new_request_received(self)
+                notify_new_request_received(self, Type='Ferry')
 
             elif old_status != self.status:
                 # Triggers the "Status Update" email

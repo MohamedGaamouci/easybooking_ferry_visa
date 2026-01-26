@@ -104,7 +104,7 @@ class VisaApplication(models.Model):
         try:
             if is_new:
                 # Sends the "Reservation Received" email for Visa
-                notify_new_request_received(self)
+                notify_new_request_received(self, Type="Visa")
 
             elif old_status != self.status:
                 # Sends the "Status Update" email (e.g., New -> Under Review)
