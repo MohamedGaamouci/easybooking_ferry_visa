@@ -153,9 +153,9 @@ def notify_new_request_received(request_obj, Type=None):
     """
     # Determine the service name dynamically
     if Type == 'Ferry':  # It's a Ferry
-        service_label = f"Ferry: {request_obj.route}"
+        service_label = "Ferry"
     elif Type == 'Visa':  # Assuming Visa model has this
-        service_label = f"Visa: {request_obj.visa_type}"
+        service_label = "Visa"
     else:
         service_label = request_obj.__class__.__name__
 
