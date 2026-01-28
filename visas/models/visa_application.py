@@ -2,7 +2,7 @@ import random
 import string
 from django.db import models
 from .visa_destination import VisaDestination
-from finance.services.notifications import notify_new_request_received, notify_status_change
+from finance.services.notifications import notify_status_change
 
 
 def generate_visa_ref():
@@ -102,11 +102,11 @@ class VisaApplication(models.Model):
 
         # 4. Fire notifications
         try:
-            if is_new:
-                # Sends the "Reservation Received" email for Visa
-                notify_new_request_received(self, Type="Visa")
+            # if is_new:
+            # Sends the "Reservation Received" email for Visa
+            # notify_new_request_received(self, Type="Visa")
 
-            elif old_status != self.status:
+            if not is_new and old_status != self.status:
                 # Sends the "Status Update" email (e.g., New -> Under Review)
                 notify_status_change(self, old_status)
 
